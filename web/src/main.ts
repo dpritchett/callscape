@@ -104,9 +104,11 @@ function applySelection() {
   const lines = [...selected].map((id) => {
     const node = world.nodeById(id)
     if (!node) return id
+    // Visible edges out of total, because the occupant filter hides callers and
+    // "in 0" for something with six of them is a wrong answer, not a summary.
     const ins = placement!.edges.filter((e) => e.to === id).length
     const outs = placement!.edges.filter((e) => e.from === id).length
-    return `${node.name}\n  ${node.pkg}\n  in ${ins} · out ${outs}`
+    return `${node.name}\n  ${node.pkg}\n  in ${ins}/${node.fanIn} · out ${outs}/${node.fanOut}`
   })
   selBox.textContent = `${lines.join('\n\n')}\n\n${n.callers.size} callers · ${n.callees.size} callees`
   selBox.style.display = 'block'

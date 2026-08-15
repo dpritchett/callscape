@@ -156,6 +156,12 @@ describe('district assignment', () => {
     ])
   })
 
+  test('carries whole-graph fan-in through, not just what survived filtering', () => {
+    const get = p.nodes.find((n) => n.name === 'Client.Get')!
+    expect(get.fanIn).toBe(12) // 12 in the graph, only 1 of them drawn here
+    expect(p.edges.filter((e) => e.to === get.id).length).toBe(1)
+  })
+
   test('encoding lifts and sizes, and a package keeps one colour', () => {
     const gitlab = p.nodes.filter((n) => n.pkg === `${M}/internal/gitlab`)
     expect(new Set(gitlab.map((n) => n.color)).size).toBe(1)

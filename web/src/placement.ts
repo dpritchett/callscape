@@ -12,6 +12,11 @@ export interface PlacedNode {
   z: number
   size: number
   color: number
+  /** Fan-in and fan-out across the whole graph, not just what survived the
+   * occupant filter. Without these, a panel showing "in 0" for a symbol with
+   * six callers is not a simplification, it is a wrong answer. */
+  fanIn: number
+  fanOut: number
 }
 
 export interface PlacedDistrict extends District {
@@ -69,6 +74,8 @@ export function place(graph: Graph, view: ViewSpec): Placement {
       z: ground.z,
       size,
       color: colorOf(n),
+      fanIn: n.fanIn,
+      fanOut: n.fanOut,
     }
   })
 

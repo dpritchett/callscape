@@ -42,6 +42,7 @@ export class World {
   private edgeColorAttr: THREE.Float32BufferAttribute | null = null
   /** Ids whose labels show regardless of distance, because they're selected. */
   private pinned = new Set<string>()
+  private selecting = false
 
   build(p: Placement) {
     this.clear()
@@ -182,6 +183,7 @@ export class World {
    */
   applySelection(n: Neighborhood) {
     this.pinned = n.related
+    this.selecting = !n.empty
 
     for (const { node, mesh } of this.byId.values()) {
       const mats = this.materialsFor(node.color)
@@ -263,9 +265,11 @@ export class World {
 
     for (const s of this.symbols) {
       const dist = s.pos.distanceTo(eye)
-      // A selected symbol keeps its name up from anywhere — you selected it to
-      // read it, and it is usually behind you by the time you stop moving.
-      const near = dist < LABEL_RANGE || this.pinned.has(s.node.id)
+      // With a selection up, only the neighbourhood is labelled — at any
+      // distance, since you selected it to read it and it is usually behind you
+      // by the time you stop moving. Labelling the dimmed 87% as well just
+      // rebuilds the wall of text the dimming was meant to clear.
+      const near = this.selecting ? this.pinned.has(s.node.id) : dist < LABEL_RANGE
       let label = this.symbolLabels.get(s.node.id)
       if (near && !label) {
         label = makeLabel(s.node.name, { size: 1, color: '#dbe4f3' })
@@ -300,6 +304,7 @@ export class World {
     this.edges = []
     this.edgeColorAttr = null
     this.pinned = new Set()
+    this.selecting = false
     this.group.clear()
   }
 }
