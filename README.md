@@ -3,9 +3,15 @@
 A Go module's call graph, as districts you fly through.
 
 ```sh
-go run ./cmd/lspvue-dump /path/to/a/go/module > web/public/graph.json
+make dump TARGET=/path/to/a/go/module   # writes web/public/graph.json
+make dev                                # dev server; open the printed URL
 go run ./cmd/lspvue-dump --stats /path/to/a/go/module   # same data, as text
-cd web && npm install && npm run dev                    # open the printed URL
+```
+
+Or install the dumper on its own:
+
+```sh
+go install github.com/dpritchett/lspvue/cmd/lspvue-dump@latest
 ```
 
 Then edit `web/public/view.json` while the page is open: what's on screen changes within
@@ -23,7 +29,7 @@ between them. `web/` lays each package out as a disc on the ground plane — det
 positions, so two runs are comparable — and encodes `size`, `color` and `height` from
 whichever node fields `view.json` names.
 
-Requires Go 1.24+ and Node 20+.
+Requires Go 1.26+ (per `go.mod`). Node is pinned in `.mise.toml`.
 
 ## Known limits
 
@@ -49,15 +55,20 @@ stranger.
 **The dev server is a dev server.** It binds localhost. Don't `--host` it onto a network
 you share.
 
-## Tests
+## Checks
 
 ```sh
-go test ./...
-cd web && npm test
+make check    # go vet, go test, golangci-lint, tsc --noEmit, vitest
+make hooks    # install the lefthook pre-commit hooks, once per clone
 ```
 
-`HANDOFF.md` is the brief this was built from, and `DECISIONS.md` lists every call made
-under its ten-minute rule, with what was rejected. Both are worth more than this README
-if you want to know why it looks like this.
+lefthook and CI both call `make` targets, so there is one source of truth per check.
+
+## The other documents
+
+`ARCHITECTURE.md` has the ground rules, the seam between the two halves, and the known
+limits. `DECISIONS.md` lists every call made under the ten-minute rule with what was
+rejected. `HANDOFF.md` is the brief this was built from, unedited. Any of the three tells
+you more than this README about why it looks like this.
 
 MIT licensed.

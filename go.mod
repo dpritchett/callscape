@@ -1,4 +1,4 @@
-module lspvue
+module github.com/dpritchett/lspvue
 
 go 1.26.6
 
