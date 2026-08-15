@@ -1,6 +1,6 @@
 {
-  "name": "web",
-  "version": "1.0.0",
+  "name": "lspvue-web",
+  "version": "0.1.0",
   "main": "index.js",
   "scripts": {
     "test": "vitest run",
@@ -10,8 +10,8 @@
   },
   "keywords": [],
   "author": "",
-  "license": "ISC",
-  "description": "",
+  "license": "MIT",
+  "description": "three.js viewer for a Go call graph dumped by lspvue-dump",
   "dependencies": {
     "three": "^0.185.1"
   },
@@ -22,5 +22,6 @@
     "vite": "^8.2.1",
     "vitest": "^3.2.7"
   },
-  "type": "module"
+  "type": "module",
+  "private": true
 }

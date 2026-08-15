@@ -4,7 +4,13 @@ import type { GraphNode, ViewSpec } from './types'
 // `/`, so `*/internal/gitlab` matches a package inside any module and
 // `*/cmd/*` matches every command package. `?` matches one character.
 export function globToRegExp(pattern: string): RegExp {
-  const body = pattern.replace(/[.+^${}()|[\]\\]/g, '\\$&').replace(/\*/g, '.*').replace(/\?/g, '.')
+  const body = pattern
+    // Runs of `*` collapse to one. `**` means nothing extra here, and leaving
+    // them in would compile to `.*.*.*`, which backtracks badly on a near-miss.
+    .replace(/\*+/g, '*')
+    .replace(/[.+^${}()|[\]\\]/g, '\\$&')
+    .replace(/\*/g, '.*')
+    .replace(/\?/g, '.')
   return new RegExp(`^${body}$`)
 }
 

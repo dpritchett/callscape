@@ -59,6 +59,13 @@ describe('glob matching over package paths', () => {
     expect(globToRegExp('*/internal/gitlab').test(`${M}/internal/gitlabber`)).toBe(false)
   })
 
+  test('runs of * collapse, so a typo cannot build a backtracking regex', () => {
+    expect(globToRegExp('***/cmd/**').source).toBe(globToRegExp('*/cmd/*').source)
+    expect(globToRegExp('***/cmd/**').test(`${M}/cmd/glk`)).toBe(true)
+    // a long near-miss must not hang: no match, and no exponential backtrack
+    expect(globToRegExp('*'.repeat(30) + 'x').test('a'.repeat(4000))).toBe(false)
+  })
+
   test('dots are literal, not wildcards', () => {
     expect(globToRegExp('example.com/*').test('example.com/mod')).toBe(true)
     expect(globToRegExp('example.com/*').test('exampleXcom/mod')).toBe(false)

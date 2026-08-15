@@ -17,7 +17,9 @@ instantiations, which multiplies nodes for no gain at this scale.
 
 **`*` in a package glob crosses `/`.** The handoff's own example, `*/internal/gitlab`,
 only matches a full module path if `*` spans separators. Rejected: doublestar `**`
-semantics, which would have made every example in the handoff wrong.
+semantics, which would have made every example in the handoff wrong. Runs of `*` collapse
+to one before the pattern is compiled, so a stray `**` cannot turn into `.*.*` and
+backtrack.
 
 **Districts are ordered alphabetically around the ring.** Determinism as specified —
 same package set, same layout — but adding a package shifts its neighbours. Rejected:
