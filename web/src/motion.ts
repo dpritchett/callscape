@@ -1,0 +1,66 @@
+/**
+ * The movement model, kept separate from the input plumbing so it can be
+ * tested without a camera, a mouse, or a clock.
+ *
+ * Velocity-based rather than position-based: input accelerates, and letting go
+ * coasts to a stop instead of snapping. That single change is most of what
+ * makes flying feel like flying rather than like nudging a cursor.
+ */
+
+export interface MotionTuning {
+  /** Units per second squared, before boost and scale. */
+  accel: number
+  /** Exponential decay per second. Terminal speed is accel / damping. */
+  damping: number
+  /** Multiplier while the boost key is held. */
+  boost: number
+}
+
+export const DEFAULT_TUNING: MotionTuning = {
+  accel: 320,
+  damping: 4.5, // ~71 u/s cruise, ~250 boosted, against a ~225-unit-wide scene
+  boost: 3.5,
+}
+
+/**
+ * Advances a velocity by one frame. `dir` is the desired direction in world
+ * space and need not be normalised — its length is the throttle, so an analog
+ * stick at half deflection accelerates half as hard.
+ */
+export function stepVelocity(
+  vel: { x: number; y: number; z: number },
+  dir: { x: number; y: number; z: number },
+  dt: number,
+  tuning: MotionTuning,
+  scale = 1,
+  boosting = false,
+): { x: number; y: number; z: number } {
+  const accel = tuning.accel * scale * (boosting ? tuning.boost : 1)
+  // Exact solution of dv/dt = a - kv over the step, rather than an Euler step.
+  // Euler makes terminal speed depend on the frame rate — you cruise measurably
+  // slower at 30fps than at 144 — which is the kind of thing that reads as the
+  // controls being mushy on a bad day.
+  const decay = Math.exp(-tuning.damping * dt)
+  const gain = ((1 - decay) * accel) / tuning.damping
+  return {
+    x: vel.x * decay + dir.x * gain,
+    y: vel.y * decay + dir.y * gain,
+    z: vel.z * decay + dir.z * gain,
+  }
+}
+
+/**
+ * Move fast when there is nothing nearby, precise when close to something.
+ * Without this, one speed is either sluggish across the map or uncontrollable
+ * inside a district.
+ */
+export function speedScale(distanceToContent: number, near = 40, far = 400): number {
+  const t = (distanceToContent - near) / (far - near)
+  return 0.55 + 2.45 * Math.min(1, Math.max(0, t))
+}
+
+/** Smoothstep-eased 0..1 progress, for the focus tween. */
+export function ease(t: number): number {
+  const c = Math.min(1, Math.max(0, t))
+  return c * c * (3 - 2 * c)
+}
