@@ -1,18 +1,32 @@
 import type { GraphNode } from './types'
 
+export interface Vec3 {
+  x: number
+  y: number
+  z: number
+}
+
 export interface District {
   pkg: string
   label: string
-  x: number
-  z: number
+  /** Centre of the district's disc, on the shell. */
+  centre: Vec3
+  /** Unit normal, pointing away from the middle of the sphere. */
+  normal: Vec3
+  /** In-plane basis, so symbols can be laid out in a flat grid. */
+  u: Vec3
+  v: Vec3
   radius: number
   count: number
 }
 
 export interface Layout {
   districts: District[]
-  /** node id -> ground position */
-  pos: Map<string, { x: number; z: number }>
+  /** node id -> position on its district's plane (before any lift) */
+  pos: Map<string, Vec3>
+  /** Radius of the shell the districts sit on. */
+  shell: number
+  /** Furthest any content reaches from the origin. */
   extent: number
 }
 
@@ -21,9 +35,14 @@ const PAD = 10 // gap between neighbouring districts
 const MIN_RADIUS = 12
 
 /**
- * Districts on the ground plane: one disc per package, laid out around a ring,
- * symbols in a stable grid inside. Pure function of the node set — the same
- * nodes always produce the same coordinates, so two runs can be compared.
+ * Districts on the surface of a sphere: a crust, with the symbols of each
+ * package on a disc tangent to it. Everything is deterministic from the node
+ * set — same nodes, same coordinates, every time.
+ *
+ * A single ring put 69 packages on a circle 700 units across, most of it empty,
+ * with the whole vertical axis unused. A shell of the same content is about a
+ * fifth the size, and every district is the same distance from the middle
+ * rather than fifty times further than its neighbour.
  */
 export function layout(nodes: GraphNode[]): Layout {
   const byPkg = new Map<string, GraphNode[]>()
@@ -33,8 +52,9 @@ export function layout(nodes: GraphNode[]): Layout {
     else byPkg.set(n.pkg, [n])
   }
 
-  // Alphabetical package order fixes the angular order. It is stable for a
-  // given set of packages, which is what determinism needs here.
+  // Alphabetical order fixes which district goes where. For Go paths that also
+  // groups relatives — pkg/chart/v2 lands next to pkg/chart/v3 — which is a
+  // free approximation of hierarchy.
   const pkgs = [...byPkg.keys()].sort()
 
   const discs = pkgs.map((pkg) => {
@@ -45,72 +65,184 @@ export function layout(nodes: GraphNode[]): Layout {
     return { pkg, members, cols, rows, radius: Math.max(MIN_RADIUS, half + CELL) }
   })
 
-  const ring = ringRadius(discs.map((d) => d.radius))
-  // Angular width each disc needs at that radius. Sizing by arc length instead
-  // would let neighbours overlap, because the chord between two centres is
-  // shorter than the arc between them.
-  const widths = discs.map((d) => angularWidth(d.radius, ring))
-  const span = widths.reduce((s, w) => s + w, 0)
+  const radii = discs.map((d) => d.radius)
+  const shell = shellRadius(radii)
+  const seats = packOnShell(radii, shell) ?? radii.map(() => ({ phi: Math.PI / 2, psi: 0 }))
 
   const districts: District[] = []
-  const pos = new Map<string, { x: number; z: number }>()
-  let walked = 0
+  const pos = new Map<string, Vec3>()
 
-  for (const [i, d] of discs.entries()) {
-    // Any slack left over is shared out proportionally, which only pushes
-    // districts further apart.
-    const theta = span > 0 ? ((walked + widths[i] / 2) / span) * 2 * Math.PI : 0
-    walked += widths[i]
+  discs.forEach((d, i) => {
+    const { phi, psi } = seats[i]
+    const normal = onSphere(phi, psi)
+    const centre = scale(normal, shell)
+    const { u, v } = basis(normal)
 
-    const cx = Math.cos(theta) * ring
-    const cz = Math.sin(theta) * ring
     districts.push({
       pkg: d.pkg,
       label: shortPkg(d.pkg),
-      x: cx,
-      z: cz,
+      centre,
+      normal,
+      u,
+      v,
       radius: d.radius,
       count: d.members.length,
     })
 
     const members = [...d.members].sort((a, b) => (a.name < b.name ? -1 : a.name > b.name ? 1 : 0))
-    members.forEach((n, i) => {
-      const col = i % d.cols
-      const row = Math.floor(i / d.cols)
+    members.forEach((n, idx) => {
+      const col = idx % d.cols
+      const row = Math.floor(idx / d.cols)
+      const du = (col - (d.cols - 1) / 2) * CELL
+      const dv = (row - (d.rows - 1) / 2) * CELL
       pos.set(n.id, {
-        x: cx + (col - (d.cols - 1) / 2) * CELL,
-        z: cz + (row - (d.rows - 1) / 2) * CELL,
+        x: centre.x + u.x * du + v.x * dv,
+        y: centre.y + u.y * du + v.y * dv,
+        z: centre.z + u.z * du + v.z * dv,
       })
     })
-  }
+  })
 
-  const extent = districts.reduce((m, d) => Math.max(m, Math.hypot(d.x, d.z) + d.radius), MIN_RADIUS)
-  return { districts, pos, extent }
+  const extent = districts.reduce((m, d) => Math.max(m, shell + d.radius), MIN_RADIUS)
+  return { districts, pos, shell, extent }
 }
 
-/** Half-angle a disc of `radius` (plus its share of PAD) subtends at `ring`. */
-function angularWidth(radius: number, ring: number): number {
-  if (ring <= 0) return 0
-  return 2 * Math.asin(Math.min(1, (radius + PAD / 2) / ring))
+function onSphere(phi: number, psi: number): Vec3 {
+  return {
+    x: Math.sin(phi) * Math.cos(psi),
+    y: Math.cos(phi),
+    z: Math.sin(phi) * Math.sin(psi),
+  }
+}
+
+function scale(v: Vec3, k: number): Vec3 {
+  return { x: v.x * k, y: v.y * k, z: v.z * k }
 }
 
 /**
- * Smallest ring radius on which every disc fits without its neighbours, found
- * by bisection. Deterministic: a fixed iteration count, no tolerance on time.
+ * Two perpendicular in-plane directions for a disc with the given normal.
+ * Deterministic, including at the poles where the usual up vector degenerates.
  */
-function ringRadius(radii: number[]): number {
-  if (radii.length <= 1) return 0
-  const need = (r: number) => radii.reduce((s, x) => s + angularWidth(x, r), 0)
+function basis(n: Vec3): { u: Vec3; v: Vec3 } {
+  const seed = Math.abs(n.y) > 0.9 ? { x: 1, y: 0, z: 0 } : { x: 0, y: 1, z: 0 }
+  const u = normalise(cross(seed, n))
+  const v = cross(n, u)
+  return { u, v }
+}
 
-  let lo = Math.max(...radii) + PAD / 2 // below this a single disc cannot fit
-  let hi = lo
-  while (need(hi) > 2 * Math.PI) hi *= 2
-  for (let i = 0; i < 64; i++) {
-    const mid = (lo + hi) / 2
-    if (need(mid) > 2 * Math.PI) lo = mid
-    else hi = mid
+function cross(a: Vec3, b: Vec3): Vec3 {
+  return {
+    x: a.y * b.z - a.z * b.y,
+    y: a.z * b.x - a.x * b.z,
+    z: a.x * b.y - a.y * b.x,
   }
-  return hi
+}
+
+function normalise(v: Vec3): Vec3 {
+  const m = Math.hypot(v.x, v.y, v.z) || 1
+  return { x: v.x / m, y: v.y / m, z: v.z / m }
+}
+
+/**
+ * Packs discs onto a sphere in latitude bands, the way the ring version packed
+ * them around a circle. Bands handle wildly different district sizes, which a
+ * uniform lattice does not: helm has a 213-symbol package next to a 2-symbol
+ * one, and spacing everything for the biggest wastes the whole shell.
+ *
+ * Returns null when they do not fit at this radius.
+ */
+function packOnShell(radii: number[], shell: number): { phi: number; psi: number }[] | null {
+  if (radii.length === 0) return []
+  if (radii.length === 1) return [{ phi: Math.PI / 2, psi: 0 }]
+
+  const angular = (r: number) => Math.asin(Math.min(1, (r + PAD / 2) / shell))
+  const seats: { phi: number; psi: number }[] = []
+
+  /** Which discs fit in one band at this latitude, and how wide each sits. */
+  const fill = (start: number, phi: number) => {
+    const band: { alpha: number; half: number }[] = []
+    let used = 0
+    let max = 0
+    for (let j = start; j < radii.length; j++) {
+      const alpha = angular(radii[j])
+      // Azimuthal half-width at this latitude: a disc near the pole eats more
+      // longitude than the same disc at the equator.
+      const half = Math.asin(Math.min(1, Math.sin(alpha) / Math.max(1e-6, Math.sin(phi))))
+      if (band.length && used + 2 * half > 2 * Math.PI) break
+      band.push({ alpha, half })
+      used += 2 * half
+      max = Math.max(max, alpha)
+    }
+    return { band, used, max }
+  }
+
+  let i = 0
+  let phi = 0
+  let previousBandMax = 0
+
+  while (i < radii.length) {
+    // The band's latitude depends on its tallest disc, and which discs fit
+    // depends on the latitude. Settle it by iterating rather than by guessing
+    // from the first disc, which is how bands used to collide with the one
+    // above whenever a big package sat late in the row.
+    let candidate = phi === 0 ? angular(radii[i]) : phi + previousBandMax + angular(radii[i])
+    let filled = fill(i, candidate)
+    for (let pass = 0; pass < 4; pass++) {
+      const settled = phi === 0 ? filled.max : phi + previousBandMax + filled.max
+      if (Math.abs(settled - candidate) < 1e-9) break
+      candidate = settled
+      filled = fill(i, candidate)
+    }
+    if (candidate >= Math.PI) return null
+
+    let walked = 0
+    for (const b of filled.band) {
+      seats.push({ phi: candidate, psi: ((walked + b.half) / filled.used) * 2 * Math.PI })
+      walked += 2 * b.half
+    }
+    i += filled.band.length
+    phi = candidate
+    previousBandMax = filled.max
+  }
+
+  return phi + previousBandMax <= Math.PI ? seats : null
+}
+
+/**
+ * The greedy packing proposes; this disposes. Checking the actual chord
+ * distance between every pair is the only feasibility test worth trusting —
+ * the angular arithmetic that produced the seats is exactly what would be
+ * wrong if they overlapped.
+ */
+function noOverlaps(seats: { phi: number; psi: number }[], radii: number[], shell: number): boolean {
+  const points = seats.map((s) => scale(onSphere(s.phi, s.psi), shell))
+  for (let a = 0; a < points.length; a++) {
+    for (let b = a + 1; b < points.length; b++) {
+      const dx = points[a].x - points[b].x
+      const dy = points[a].y - points[b].y
+      const dz = points[a].z - points[b].z
+      if (Math.hypot(dx, dy, dz) < radii[a] + radii[b]) return false
+    }
+  }
+  return true
+}
+
+/**
+ * Smallest shell the districts actually fit on, found by growing until the
+ * packing verifies. Grown rather than bisected: which discs land in which band
+ * changes with the radius, so feasibility is not perfectly monotonic and a
+ * bisection can converge onto a radius that does not work.
+ */
+function shellRadius(radii: number[]): number {
+  if (radii.length <= 1) return 0
+
+  let shell = Math.max(...radii) + PAD
+  for (let step = 0; step < 200; step++) {
+    const seats = packOnShell(radii, shell)
+    if (seats && noOverlaps(seats, radii, shell)) return shell
+    shell *= 1.06
+  }
+  return shell
 }
 
 /** `github.com/x/y/internal/gitlab` -> `internal/gitlab`. */

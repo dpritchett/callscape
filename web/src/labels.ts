@@ -30,11 +30,13 @@ export function makeLabel(text: string, opts: { size?: number; color?: string; b
   const px = 64
   const color = opts.color ?? '#e6edf7'
   const font = `600 ${px}px ui-monospace, Menlo, monospace`
+  const lines = text.split('\n')
+  const lineHeight = px * 1.15
 
   const measure = document.createElement('canvas').getContext('2d')!
   measure.font = font
-  const w = Math.ceil(measure.measureText(text).width) + 24
-  const h = px + 24
+  const w = Math.ceil(Math.max(...lines.map((l) => measure.measureText(l).width))) + 24
+  const h = Math.ceil(lines.length * lineHeight) + 24
 
   const canvas = document.createElement('canvas')
   canvas.width = w
@@ -48,7 +50,10 @@ export function makeLabel(text: string, opts: { size?: number; color?: string; b
   ctx.font = font
   ctx.fillStyle = color
   ctx.textBaseline = 'middle'
-  ctx.fillText(text, 12, h / 2)
+  ctx.textAlign = 'center'
+  lines.forEach((line, i) => {
+    ctx.fillText(line, w / 2, 12 + lineHeight * (i + 0.5))
+  })
 
   const tex = new THREE.CanvasTexture(canvas)
   tex.colorSpace = THREE.SRGBColorSpace

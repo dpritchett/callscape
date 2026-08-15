@@ -136,16 +136,36 @@ describe('district assignment', () => {
     const byPkg = new Map(p.districts.map((d) => [d.pkg, d]))
     for (const n of p.nodes) {
       const d = byPkg.get(n.pkg)!
-      expect(Math.hypot(n.x - d.x, n.z - d.z)).toBeLessThanOrEqual(d.radius)
+      const seat = p.seatOf.get(n.id)! // where it meets the plane, before lifting
+      expect(dist(seat, d.centre)).toBeLessThanOrEqual(d.radius)
     }
   })
 
-  test('districts do not overlap', () => {
+  test('symbols lift towards the middle of the shell, not away from it', () => {
+    for (const n of p.nodes) {
+      const seat = p.seatOf.get(n.id)!
+      // the lifted position is closer to the origin than its seat
+      expect(Math.hypot(n.x, n.y, n.z)).toBeLessThanOrEqual(Math.hypot(seat.x, seat.y, seat.z))
+    }
+  })
+
+  test('districts do not overlap, in three dimensions', () => {
     for (const a of p.districts) {
       for (const b of p.districts) {
         if (a === b) continue
-        expect(Math.hypot(a.x - b.x, a.z - b.z)).toBeGreaterThan(a.radius + b.radius)
+        expect(dist(a.centre, b.centre)).toBeGreaterThan(a.radius + b.radius)
       }
+    }
+  })
+
+  test('every district sits on the shell, facing outwards', () => {
+    for (const d of p.districts) {
+      expect(Math.hypot(d.centre.x, d.centre.y, d.centre.z)).toBeCloseTo(p.shell, 6)
+      expect(Math.hypot(d.normal.x, d.normal.y, d.normal.z)).toBeCloseTo(1, 9)
+      // the in-plane basis is perpendicular to the normal and to itself
+      expect(dot(d.u, d.normal)).toBeCloseTo(0, 9)
+      expect(dot(d.v, d.normal)).toBeCloseTo(0, 9)
+      expect(dot(d.u, d.v)).toBeCloseTo(0, 9)
     }
   })
 
@@ -167,12 +187,16 @@ describe('district assignment', () => {
     expect(new Set(gitlab.map((n) => n.color)).size).toBe(1)
     expect(new Set(p.nodes.map((n) => n.color)).size).toBe(2)
 
-    const post = p.nodes.find((n) => n.name === 'Client.Post')! // most lines
-    const helper = p.nodes.find((n) => n.name === 'helper')!
-    expect(post.y).toBeGreaterThan(helper.y)
+    // Height is now a lift off the district's plane along its normal, so it is
+    // a distance from the seat rather than a y coordinate.
+    const lift = (name: string) => {
+      const n = p.nodes.find((x) => x.name === name)!
+      return dist(n, p.seatOf.get(n.id)!)
+    }
+    expect(lift('Client.Post')).toBeGreaterThan(lift('helper')) // 90 lines vs 5
 
     const get = p.nodes.find((n) => n.name === 'Client.Get')! // most fanIn
-    expect(get.size).toBeGreaterThan(helper.size)
+    expect(get.size).toBeGreaterThan(p.nodes.find((n) => n.name === 'helper')!.size)
   })
 })
 
@@ -195,16 +219,20 @@ describe('determinism', () => {
     expect([...b.edges].sort(byKey)).toEqual([...a.edges].sort(byKey))
   })
 
-  test('a symbol keeps its spot when an unrelated package joins the view', () => {
-    const wide = view({ occupants: { ...BASE_VIEW.occupants, packages: ['*/internal/gitlab'] } })
-    const one = place(GRAPH, wide).nodes.find((n) => n.name === 'Client.Get')!
-    const relative = place(GRAPH, view()).nodes.find((n) => n.name === 'Client.Get')!
-    const district = place(GRAPH, view()).districts.find((d) => d.pkg === `${M}/internal/gitlab`)!
-    // absolute position moves with the ring, but the offset within the district
-    // holds (to float precision — the centre came out of a sin/cos)
-    expect(relative.x - district.x).toBeCloseTo(one.x, 9)
-    expect(relative.z - district.z).toBeCloseTo(one.z, 9)
-    expect(relative.y).toBe(one.y)
+  test('a symbol keeps its seat within its district when another package joins', () => {
+    // A district moves and turns when the set of packages changes, so the
+    // invariant is its position in the district's own frame, not in the world's.
+    const local = (v: ViewSpec) => {
+      const p = place(GRAPH, v)
+      const d = p.districts.find((x) => x.pkg === `${M}/internal/gitlab`)!
+      const seat = p.seatOf.get(`${M}/internal/gitlab.Client.Get`)!
+      const rel = { x: seat.x - d.centre.x, y: seat.y - d.centre.y, z: seat.z - d.centre.z }
+      return { u: dot(rel, d.u), v: dot(rel, d.v) }
+    }
+    const alone = local(view({ occupants: { ...BASE_VIEW.occupants, packages: ['*/internal/gitlab'] } }))
+    const crowded = local(view())
+    expect(crowded.u).toBeCloseTo(alone.u, 9)
+    expect(crowded.v).toBeCloseTo(alone.v, 9)
   })
 })
 
@@ -269,3 +297,7 @@ describe('edge display policy', () => {
     expect(place(GRAPH, view()).edgeShow).toBe('all') // fixture has 2
   })
 })
+
+type V = { x: number; y: number; z: number }
+const dot = (a: V, b: V) => a.x * b.x + a.y * b.y + a.z * b.z
+const dist = (a: V, b: V) => Math.hypot(a.x - b.x, a.y - b.y, a.z - b.z)

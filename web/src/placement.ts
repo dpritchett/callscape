@@ -6,7 +6,7 @@ import type {
   ResolvedEdgeShow,
   ViewSpec,
 } from './types'
-import { layout, type District } from './layout'
+import { layout, type District, type Vec3 } from './layout'
 import { selectOccupants } from './select'
 
 /** A symbol, placed and encoded. Everything the renderer needs, no three.js in it. */
@@ -41,6 +41,10 @@ export interface Placement {
   nodes: PlacedNode[]
   districts: PlacedDistrict[]
   edges: PlacedEdge[]
+  /** Where each symbol meets its district's plane, before being lifted. */
+  seatOf: Map<string, Vec3>
+  /** Radius of the shell the districts sit on. */
+  shell: number
   /** How far the outermost district reaches, for framing. */
   extent: number
   /** Total symbols in the graph, before occupants filtered them. */
@@ -83,16 +87,25 @@ export function place(graph: Graph, view: ViewSpec, reveal: Iterable<string> = [
   const liftOf = scaler(selected, view.encoding.height, 0, MAX_LIFT)
   const colorOf = colorer(selected, view.encoding.color)
 
+  const districtOf = new Map(lay.districts.map((d) => [d.pkg, d]))
+
   const nodes: PlacedNode[] = selected.map((n) => {
-    const ground = lay.pos.get(n.id)!
+    const seat = lay.pos.get(n.id)!
     const size = sizeOf(n) * BASE
+    // Symbols rise towards the middle of the shell rather than away from it, so
+    // the view from inside is of buildings pointing at you rather than roots.
+    const lift = liftOf(n) + size / 2
+    const d = districtOf.get(n.pkg)
+    const nx = d?.normal.x ?? 0
+    const ny = d?.normal.y ?? 1
+    const nz = d?.normal.z ?? 0
     return {
       id: n.id,
       pkg: n.pkg,
       name: n.name,
-      x: ground.x,
-      y: liftOf(n) + size / 2, // sit the box on top of its lift, not through it
-      z: ground.z,
+      x: seat.x - nx * lift,
+      y: seat.y - ny * lift,
+      z: seat.z - nz * lift,
       size,
       color: colorOf(n),
       fanIn: n.fanIn,
@@ -119,6 +132,8 @@ export function place(graph: Graph, view: ViewSpec, reveal: Iterable<string> = [
     nodes,
     districts,
     edges,
+    seatOf: lay.pos,
+    shell: lay.shell,
     extent: lay.extent,
     total: graph.nodes.length,
     revealed: extra.length,

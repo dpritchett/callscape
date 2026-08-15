@@ -36,10 +36,10 @@ scene.add(key)
 const world = new World()
 scene.add(world.group)
 
-const grid = new THREE.GridHelper(2400, 120, 0x1c2434, 0x141a26)
-;(grid.material as THREE.Material).transparent = true
-;(grid.material as THREE.Material).opacity = 0.5
-scene.add(grid)
+// No ground grid: districts are on a shell now, so a horizontal plane through
+// the middle of it is a lie about where the ground is.
+const fog = new THREE.Fog(0x0b0e14, 260, 1100)
+scene.fog = fog
 
 // Swap this line for an OrbitController if flying turns out to feel bad.
 const flyControls = new FlyController(camera, renderer.domElement)
@@ -140,6 +140,10 @@ function rebuild() {
   const p = place(graph, view, revealing ? selected : [])
   placement = p
   world.build(p, view.edges.opacity)
+  // Depth cue scaled to the world we actually built, so the far side of the
+  // shell reads as far away rather than as missing.
+  fog.near = p.extent * 0.8
+  fog.far = p.extent * 3
   devlog('rebuild', { nodes: p.nodes.length, edges: p.edges.length, districts: p.districts.length })
 
   // A view change can filter out something that was selected; keep only what

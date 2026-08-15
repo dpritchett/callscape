@@ -7,6 +7,8 @@ import type { ResolvedEdgeShow } from './types'
 const LABEL_RANGE = 55 // symbol labels appear inside this radius
 const DISTRICT_PX = 20 // on-screen label heights
 const SYMBOL_PX = 13
+const DISTRICT_LABELS = 14 // nearest N, so there is always something readable
+const SYMBOL_LABELS = 24
 
 // Edge colours. The unselected pair is dim-inside-a-package, bright-across it;
 // once something is selected, direction matters more than distance.
@@ -16,6 +18,12 @@ const EDGE_IN = new THREE.Color(0x7dcfff) // someone calls the selection
 const EDGE_OUT = new THREE.Color(0xff9e64) // the selection calls someone
 const EDGE_INTERNAL = new THREE.Color(0xffffff) // both ends selected
 const EDGE_MUTED = new THREE.Color(0x1a1f2b)
+
+interface Symbol3D {
+  node: PlacedNode
+  mesh: THREE.Mesh
+  pos: THREE.Vector3
+}
 
 interface Materials {
   base: THREE.MeshLambertMaterial
@@ -31,7 +39,7 @@ interface Materials {
 export class World {
   readonly group = new THREE.Group()
 
-  private symbols: { node: PlacedNode; mesh: THREE.Mesh; pos: THREE.Vector3 }[] = []
+  private symbols: Symbol3D[] = []
   private symbolLabels = new Map<string, THREE.Sprite>()
   private districtLabels: THREE.Sprite[] = []
   private disposables: (() => void)[] = []
@@ -77,53 +85,77 @@ export class World {
       this.positions.set(n.id, pos)
       this.symbols.push({ node: n, mesh, pos })
 
-      // Stalk down to the ground, so a lifted symbol still reads as belonging
-      // to its district.
-      const foot = n.y - n.size / 2
-      if (foot > 0.5) {
-        const stalk = new THREE.Line(
-          new THREE.BufferGeometry().setFromPoints([
-            new THREE.Vector3(n.x, 0.1, n.z),
-            new THREE.Vector3(n.x, foot, n.z),
-          ]),
-          new THREE.LineBasicMaterial({ color: n.color, transparent: true, opacity: 0.22 }),
-        )
-        this.group.add(stalk)
-        this.disposables.push(() => {
-          stalk.geometry.dispose()
-          ;(stalk.material as THREE.Material).dispose()
-        })
+      // Stalk back to the district's plane, so a lifted symbol still reads as
+      // belonging to it.
+      const seat = p.seatOf.get(n.id)
+      if (seat) {
+        const foot = new THREE.Vector3(seat.x, seat.y, seat.z)
+        if (foot.distanceTo(mesh.position) > n.size / 2 + 0.5) {
+          const stalk = new THREE.Line(
+            new THREE.BufferGeometry().setFromPoints([foot, mesh.position.clone()]),
+            new THREE.LineBasicMaterial({ color: n.color, transparent: true, opacity: 0.22 }),
+          )
+          this.group.add(stalk)
+          this.disposables.push(() => {
+            stalk.geometry.dispose()
+            ;(stalk.material as THREE.Material).dispose()
+          })
+        }
       }
     }
   }
 
   private buildDistricts(p: Placement) {
     const disc = new THREE.CircleGeometry(1, 48)
-    this.disposables.push(() => disc.dispose())
+    const rimGeom = new THREE.RingGeometry(0.985, 1, 64)
+    this.disposables.push(() => {
+      disc.dispose()
+      rimGeom.dispose()
+    })
+
+    const FACE = new THREE.Vector3(0, 0, 1) // CircleGeometry's own normal
+    const normal = new THREE.Vector3()
+    const quat = new THREE.Quaternion()
 
     for (const d of p.districts) {
-      const mat = new THREE.MeshBasicMaterial({ color: d.color, transparent: true, opacity: 0.07 })
+      normal.set(d.normal.x, d.normal.y, d.normal.z)
+      quat.setFromUnitVectors(FACE, normal)
+
+      const mat = new THREE.MeshBasicMaterial({
+        color: d.color,
+        transparent: true,
+        opacity: 0.07,
+        side: THREE.DoubleSide,
+      })
       const floor = new THREE.Mesh(disc, mat)
-      floor.rotation.x = -Math.PI / 2
+      floor.quaternion.copy(quat)
       floor.scale.setScalar(d.radius)
-      floor.position.set(d.x, 0, d.z)
+      floor.position.set(d.centre.x, d.centre.y, d.centre.z)
       this.group.add(floor)
       this.disposables.push(() => mat.dispose())
 
-      const rimGeom = new THREE.RingGeometry(0.985, 1, 64)
-      const rimMat = new THREE.MeshBasicMaterial({ color: d.color, transparent: true, opacity: 0.5, side: THREE.DoubleSide })
-      const rim = new THREE.Mesh(rimGeom, rimMat)
-      rim.rotation.x = -Math.PI / 2
-      rim.scale.setScalar(d.radius)
-      rim.position.set(d.x, 0.05, d.z)
-      this.group.add(rim)
-      this.disposables.push(() => {
-        rimGeom.dispose()
-        rimMat.dispose()
+      const rimMat = new THREE.MeshBasicMaterial({
+        color: d.color,
+        transparent: true,
+        opacity: 0.5,
+        side: THREE.DoubleSide,
       })
+      const rim = new THREE.Mesh(rimGeom, rimMat)
+      rim.quaternion.copy(quat)
+      rim.scale.setScalar(d.radius)
+      rim.position.copy(floor.position).addScaledVector(normal, -0.05)
+      this.group.add(rim)
+      this.disposables.push(() => rimMat.dispose())
 
-      const label = makeLabel(`${d.label}  (${d.count})`, { size: 7, bg: 'rgba(10,13,20,0.72)' })
-      label.position.set(d.x, MAX_LIFT + 16, d.z)
+      // Package paths break at the slash, so a label is two short lines rather
+      // than one long one — they collide far less at the same legibility.
+      const label = makeLabel(`${d.label.split('/').join('\n')}\n(${d.count})`, {
+        size: 7,
+        bg: 'rgba(10,13,20,0.72)',
+      })
+      label.position
+        .copy(floor.position)
+        .addScaledVector(normal, -(MAX_LIFT + 16))
       this.group.add(label)
       this.districtLabels.push(label)
       this.disposables.push(() => disposeSprite(label))
@@ -285,31 +317,50 @@ export class World {
   updateLabels(camera: THREE.PerspectiveCamera, viewportHeight: number) {
     const eye = camera.position
 
-    for (const label of this.districtLabels) {
-      const h = labelWorldHeight(DISTRICT_PX, label.position.distanceTo(eye), camera.fov, viewportHeight, 0.05, 18)
-      setLabelHeight(label, h)
-    }
+    // Nearest-N rather than everything-within-D. From across a 69-district
+    // shell the second rule gives you either a wall of overlapping text or
+    // nothing at all; this way there is always something readable in front of
+    // you and never a pile. No upper clamp on size, so a label stays the same
+    // number of pixels tall however far away it is.
+    const districts = this.districtLabels
+      .map((label) => ({ label, d: label.position.distanceTo(eye) }))
+      .sort((a, b) => a.d - b.d)
 
+    districts.forEach(({ label, d }, i) => {
+      label.visible = i < DISTRICT_LABELS
+      if (!label.visible) return
+      setLabelHeight(label, labelWorldHeight(DISTRICT_PX, d, camera.fov, viewportHeight, 0.05, 1e6))
+    })
+
+    // With a selection up, only the neighbourhood is labelled — at any
+    // distance, since you selected it to read it and it is usually behind you
+    // by the time you stop moving.
+    const candidates: { s: Symbol3D; d: number }[] = []
     for (const s of this.symbols) {
-      const dist = s.pos.distanceTo(eye)
-      // With a selection up, only the neighbourhood is labelled — at any
-      // distance, since you selected it to read it and it is usually behind you
-      // by the time you stop moving. Labelling the dimmed 87% as well just
-      // rebuilds the wall of text the dimming was meant to clear.
-      const near = this.selecting ? this.pinned.has(s.node.id) : dist < LABEL_RANGE
+      const d = s.pos.distanceTo(eye)
+      const wanted = this.selecting ? this.pinned.has(s.node.id) : d < LABEL_RANGE
+      if (wanted) candidates.push({ s, d })
+    }
+    candidates.sort((a, b) => a.d - b.d)
+
+    const shown = new Set<string>()
+    for (const { s, d } of candidates.slice(0, SYMBOL_LABELS)) {
+      shown.add(s.node.id)
       let label = this.symbolLabels.get(s.node.id)
-      if (near && !label) {
+      if (!label) {
         label = makeLabel(s.node.name, { size: 1, color: '#dbe4f3' })
         this.group.add(label)
         this.symbolLabels.set(s.node.id, label)
       }
-      if (!label) continue
-      label.visible = near
-      if (!near) continue
-      const h = labelWorldHeight(SYMBOL_PX, dist, camera.fov, viewportHeight, 0.05, 5)
+      label.visible = true
+      const h = labelWorldHeight(SYMBOL_PX, d, camera.fov, viewportHeight, 0.05, 1e6)
       setLabelHeight(label, h)
-      // Sit just clear of the box, whatever the label is currently sized to.
-      label.position.set(s.pos.x, s.pos.y + s.node.size / 2 + h * 0.8, s.pos.z)
+      // Sit just clear of the box, on the side the camera is on.
+      const away = s.pos.clone().sub(eye).normalize().multiplyScalar(-(s.node.size / 2 + h * 0.8))
+      label.position.copy(s.pos).add(away)
+    }
+    for (const [id, label] of this.symbolLabels) {
+      if (!shown.has(id)) label.visible = false
     }
   }
 
