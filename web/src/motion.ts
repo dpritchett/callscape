@@ -59,6 +59,26 @@ export function speedScale(distanceToContent: number, near = 40, far = 400): num
   return 0.55 + 2.45 * Math.min(1, Math.max(0, t))
 }
 
+/**
+ * Radial deadzone for an analog stick. Rescales so the usable range starts at
+ * zero just outside the deadzone — otherwise the stick jumps to `dz` worth of
+ * throttle the instant it registers — and clamps the diagonal, which would
+ * otherwise reach 1.41 and make corners faster than the axes.
+ */
+export function deadzone(x: number, y: number, dz = 0.12): { x: number; y: number } {
+  const mag = Math.hypot(x, y)
+  if (mag <= dz) return { x: 0, y: 0 }
+  const scaled = Math.min(1, (mag - dz) / (1 - dz))
+  return { x: (x / mag) * scaled, y: (y / mag) * scaled }
+}
+
+/** One-dimensional deadzone, for triggers and single axes. */
+export function deadzone1(v: number, dz = 0.12): number {
+  const mag = Math.abs(v)
+  if (mag <= dz) return 0
+  return Math.sign(v) * Math.min(1, (mag - dz) / (1 - dz))
+}
+
 /** Smoothstep-eased 0..1 progress, for the focus tween. */
 export function ease(t: number): number {
   const c = Math.min(1, Math.max(0, t))

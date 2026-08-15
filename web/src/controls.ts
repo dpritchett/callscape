@@ -1,5 +1,13 @@
 import * as THREE from 'three'
-import { DEFAULT_TUNING, ease, speedScale, stepVelocity, type MotionTuning } from './motion'
+import {
+  DEFAULT_TUNING,
+  deadzone,
+  deadzone1,
+  ease,
+  speedScale,
+  stepVelocity,
+  type MotionTuning,
+} from './motion'
 
 /**
  * Everything the app needs from a camera controller. Swapping fly for orbit is
@@ -24,6 +32,11 @@ export class FlyController implements Controller {
 
   private vel = new THREE.Vector3()
   private tuning: MotionTuning = DEFAULT_TUNING
+
+  /** Wired by main.ts to the same action as the F key. */
+  onFocus: (() => void) | null = null
+  private padLook = 2.6 // radians/sec at full stick deflection
+  private padFocusHeld = false
 
   // Focus tween state. Flying to a symbol beats being teleported to it.
   private tween: { from: THREE.Vector3; to: THREE.Vector3; look: THREE.Vector3; t: number } | null = null
@@ -57,20 +70,26 @@ export class FlyController implements Controller {
     this.camera.getWorldDirection(this.dir)
     this.right.crossVectors(this.dir, this.camera.up).normalize()
 
+    const pad = this.readGamepad(dt)
     const k = this.keys
     // Held mouse buttons drive the same axis as W and S, so the mouse alone is
     // enough to get around.
     const forward =
-      (k.has('KeyW') || this.buttons.has(0) ? 1 : 0) - (k.has('KeyS') || this.buttons.has(2) ? 1 : 0)
-    const strafe = (k.has('KeyD') ? 1 : 0) - (k.has('KeyA') ? 1 : 0)
-    const rise = (k.has('KeyE') ? 1 : 0) - (k.has('KeyQ') ? 1 : 0)
+      (k.has('KeyW') || this.buttons.has(0) ? 1 : 0) -
+      (k.has('KeyS') || this.buttons.has(2) ? 1 : 0) +
+      (pad?.forward ?? 0)
+    const strafe = (k.has('KeyD') ? 1 : 0) - (k.has('KeyA') ? 1 : 0) + (pad?.strafe ?? 0)
+    const rise = (k.has('KeyE') ? 1 : 0) - (k.has('KeyQ') ? 1 : 0) + (pad?.rise ?? 0)
 
     this.input.set(0, 0, 0)
     if (forward) this.input.addScaledVector(this.dir, forward)
     if (strafe) this.input.addScaledVector(this.right, strafe)
     if (rise) this.input.y += rise
+    // Clamp the throttle so a diagonal is not 1.41x faster than an axis, and so
+    // stick plus keyboard does not stack into double acceleration.
+    if (this.input.lengthSq() > 1) this.input.normalize()
 
-    const boosting = k.has('ShiftLeft') || k.has('ShiftRight')
+    const boosting = k.has('ShiftLeft') || k.has('ShiftRight') || (pad?.boost ?? false)
     const scale = speedScale(this.camera.position.length())
     const next = stepVelocity(this.vel, this.input, dt, this.tuning, scale, boosting)
     this.vel.set(next.x, next.y, next.z)
@@ -107,6 +126,48 @@ export class FlyController implements Controller {
     window.removeEventListener('blur', this.onBlur)
   }
 
+  /**
+   * Standard-mapping gamepad, polled rather than evented. Left stick flies,
+   * right stick looks, triggers are the vertical pair, bumpers boost, A snaps
+   * to focus. Works whether or not the pointer is captured — a pad is its own
+   * input vector, not a mouse accessory.
+   */
+  private readGamepad(dt: number) {
+    const pads = navigator.getGamepads?.() ?? []
+    let pad: Gamepad | null = null
+    for (const p of pads) {
+      if (p?.connected) {
+        pad = p
+        break
+      }
+    }
+    if (!pad) return null
+
+    const move = deadzone(pad.axes[0] ?? 0, pad.axes[1] ?? 0)
+    const look = deadzone(pad.axes[2] ?? 0, pad.axes[3] ?? 0)
+
+    if (look.x || look.y) {
+      this.euler.y -= look.x * this.padLook * dt
+      this.euler.x -= look.y * this.padLook * dt
+      this.euler.x = Math.max(-Math.PI / 2 + 0.01, Math.min(Math.PI / 2 - 0.01, this.euler.x))
+      this.camera.quaternion.setFromEuler(this.euler)
+      this.tween = null
+    }
+
+    const focus = pad.buttons[0]?.pressed ?? false
+    if (focus && !this.padFocusHeld) this.onFocus?.()
+    this.padFocusHeld = focus
+
+    const down = deadzone1(pad.buttons[6]?.value ?? 0)
+    const up = deadzone1(pad.buttons[7]?.value ?? 0)
+    return {
+      forward: -move.y, // stick up is forward
+      strafe: move.x,
+      rise: up - down,
+      boost: (pad.buttons[4]?.pressed ?? false) || (pad.buttons[5]?.pressed ?? false),
+    }
+  }
+
   private stepTween(dt: number) {
     const tw = this.tween!
     tw.t += dt / FOCUS_SECONDS
@@ -116,14 +177,22 @@ export class FlyController implements Controller {
     if (tw.t >= 1) this.tween = null
   }
 
+  // What a click means depends on whether the pointer is captured, so the two
+  // states get their own bindings.
   private onMouseDown = (e: MouseEvent) => {
-    if (!this.locked) {
-      // The click that captures the mouse must not also lurch us forward, so
-      // it is spent on the lock and nothing else.
-      this.dom.requestPointerLock()
-      return
-    }
-    this.buttons.add(e.button)
+    if (this.locked) this.pressCaptured(e.button)
+    else this.pressUncaptured(e.button)
+  }
+
+  private pressUncaptured = (button: number) => {
+    // Only the primary button captures, and that press is spent on capturing:
+    // carrying it over would fire you forward the instant you clicked in.
+    // Delete this branch's `return` if you'd rather it be continuous.
+    if (button === 0) this.dom.requestPointerLock()
+  }
+
+  private pressCaptured = (button: number) => {
+    this.buttons.add(button)
     this.tween = null // any input cancels a focus flight
   }
 

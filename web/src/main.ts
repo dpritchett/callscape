@@ -37,7 +37,9 @@ const grid = new THREE.GridHelper(2400, 120, 0x1c2434, 0x141a26)
 scene.add(grid)
 
 // Swap this line for an OrbitController if flying turns out to feel bad.
-const controls: Controller = new FlyController(camera, renderer.domElement)
+const flyControls = new FlyController(camera, renderer.domElement)
+const controls: Controller = flyControls
+flyControls.onFocus = () => frameFocus() // gamepad A, same action as F
 
 addEventListener('resize', () => {
   camera.aspect = innerWidth / innerHeight

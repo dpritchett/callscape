@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { DEFAULT_TUNING, ease, speedScale, stepVelocity } from './motion'
+import { DEFAULT_TUNING, deadzone, deadzone1, ease, speedScale, stepVelocity } from './motion'
 
 const V = (x = 0, y = 0, z = 0) => ({ x, y, z })
 const len = (v: { x: number; y: number; z: number }) => Math.hypot(v.x, v.y, v.z)
@@ -66,4 +66,34 @@ test('ease is clamped and symmetric about its midpoint', () => {
   expect(ease(2)).toBe(1)
   expect(ease(0.5)).toBeCloseTo(0.5, 9)
   expect(ease(0.25) + ease(0.75)).toBeCloseTo(1, 9)
+})
+
+describe('analog deadzone', () => {
+  test('ignores drift and starts from zero just outside the zone', () => {
+    expect(deadzone(0.1, 0.05)).toEqual({ x: 0, y: 0 })
+    const nudge = deadzone(0.13, 0)
+    expect(nudge.x).toBeGreaterThan(0)
+    expect(nudge.x).toBeLessThan(0.03) // no jump to 13% throttle
+  })
+
+  test('full deflection is full throttle, and diagonals are not faster', () => {
+    const axis = deadzone(1, 0)
+    const corner = deadzone(1, 1)
+    expect(Math.hypot(axis.x, axis.y)).toBeCloseTo(1, 9)
+    expect(Math.hypot(corner.x, corner.y)).toBeCloseTo(1, 9)
+    expect(corner.x).toBeCloseTo(corner.y, 9)
+  })
+
+  test('preserves direction and sign', () => {
+    const v = deadzone(-0.8, 0.4)
+    expect(v.x).toBeLessThan(0)
+    expect(v.y).toBeGreaterThan(0)
+    expect(v.x / v.y).toBeCloseTo(-2, 9)
+  })
+
+  test('triggers use the same treatment on one axis', () => {
+    expect(deadzone1(0.05)).toBe(0)
+    expect(deadzone1(1)).toBeCloseTo(1, 9)
+    expect(deadzone1(-1)).toBeCloseTo(-1, 9)
+  })
 })
