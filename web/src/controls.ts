@@ -40,10 +40,13 @@ export class FlyController implements Controller {
   onPick: (() => void) | null = null
   /** Drop the whole selection. */
   onClearSelection: (() => void) | null = null
+  /** Pull the selection's hidden neighbours into the scene, and back out. */
+  onToggleReveal: (() => void) | null = null
   private padLook = 2.6 // radians/sec at full stick deflection
   private padFocusHeld = false
   private padPickHeld = false
   private padClearHeld = false
+  private padRevealHeld = false
 
   // Focus tween state. Flying to a symbol beats being teleported to it.
   private tween: { from: THREE.Vector3; to: THREE.Vector3; look: THREE.Vector3; t: number } | null = null
@@ -173,6 +176,10 @@ export class FlyController implements Controller {
     if (clear && !this.padClearHeld) this.onClearSelection?.()
     this.padClearHeld = clear
 
+    const reveal = pad.buttons[3]?.pressed ?? false // Y / triangle
+    if (reveal && !this.padRevealHeld) this.onToggleReveal?.()
+    this.padRevealHeld = reveal
+
     const down = deadzone1(pad.buttons[6]?.value ?? 0)
     const up = deadzone1(pad.buttons[7]?.value ?? 0)
     return {
@@ -260,6 +267,7 @@ export class FlyController implements Controller {
     devlog('keydown', { code: e.code, locked: this.locked })
     if (e.code === 'Space') this.onPick?.()
     if (e.code === 'KeyX') this.onClearSelection?.()
+    if (e.code === 'KeyR') this.onToggleReveal?.()
   }
 
   private onKeyUp = (e: KeyboardEvent) => {

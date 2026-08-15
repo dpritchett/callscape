@@ -13,6 +13,7 @@ const EDGE_INTRA = new THREE.Color(0x39415a)
 const EDGE_CROSS = new THREE.Color(0xffc978)
 const EDGE_IN = new THREE.Color(0x7dcfff) // someone calls the selection
 const EDGE_OUT = new THREE.Color(0xff9e64) // the selection calls someone
+const EDGE_INTERNAL = new THREE.Color(0xffffff) // both ends selected
 const EDGE_MUTED = new THREE.Color(0x1a1f2b)
 
 interface Materials {
@@ -200,7 +201,14 @@ export class World {
       if (n.empty) c = e.cross ? EDGE_CROSS : EDGE_INTRA
       else {
         const role = n.role.get(edgeKey(e.from, e.to))
-        c = role === 'in' ? EDGE_IN : role === 'out' ? EDGE_OUT : EDGE_MUTED
+        c =
+          role === 'in'
+            ? EDGE_IN
+            : role === 'out'
+              ? EDGE_OUT
+              : role === 'internal'
+                ? EDGE_INTERNAL
+                : EDGE_MUTED
       }
       attr.setXYZ(i * 2, c.r, c.g, c.b)
       attr.setXYZ(i * 2 + 1, c.r, c.g, c.b)

@@ -210,3 +210,40 @@ describe('determinism', () => {
 
 const byKey = (a: { from: string; to: string }, b: { from: string; to: string }) =>
   `${a.from}->${a.to}` < `${b.from}->${b.to}` ? -1 : 1
+
+describe('reveal', () => {
+  // vendorish.Untouched calls internal/gitlab.Client.Get but no pattern matches
+  // its package, so it is normally invisible.
+  const anchor = `${M}/internal/gitlab.Client.Get`
+
+  test('is off unless asked for', () => {
+    const p = place(GRAPH, view())
+    expect(p.revealed).toBe(0)
+    expect(p.nodes.some((n) => n.pkg === `${M}/vendorish`)).toBe(false)
+  })
+
+  test('pulls a filtered-out caller in, and says how many', () => {
+    const p = place(GRAPH, view(), [anchor])
+    expect(p.revealed).toBe(1)
+    expect(p.nodes.find((n) => n.name === 'Untouched')).toBeTruthy()
+    expect(p.edges).toContainEqual({ from: `${M}/vendorish.Untouched`, to: anchor, cross: true })
+  })
+
+  test('gives the newcomer its own district', () => {
+    const p = place(GRAPH, view(), [anchor])
+    expect(p.districts.map((d) => d.pkg)).toContain(`${M}/vendorish`)
+  })
+
+  test('revealing something with no hidden neighbours changes nothing', () => {
+    const before = place(GRAPH, view())
+    const after = place(GRAPH, view(), [`${M}/internal/format.Rows`])
+    expect(after.revealed).toBe(0)
+    expect(JSON.stringify(after.nodes)).toBe(JSON.stringify(before.nodes))
+  })
+
+  test('stays deterministic with reveal on', () => {
+    expect(JSON.stringify(place(GRAPH, view(), [anchor]))).toBe(
+      JSON.stringify(place(GRAPH, view(), [anchor])),
+    )
+  })
+})

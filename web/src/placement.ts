@@ -38,6 +38,8 @@ export interface Placement {
   extent: number
   /** Total symbols in the graph, before occupants filtered them. */
   total: number
+  /** How many nodes were pulled in past the occupant filter by `reveal`. */
+  revealed: number
 }
 
 export const PALETTE = [
@@ -54,8 +56,10 @@ const BASE = 2.2
  * no randomness. The same arguments always produce byte-identical output, which
  * is what makes a layout comparable to itself across runs.
  */
-export function place(graph: Graph, view: ViewSpec): Placement {
-  const selected = selectOccupants(graph.nodes, view)
+export function place(graph: Graph, view: ViewSpec, reveal: Iterable<string> = []): Placement {
+  const kept = selectOccupants(graph.nodes, view)
+  const extra = neighboursPastTheFilter(graph, kept, reveal)
+  const selected = extra.length ? [...kept, ...extra] : kept
   const lay = layout(selected)
 
   const sizeOf = scaler(selected, view.encoding.size, SIZE_RANGE[0], SIZE_RANGE[1])
@@ -94,7 +98,37 @@ export function place(graph: Graph, view: ViewSpec): Placement {
     edges.push({ from: e.from, to: e.to, cross: from !== to })
   }
 
-  return { nodes, districts, edges, extent: lay.extent, total: graph.nodes.length }
+  return {
+    nodes,
+    districts,
+    edges,
+    extent: lay.extent,
+    total: graph.nodes.length,
+    revealed: extra.length,
+  }
+}
+
+/**
+ * Nodes adjacent to `reveal` in the full graph that the occupant filter threw
+ * away. Selecting a symbol and being told it has 12 callers while 8 are drawn
+ * is only useful if you can then go and see the other 4.
+ */
+function neighboursPastTheFilter(
+  graph: Graph,
+  kept: GraphNode[],
+  reveal: Iterable<string>,
+): GraphNode[] {
+  const anchors = new Set(reveal)
+  if (anchors.size === 0) return []
+
+  const present = new Set(kept.map((n) => n.id))
+  const wanted = new Set<string>()
+  for (const e of graph.edges) {
+    if (anchors.has(e.from) && !present.has(e.to)) wanted.add(e.to)
+    if (anchors.has(e.to) && !present.has(e.from)) wanted.add(e.from)
+  }
+  if (wanted.size === 0) return []
+  return graph.nodes.filter((n) => wanted.has(n.id))
 }
 
 /** District label: the package path with the module prefix taken off. */

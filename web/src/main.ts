@@ -57,6 +57,7 @@ let placement: Placement | null = null
 let framed = false
 let status = ''
 let selected = new Set<string>()
+let revealing = false
 
 const selBox = document.getElementById('sel')!
 const raycaster = new THREE.Raycaster()
@@ -75,7 +76,16 @@ function pickAtReticle() {
     return
   }
   selected = toggle(selected, hit.id)
-  applySelection()
+  // While revealing, the selection decides which nodes exist, so it has to go
+  // all the way back through place().
+  if (revealing) rebuild()
+  else applySelection()
+}
+
+function toggleReveal() {
+  revealing = !revealing
+  devlog('reveal', { on: revealing, selected: selected.size })
+  rebuild()
 }
 
 /** A miss has to look different from a broken button. */
@@ -116,6 +126,7 @@ function applySelection() {
 
 flyControls.onPick = pickAtReticle
 flyControls.onClearSelection = clearSelection
+flyControls.onToggleReveal = toggleReveal
 
 function frameFocus() {
   if (!view) return
@@ -125,7 +136,7 @@ function frameFocus() {
 
 function rebuild() {
   if (!graph || !view) return
-  const p = place(graph, view)
+  const p = place(graph, view, revealing ? selected : [])
   placement = p
   world.build(p)
   devlog('rebuild', { nodes: p.nodes.length, edges: p.edges.length, districts: p.districts.length })
@@ -139,7 +150,8 @@ function rebuild() {
 
   status = [
     graph.module,
-    `${p.nodes.length}/${p.total} symbols · ${p.edges.length} edges · ${p.districts.length} districts`,
+    `${p.nodes.length}/${p.total} symbols · ${p.edges.length} edges · ${p.districts.length} districts` +
+      (p.revealed ? ` · +${p.revealed} revealed` : ''),
     `size=${view.encoding.size}  color=${view.encoding.color}  height=${view.encoding.height}`,
     `packages: ${view.occupants.packages.join(', ')}`,
   ].join('\n')

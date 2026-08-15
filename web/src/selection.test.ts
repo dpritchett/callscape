@@ -41,9 +41,9 @@ describe('neighborhood', () => {
     expect(n.role.get(edgeKey('e', 'f'))).toBe('out')
   })
 
-  test('an edge between two selected nodes reads as outgoing, not both', () => {
+  test('an edge between two selected nodes is internal, not in or out', () => {
     const n = neighborhood(EDGES, ['b', 'c'])
-    expect(n.role.get(edgeKey('b', 'c'))).toBe('out')
+    expect(n.role.get(edgeKey('b', 'c'))).toBe('internal')
     expect(n.callees.has('c')).toBe(false) // already selected, not a neighbour
     expect(n.callers.has('b')).toBe(false)
   })
