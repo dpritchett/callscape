@@ -1,0 +1,22 @@
+{
+  "occupants": {
+    "packages": [
+      "*/internal/gitlab",
+      "*/glkcli",
+      "*/internal/format",
+      "*/internal/index",
+      "*/cmd/*"
+    ],
+    "minFanIn": 0,
+    "limit": 120
+  },
+  "encoding": {
+    "size": "fanIn",
+    "color": "pkg",
+    "height": "lines"
+  },
+  "camera": {
+    "focus": "github.com/radiusmethod/gitlab-kiosk/internal/gitlab.Client.Get",
+    "distance": 120
+  }
+}

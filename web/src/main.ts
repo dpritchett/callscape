@@ -1,0 +1,138 @@
+import * as THREE from 'three'
+import { FlyController, type Controller } from './controls'
+import { parseView } from './view'
+import { World } from './world'
+import { place } from './placement'
+import type { Graph, ViewSpec } from './types'
+
+const POLL_MS = 400
+
+const hud = document.getElementById('hud')!
+const errBox = document.getElementById('err')!
+
+const renderer = new THREE.WebGLRenderer({ antialias: true })
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2))
+renderer.setSize(innerWidth, innerHeight)
+document.body.appendChild(renderer.domElement)
+
+const scene = new THREE.Scene()
+scene.background = new THREE.Color(0x0b0e14)
+scene.fog = new THREE.Fog(0x0b0e14, 260, 1100)
+
+const camera = new THREE.PerspectiveCamera(65, innerWidth / innerHeight, 0.5, 4000)
+camera.position.set(0, 90, 220)
+camera.lookAt(0, 0, 0)
+
+scene.add(new THREE.AmbientLight(0xffffff, 0.65))
+const key = new THREE.DirectionalLight(0xffffff, 0.9)
+key.position.set(120, 220, 90)
+scene.add(key)
+
+const world = new World()
+scene.add(world.group)
+
+const grid = new THREE.GridHelper(2400, 120, 0x1c2434, 0x141a26)
+;(grid.material as THREE.Material).transparent = true
+;(grid.material as THREE.Material).opacity = 0.5
+scene.add(grid)
+
+// Swap this line for an OrbitController if flying turns out to feel bad.
+const controls: Controller = new FlyController(camera, renderer.domElement)
+
+addEventListener('resize', () => {
+  camera.aspect = innerWidth / innerHeight
+  camera.updateProjectionMatrix()
+  renderer.setSize(innerWidth, innerHeight)
+})
+
+let graph: Graph | null = null
+let view: ViewSpec | null = null
+let framed = false
+let status = ''
+
+addEventListener('keydown', (e) => {
+  if (e.code === 'KeyF') frameFocus()
+})
+
+function frameFocus() {
+  if (!view) return
+  const target = (view.camera.focus && world.positionOf(view.camera.focus)) || new THREE.Vector3(0, 0, 0)
+  controls.frame(target, view.camera.distance)
+}
+
+function rebuild() {
+  if (!graph || !view) return
+  const p = place(graph, view)
+  world.build(p)
+  status = [
+    graph.module,
+    `${p.nodes.length}/${p.total} symbols · ${p.edges.length} edges · ${p.districts.length} districts`,
+    `size=${view.encoding.size}  color=${view.encoding.color}  height=${view.encoding.height}`,
+    `packages: ${view.occupants.packages.join(', ')}`,
+  ].join('\n')
+  hud.textContent = status
+  if (!framed) {
+    framed = true
+    frameFocus()
+  }
+}
+
+const errors = new Map<string, string>()
+
+function setError(where: string, e: unknown) {
+  errors.set(where, `${where}:\n${e instanceof Error ? e.message : String(e)}`)
+  renderErrors()
+}
+
+function clearError(where: string) {
+  if (errors.delete(where)) renderErrors()
+}
+
+function renderErrors() {
+  errBox.textContent = [...errors.values()].join('\n\n')
+  errBox.style.display = errors.size ? 'block' : 'none'
+}
+
+/**
+ * Polls a JSON file, invoking onChange only when the bytes actually change.
+ * `last` advances only after a successful apply, so a broken file keeps its
+ * error on screen until it is fixed.
+ */
+function watch(url: string, onChange: (raw: unknown) => void) {
+  let last: string | null = null
+  const tick = async () => {
+    try {
+      const res = await fetch(`${url}?t=${Date.now()}`, { cache: 'no-store' })
+      if (!res.ok) throw new Error(`${res.status} ${res.statusText}`)
+      const text = await res.text()
+      if (text !== last) {
+        onChange(JSON.parse(text))
+        last = text
+      }
+      clearError(url)
+    } catch (e) {
+      setError(url, e)
+    } finally {
+      setTimeout(tick, POLL_MS)
+    }
+  }
+  tick()
+}
+
+watch('/graph.json', (raw) => {
+  graph = raw as Graph
+  rebuild()
+})
+
+watch('/view.json', (raw) => {
+  view = parseView(raw)
+  rebuild()
+})
+
+const clock = new THREE.Clock()
+renderer.setAnimationLoop(() => {
+  const dt = Math.min(clock.getDelta(), 0.1)
+  controls.update(dt)
+  world.updateLabels(camera, renderer.domElement.clientHeight)
+  renderer.render(scene, camera)
+})

@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>lspvue</title>
+    <style>
+      html, body { margin: 0; height: 100%; background: #0b0e14; overflow: hidden; }
+      canvas { display: block; }
+      #hud {
+        position: fixed; top: 10px; left: 12px;
+        font: 12px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace;
+        color: #8b95a7; pointer-events: none; white-space: pre; text-shadow: 0 1px 2px #000;
+      }
+      #err {
+        position: fixed; bottom: 0; left: 0; right: 0;
+        font: 12px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace;
+        color: #ffb4a2; background: #2a1114; border-top: 1px solid #6b2732;
+        padding: 8px 12px; white-space: pre-wrap; display: none;
+      }
+      #hint {
+        position: fixed; bottom: 10px; left: 12px;
+        font: 12px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace;
+        color: #5b6474; pointer-events: none;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="hud"></div>
+    <div id="hint">click to fly &middot; WASD + mouse &middot; shift boost &middot; QE up/down &middot; F focus &middot; esc release</div>
+    <div id="err"></div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

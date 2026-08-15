@@ -1,0 +1,4 @@
+# build artifact from `go build ./...`
+/lspvue-dump
+
+.claude/settings.local.json

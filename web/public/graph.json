@@ -1,0 +1,3675 @@
+{
+  "module": "github.com/radiusmethod/gitlab-kiosk",
+  "nodes": [
+    {
+      "id": "github.com/radiusmethod/gitlab-kiosk/cmd/glk.main",
+      "name": "main",
+      "pkg": "github.com/radiusmethod/gitlab-kiosk/cmd/glk",
+      "file": "cmd/glk/main.go",
+      "line": 5,
+      "lines": 3,
+      "exported": false,
+      "fanIn": 0,
+      "fanOut": 1
+    },
+    {
+      "id": "github.com/radiusmethod/gitlab-kiosk/cmd/grec.main",
+      "name": "main",
+      "pkg": "github.com/radiusmethod/gitlab-kiosk/cmd/grec",
+      "file": "cmd/grec/main.go",
+      "line": 5,
+      "lines": 3,
+      "exported": false,
+      "fanIn": 0,
+      "fanOut": 1
+    },
+    {
+      "id": "github.com/radiusmethod/gitlab-kiosk/glkcli.ConfigureErrorHints",
+      "name": "ConfigureErrorHints",
+      "pkg": "github.com/radiusmethod/gitlab-kiosk/glkcli",
+      "file": "glkcli/root.go",
+      "line": 139,
+      "lines": 9,
+      "exported": true,
+      "fanIn": 1,
+      "fanOut": 0
+    },
+    {
+      "id": "github.com/radiusmethod/gitlab-kiosk/glkcli.Execute",
+      "name": "Execute",
+      "pkg": "github.com/radiusmethod/gitlab-kiosk/glkcli",
+      "file": "glkcli/root.go",
+      "line": 197,
+      "lines": 6,
+      "exported": true,
+      "fanIn": 1,
+      "fanOut": 5
+    },
+    {
+      "id": "github.com/radiusmethod/gitlab-kiosk/glkcli.RootCmd",
+      "name": "RootCmd",
+      "pkg": "github.com/radiusmethod/gitlab-kiosk/glkcli",
+      "file": "glkcli/root.go",
+      "line": 119,
+      "lines": 1,
+      "exported": true,
+      "fanIn": 1,
+      "fanOut": 0
+    },
+    {
+      "id": "github.com/radiusmethod/gitlab-kiosk/glkcli.allPipelineRowsTerminal",
+      "name": "allPipelineRowsTerminal",
+      "pkg": "github.com/radiusmethod/gitlab-kiosk/glkcli",
+      "file": "glkcli/jobs.go",
+      "line": 225,
+      "lines": 8,
+      "exported": false,
+      "fanIn": 0,
+      "fanOut": 1
+    },
+    {
+      "id": "github.com/radiusmethod/gitlab-kiosk/glkcli.anyJobFailed",
+      "name": "anyJobFailed",
+      "pkg": "github.com/radiusmethod/gitlab-kiosk/glkcli",
+      "file": "glkcli/jobs.go",
+      "line": 197,
+      "lines": 8,
+      "exported": false,
+      "fanIn": 0,
+      "fanOut": 1
+    },
+    {
+      "id": "github.com/radiusmethod/gitlab-kiosk/glkcli.anyPipelineRowFailed",
+      "name": "anyPipelineRowFailed",
+      "pkg": "github.com/radiusmethod/gitlab-kiosk/glkcli",
+      "file": "glkcli/jobs.go",
+      "line": 206,
+      "lines": 8,
+      "exported": false,
+      "fanIn": 0,
+      "fanOut": 0
+    },
+    {
+      "id": "github.com/radiusmethod/gitlab-kiosk/glkcli.artifactFileMode",
+      "name": "artifactFileMode",
+      "pkg": "github.com/radiusmethod/gitlab-kiosk/glkcli",
+      "file": "glkcli/artifacts.go",
+      "line": 341,
+      "lines": 7,
+      "exported": false,
+      "fanIn": 1,
+      "fanOut": 0
+    },
+    {
+      "id": "github.com/radiusmethod/gitlab-kiosk/glkcli.artifactTargetPath",
+      "name": "artifactTargetPath",
+      "pkg": "github.com/radiusmethod/gitlab-kiosk/glkcli",
+      "file": "glkcli/artifacts.go",
+      "line": 326,
+      "lines": 14,
+      "exported": false,
+      "fanIn": 1,
+      "fanOut": 0
+    },
+    {
+      "id": "github.com/radiusmethod/gitlab-kiosk/glkcli.artifactTreeHasDirectory",
+      "name": "artifactTreeHasDirectory",
+      "pkg": "github.com/radiusmethod/gitlab-kiosk/glkcli",
+      "file": "glkcli/artifacts.go",
+      "line": 121,
+      "lines": 9,
+      "exported": false,
+      "fanIn": 0,
+      "fanOut": 1
+    },
+    {
+      "id": "github.com/radiusmethod/gitlab-kiosk/glkcli.bashCommandTargetsHost",
+      "name": "bashCommandTargetsHost",
+      "pkg": "github.com/radiusmethod/gitlab-kiosk/glkcli",
+      "file": "glkcli/hook.go",
+      "line": 78,
+      "lines": 34,
+      "exported": false,
+      "fanIn": 0,
+      "fanOut": 2
+    },
+    {
+      "id": "github.com/radiusmethod/gitlab-kiosk/glkcli.binaryActivationChecks",
+      "name": "binaryActivationChecks",
+      "pkg": "github.com/radiusmethod/gitlab-kiosk/glkcli",
+      "file": "glkcli/doctor.go",
+      "line": 261,
+      "lines": 42,
+      "exported": false,
+      "fanIn": 1,
+      "fanOut": 1
+    },
+    {
+      "id": "github.com/radiusmethod/gitlab-kiosk/glkcli.buildInstallTargets",
+      "name": "buildInstallTargets",
+      "pkg": "github.com/radiusmethod/gitlab-kiosk/glkcli",
+      "file": "glkcli/install_skills.go",
+      "line": 212,
+      "lines": 30,
+      "exported": false,
+      "fanIn": 0,
+      "fanOut": 0
+    },
+    {
+      "id": "github.com/radiusmethod/gitlab-kiosk/glkcli.cacheChecks",
+      "name": "cacheChecks",
+      "pkg": "github.com/radiusmethod/gitlab-kiosk/glkcli",
+      "file": "glkcli/doctor.go",
+      "line": 518,
+      "lines": 43,
+      "exported": false,
+      "fanIn": 1,
+      "fanOut": 0
+    },
+    {
+      "id": "github.com/radiusmethod/gitlab-kiosk/glkcli.checkSkillDrift",
+      "name": "checkSkillDrift",
+      "pkg": "github.com/radiusmethod/gitlab-kiosk/glkcli",
+      "file": "glkcli/skill_check.go",
+      "line": 15,
+      "lines": 31,
+      "exported": false,
+      "fanIn": 0,
+      "fanOut": 1
+    },
+    {
+      "id": "github.com/radiusmethod/gitlab-kiosk/glkcli.compareSemver",
+      "name": "compareSemver",
+      "pkg": "github.com/radiusmethod/gitlab-kiosk/glkcli",
+      "file": "glkcli/doctor.go",
+      "line": 840,
+      "lines": 19,
+      "exported": false,
+      "fanIn": 1,
+      "fanOut": 1
+    },
+    {
+      "id": "github.com/radiusmethod/gitlab-kiosk/glkcli.configChecks",
+      "name": "configChecks",
+      "pkg": "github.com/radiusmethod/gitlab-kiosk/glkcli",
+      "file": "glkcli/doctor.go",
+      "line": 414,
+      "lines": 52,
+      "exported": false,
+      "fanIn": 1,
+      "fanOut": 1
+    },
+    {
+      "id": "github.com/radiusmethod/gitlab-kiosk/glkcli.configureHTTPLogging",
+      "name": "configureHTTPLogging",
+      "pkg": "github.com/radiusmethod/gitlab-kiosk/glkcli",
+      "file": "glkcli/root.go",
+      "line": 121,
+      "lines": 13,
+      "exported": false,
+      "fanIn": 0,
+      "fanOut": 1
+    },
+    {
+      "id": "github.com/radiusmethod/gitlab-kiosk/glkcli.confirmInstall",
+      "name": "confirmInstall",
+      "pkg": "github.com/radiusmethod/gitlab-kiosk/glkcli",
+      "file": "glkcli/install_skills.go",
+      "line": 341,
+      "lines": 9,
+      "exported": false,
+      "fanIn": 0,
+      "fanOut": 0
+    },
+    {
+      "id": "github.com/radiusmethod/gitlab-kiosk/glkcli.containsEntry",
+      "name": "containsEntry",
+      "pkg": "github.com/radiusmethod/gitlab-kiosk/glkcli",
+      "file": "glkcli/install_hooks.go",
+      "line": 295,
+      "lines": 8,
+      "exported": false,
+      "fanIn": 2,
+      "fanOut": 0
+    },
+    {
+      "id": "github.com/radiusmethod/gitlab-kiosk/glkcli.countPendingPipelineRows",
+      "name": "countPendingPipelineRows",
+      "pkg": "github.com/radiusmethod/gitlab-kiosk/glkcli",
+      "file": "glkcli/jobs.go",
+      "line": 234,
+      "lines": 9,
+      "exported": false,
+      "fanIn": 0,
+      "fanOut": 1
+    },
+    {
+      "id": "github.com/radiusmethod/gitlab-kiosk/glkcli.decodeHookEntries",
+      "name": "decodeHookEntries",
+      "pkg": "github.com/radiusmethod/gitlab-kiosk/glkcli",
+      "file": "glkcli/install_hooks.go",
+      "line": 226,
+      "lines": 14,
+      "exported": false,
+      "fanIn": 3,
+      "fanOut": 0
+    },
+    {
+      "id": "github.com/radiusmethod/gitlab-kiosk/glkcli.desiredGLKPreToolUseEntry",
+      "name": "desiredGLKPreToolUseEntry",
+      "pkg": "github.com/radiusmethod/gitlab-kiosk/glkcli",
+      "file": "glkcli/install_hooks.go",
+      "line": 277,
+      "lines": 9,
+      "exported": false,
+      "fanIn": 2,
+      "fanOut": 0
+    },
+    {
+      "id": "github.com/radiusmethod/gitlab-kiosk/glkcli.desiredHookConfig",
+      "name": "desiredHookConfig",
+      "pkg": "github.com/radiusmethod/gitlab-kiosk/glkcli",
+      "file": "glkcli/install_hooks.go",
+      "line": 146,
+      "lines": 24,
+      "exported": false,
+      "fanIn": 0,
+      "fanOut": 3
+    },
+    {
+      "id": "github.com/radiusmethod/gitlab-kiosk/glkcli.desiredHookConfigWithoutGLK",
+      "name": "desiredHookConfigWithoutGLK",
+      "pkg": "github.com/radiusmethod/gitlab-kiosk/glkcli",
+      "file": "glkcli/install_hooks.go",
+      "line": 171,
+      "lines": 35,
+      "exported": false,
+      "fanIn": 0,
+      "fanOut": 2
+    },
+    {
+      "id": "github.com/radiusmethod/gitlab-kiosk/glkcli.diffStatus",
+      "name": "diffStatus",
+      "pkg": "github.com/radiusmethod/gitlab-kiosk/glkcli",
+      "file": "glkcli/mr_diffs.go",
+      "line": 88,
+      "lines": 12,
+      "exported": false,
+      "fanIn": 1,
+      "fanOut": 0
+    },
+    {
+      "id": "github.com/radiusmethod/gitlab-kiosk/glkcli.doctorConfigPath",
+      "name": "doctorConfigPath",
+      "pkg": "github.com/radiusmethod/gitlab-kiosk/glkcli",
+      "file": "glkcli/doctor.go",
+      "line": 251,
+      "lines": 9,
+      "exported": false,
+      "fanIn": 1,
+      "fanOut": 0
+    },
+    {
+      "id": "github.com/radiusmethod/gitlab-kiosk/glkcli.doctorGetenv",
+      "name": "doctorGetenv",
+      "pkg": "github.com/radiusmethod/gitlab-kiosk/glkcli",
+      "file": "glkcli/doctor.go",
+      "line": 244,
+      "lines": 6,
+      "exported": false,
+      "fanIn": 1,
+      "fanOut": 0
+    },
+    {
+      "id": "github.com/radiusmethod/gitlab-kiosk/glkcli.doctorSummaryRow",
+      "name": "doctorSummaryRow",
+      "pkg": "github.com/radiusmethod/gitlab-kiosk/glkcli",
+      "file": "glkcli/doctor.go",
+      "line": 886,
+      "lines": 6,
+      "exported": false,
+      "fanIn": 1,
+      "fanOut": 0
+    },
+    {
+      "id": "github.com/radiusmethod/gitlab-kiosk/glkcli.enrichError",
+      "name": "enrichError",
+      "pkg": "github.com/radiusmethod/gitlab-kiosk/glkcli",
+      "file": "glkcli/root.go",
+      "line": 152,
+      "lines": 42,
+      "exported": false,
+      "fanIn": 1,
+      "fanOut": 2
+    },
+    {
+      "id": "github.com/radiusmethod/gitlab-kiosk/glkcli.environmentChecks",
+      "name": "environmentChecks",
+      "pkg": "github.com/radiusmethod/gitlab-kiosk/glkcli",
+      "file": "glkcli/doctor.go",
+      "line": 374,
+      "lines": 22,
+      "exported": false,
+      "fanIn": 1,
+      "fanOut": 1
+    },
+    {
+      "id": "github.com/radiusmethod/gitlab-kiosk/glkcli.eventTitle",
+      "name": "eventTitle",
+      "pkg": "github.com/radiusmethod/gitlab-kiosk/glkcli",
+      "file": "glkcli/user_events.go",
+      "line": 119,
+      "lines": 9,
+      "exported": false,
+      "fanIn": 0,
+      "fanOut": 2
+    },
+    {
+      "id": "github.com/radiusmethod/gitlab-kiosk/glkcli.eventURL",
+      "name": "eventURL",
+      "pkg": "github.com/radiusmethod/gitlab-kiosk/glkcli",
+      "file": "glkcli/user_events.go",
+      "line": 130,
+      "lines": 60,
+      "exported": false,
+      "fanIn": 0,
+      "fanOut": 3
+    },
+    {
+      "id": "github.com/radiusmethod/gitlab-kiosk/glkcli.extractArtifactArchive",
+      "name": "extractArtifactArchive",
+      "pkg": "github.com/radiusmethod/gitlab-kiosk/glkcli",
+      "file": "glkcli/artifacts.go",
+      "line": 261,
+      "lines": 64,
+      "exported": false,
+      "fanIn": 0,
+      "fanOut": 2
+    },
+    {
+      "id": "github.com/radiusmethod/gitlab-kiosk/glkcli.extractFrontmatter",
+      "name": "extractFrontmatter",
+      "pkg": "github.com/radiusmethod/gitlab-kiosk/glkcli",
+      "file": "glkcli/doctor.go",
+      "line": 726,
+      "lines": 13,
+      "exported": false,
+      "fanIn": 1,
+      "fanOut": 0
+    },
+    {
+      "id": "github.com/radiusmethod/gitlab-kiosk/glkcli.extractNotesWidget",
+      "name": "extractNotesWidget",
+      "pkg": "github.com/radiusmethod/gitlab-kiosk/glkcli",
+      "file": "glkcli/epic_notes.go",
+      "line": 197,
+      "lines": 9,
+      "exported": false,
+      "fanIn": 1,
+      "fanOut": 0
+    },
+    {
+      "id": "github.com/radiusmethod/gitlab-kiosk/glkcli.failedJobNames",
+      "name": "failedJobNames",
+      "pkg": "github.com/radiusmethod/gitlab-kiosk/glkcli",
+      "file": "glkcli/jobs.go",
+      "line": 215,
+      "lines": 9,
+      "exported": false,
+      "fanIn": 0,
+      "fanOut": 1
+    },
+    {
+      "id": "github.com/radiusmethod/gitlab-kiosk/glkcli.failedPipelineJobIDs",
+      "name": "failedPipelineJobIDs",
+      "pkg": "github.com/radiusmethod/gitlab-kiosk/glkcli",
+      "file": "glkcli/btw_hints.go",
+      "line": 49,
+      "lines": 9,
+      "exported": false,
+      "fanIn": 1,
+      "fanOut": 0
+    },
+    {
+      "id": "github.com/radiusmethod/gitlab-kiosk/glkcli.fetchDiscussions",
+      "name": "fetchDiscussions",
+      "pkg": "github.com/radiusmethod/gitlab-kiosk/glkcli",
+      "file": "glkcli/discussions.go",
+      "line": 27,
+      "lines": 83,
+      "exported": false,
+      "fanIn": 0,
+      "fanOut": 8
+    },
+    {
+      "id": "github.com/radiusmethod/gitlab-kiosk/glkcli.fetchEpicNotes",
+      "name": "fetchEpicNotes",
+      "pkg": "github.com/radiusmethod/gitlab-kiosk/glkcli",
+      "file": "glkcli/epic_notes.go",
+      "line": 66,
+      "lines": 78,
+      "exported": false,
+      "fanIn": 0,
+      "fanOut": 7
+    },
+    {
+      "id": "github.com/radiusmethod/gitlab-kiosk/glkcli.fetchLatestReleaseVersion",
+      "name": "fetchLatestReleaseVersion",
+      "pkg": "github.com/radiusmethod/gitlab-kiosk/glkcli",
+      "file": "glkcli/doctor.go",
+      "line": 740,
+      "lines": 18,
+      "exported": false,
+      "fanIn": 0,
+      "fanOut": 3
+    },
+    {
+      "id": "github.com/radiusmethod/gitlab-kiosk/glkcli.fetchLatestReleaseVersionAPI",
+      "name": "fetchLatestReleaseVersionAPI",
+      "pkg": "github.com/radiusmethod/gitlab-kiosk/glkcli",
+      "file": "glkcli/doctor.go",
+      "line": 759,
+      "lines": 29,
+      "exported": false,
+      "fanIn": 1,
+      "fanOut": 0
+    },
+    {
+      "id": "github.com/radiusmethod/gitlab-kiosk/glkcli.fetchLatestReleaseVersionGH",
+      "name": "fetchLatestReleaseVersionGH",
+      "pkg": "github.com/radiusmethod/gitlab-kiosk/glkcli",
+      "file": "glkcli/doctor.go",
+      "line": 823,
+      "lines": 16,
+      "exported": false,
+      "fanIn": 1,
+      "fanOut": 0
+    },
+    {
+      "id": "github.com/radiusmethod/gitlab-kiosk/glkcli.fetchLatestReleaseVersionRedirect",
+      "name": "fetchLatestReleaseVersionRedirect",
+      "pkg": "github.com/radiusmethod/gitlab-kiosk/glkcli",
+      "file": "glkcli/doctor.go",
+      "line": 789,
+      "lines": 33,
+      "exported": false,
+      "fanIn": 1,
+      "fanOut": 0
+    },
+    {
+      "id": "github.com/radiusmethod/gitlab-kiosk/glkcli.fetchMRDiffs",
+      "name": "fetchMRDiffs",
+      "pkg": "github.com/radiusmethod/gitlab-kiosk/glkcli",
+      "file": "glkcli/mr_diffs.go",
+      "line": 30,
+      "lines": 57,
+      "exported": false,
+      "fanIn": 0,
+      "fanOut": 7
+    },
+    {
+      "id": "github.com/radiusmethod/gitlab-kiosk/glkcli.fetchPipelineBridges",
+      "name": "fetchPipelineBridges",
+      "pkg": "github.com/radiusmethod/gitlab-kiosk/glkcli",
+      "file": "glkcli/jobs.go",
+      "line": 352,
+      "lines": 11,
+      "exported": false,
+      "fanIn": 1,
+      "fanOut": 1
+    },
+    {
+      "id": "github.com/radiusmethod/gitlab-kiosk/glkcli.fetchPipelineJobs",
+      "name": "fetchPipelineJobs",
+      "pkg": "github.com/radiusmethod/gitlab-kiosk/glkcli",
+      "file": "glkcli/jobs.go",
+      "line": 340,
+      "lines": 11,
+      "exported": false,
+      "fanIn": 1,
+      "fanOut": 1
+    },
+    {
+      "id": "github.com/radiusmethod/gitlab-kiosk/glkcli.filterArtifactTreeByPath",
+      "name": "filterArtifactTreeByPath",
+      "pkg": "github.com/radiusmethod/gitlab-kiosk/glkcli",
+      "file": "glkcli/artifacts.go",
+      "line": 131,
+      "lines": 9,
+      "exported": false,
+      "fanIn": 0,
+      "fanOut": 1
+    },
+    {
+      "id": "github.com/radiusmethod/gitlab-kiosk/glkcli.filterPipelineRowsByMatch",
+      "name": "filterPipelineRowsByMatch",
+      "pkg": "github.com/radiusmethod/gitlab-kiosk/glkcli",
+      "file": "glkcli/jobs.go",
+      "line": 180,
+      "lines": 16,
+      "exported": false,
+      "fanIn": 0,
+      "fanOut": 0
+    },
+    {
+      "id": "github.com/radiusmethod/gitlab-kiosk/glkcli.fishCompletionsDir",
+      "name": "fishCompletionsDir",
+      "pkg": "github.com/radiusmethod/gitlab-kiosk/glkcli",
+      "file": "glkcli/install_skills.go",
+      "line": 169,
+      "lines": 18,
+      "exported": false,
+      "fanIn": 0,
+      "fanOut": 0
+    },
+    {
+      "id": "github.com/radiusmethod/gitlab-kiosk/glkcli.gidToNumeric",
+      "name": "gidToNumeric",
+      "pkg": "github.com/radiusmethod/gitlab-kiosk/glkcli",
+      "file": "glkcli/epic_notes.go",
+      "line": 47,
+      "lines": 6,
+      "exported": false,
+      "fanIn": 1,
+      "fanOut": 0
+    },
+    {
+      "id": "github.com/radiusmethod/gitlab-kiosk/glkcli.gitLabChecks",
+      "name": "gitLabChecks",
+      "pkg": "github.com/radiusmethod/gitlab-kiosk/glkcli",
+      "file": "glkcli/doctor.go",
+      "line": 467,
+      "lines": 50,
+      "exported": false,
+      "fanIn": 1,
+      "fanOut": 1
+    },
+    {
+      "id": "github.com/radiusmethod/gitlab-kiosk/glkcli.groupedEnvCheck",
+      "name": "groupedEnvCheck",
+      "pkg": "github.com/radiusmethod/gitlab-kiosk/glkcli",
+      "file": "glkcli/doctor.go",
+      "line": 397,
+      "lines": 16,
+      "exported": false,
+      "fanIn": 1,
+      "fanOut": 0
+    },
+    {
+      "id": "github.com/radiusmethod/gitlab-kiosk/glkcli.hookChecks",
+      "name": "hookChecks",
+      "pkg": "github.com/radiusmethod/gitlab-kiosk/glkcli",
+      "file": "glkcli/doctor.go",
+      "line": 355,
+      "lines": 18,
+      "exported": false,
+      "fanIn": 1,
+      "fanOut": 1
+    },
+    {
+      "id": "github.com/radiusmethod/gitlab-kiosk/glkcli.hookInstallTargets",
+      "name": "hookInstallTargets",
+      "pkg": "github.com/radiusmethod/gitlab-kiosk/glkcli",
+      "file": "glkcli/install_hooks.go",
+      "line": 130,
+      "lines": 15,
+      "exported": false,
+      "fanIn": 0,
+      "fanOut": 0
+    },
+    {
+      "id": "github.com/radiusmethod/gitlab-kiosk/glkcli.init",
+      "name": "init",
+      "pkg": "github.com/radiusmethod/gitlab-kiosk/glkcli",
+      "file": "glkcli/work_items.go",
+      "line": 109,
+      "lines": 4,
+      "exported": false,
+      "fanIn": 0,
+      "fanOut": 2
+    },
+    {
+      "id": "github.com/radiusmethod/gitlab-kiosk/glkcli.initVersionFallback",
+      "name": "initVersionFallback",
+      "pkg": "github.com/radiusmethod/gitlab-kiosk/glkcli",
+      "file": "glkcli/version.go",
+      "line": 33,
+      "lines": 25,
+      "exported": false,
+      "fanIn": 1,
+      "fanOut": 0
+    },
+    {
+      "id": "github.com/radiusmethod/gitlab-kiosk/glkcli.inspectInstalledHook",
+      "name": "inspectInstalledHook",
+      "pkg": "github.com/radiusmethod/gitlab-kiosk/glkcli",
+      "file": "glkcli/doctor.go",
+      "line": 646,
+      "lines": 60,
+      "exported": false,
+      "fanIn": 1,
+      "fanOut": 4
+    },
+    {
+      "id": "github.com/radiusmethod/gitlab-kiosk/glkcli.inspectInstalledSkill",
+      "name": "inspectInstalledSkill",
+      "pkg": "github.com/radiusmethod/gitlab-kiosk/glkcli",
+      "file": "glkcli/doctor.go",
+      "line": 607,
+      "lines": 38,
+      "exported": false,
+      "fanIn": 2,
+      "fanOut": 2
+    },
+    {
+      "id": "github.com/radiusmethod/gitlab-kiosk/glkcli.isManagedGLKEntry",
+      "name": "isManagedGLKEntry",
+      "pkg": "github.com/radiusmethod/gitlab-kiosk/glkcli",
+      "file": "glkcli/install_hooks.go",
+      "line": 287,
+      "lines": 7,
+      "exported": false,
+      "fanIn": 2,
+      "fanOut": 0
+    },
+    {
+      "id": "github.com/radiusmethod/gitlab-kiosk/glkcli.isNumericID",
+      "name": "isNumericID",
+      "pkg": "github.com/radiusmethod/gitlab-kiosk/glkcli",
+      "file": "glkcli/epic_notes.go",
+      "line": 54,
+      "lines": 11,
+      "exported": false,
+      "fanIn": 1,
+      "fanOut": 0
+    },
+    {
+      "id": "github.com/radiusmethod/gitlab-kiosk/glkcli.isShellSeparator",
+      "name": "isShellSeparator",
+      "pkg": "github.com/radiusmethod/gitlab-kiosk/glkcli",
+      "file": "glkcli/hook.go",
+      "line": 164,
+      "lines": 3,
+      "exported": false,
+      "fanIn": 1,
+      "fanOut": 0
+    },
+    {
+      "id": "github.com/radiusmethod/gitlab-kiosk/glkcli.isTerminalJobStatus",
+      "name": "isTerminalJobStatus",
+      "pkg": "github.com/radiusmethod/gitlab-kiosk/glkcli",
+      "file": "glkcli/job_trace.go",
+      "line": 21,
+      "lines": 7,
+      "exported": false,
+      "fanIn": 2,
+      "fanOut": 0
+    },
+    {
+      "id": "github.com/radiusmethod/gitlab-kiosk/glkcli.isTerminalPipelineStatus",
+      "name": "isTerminalPipelineStatus",
+      "pkg": "github.com/radiusmethod/gitlab-kiosk/glkcli",
+      "file": "glkcli/pipeline.go",
+      "line": 28,
+      "lines": 7,
+      "exported": false,
+      "fanIn": 0,
+      "fanOut": 0
+    },
+    {
+      "id": "github.com/radiusmethod/gitlab-kiosk/glkcli.jobRow",
+      "name": "jobRow",
+      "pkg": "github.com/radiusmethod/gitlab-kiosk/glkcli",
+      "file": "glkcli/jobs.go",
+      "line": 327,
+      "lines": 12,
+      "exported": false,
+      "fanIn": 1,
+      "fanOut": 1
+    },
+    {
+      "id": "github.com/radiusmethod/gitlab-kiosk/glkcli.jobTraceCachePath",
+      "name": "jobTraceCachePath",
+      "pkg": "github.com/radiusmethod/gitlab-kiosk/glkcli",
+      "file": "glkcli/job_trace.go",
+      "line": 30,
+      "lines": 7,
+      "exported": false,
+      "fanIn": 0,
+      "fanOut": 1
+    },
+    {
+      "id": "github.com/radiusmethod/gitlab-kiosk/glkcli.jsonArray",
+      "name": "jsonArray",
+      "pkg": "github.com/radiusmethod/gitlab-kiosk/glkcli",
+      "file": "glkcli/helpers.go",
+      "line": 53,
+      "lines": 17,
+      "exported": false,
+      "fanIn": 0,
+      "fanOut": 0
+    },
+    {
+      "id": "github.com/radiusmethod/gitlab-kiosk/glkcli.jsonNested",
+      "name": "jsonNested",
+      "pkg": "github.com/radiusmethod/gitlab-kiosk/glkcli",
+      "file": "glkcli/helpers.go",
+      "line": 32,
+      "lines": 18,
+      "exported": false,
+      "fanIn": 5,
+      "fanOut": 1
+    },
+    {
+      "id": "github.com/radiusmethod/gitlab-kiosk/glkcli.jsonStr",
+      "name": "jsonStr",
+      "pkg": "github.com/radiusmethod/gitlab-kiosk/glkcli",
+      "file": "glkcli/helpers.go",
+      "line": 10,
+      "lines": 19,
+      "exported": false,
+      "fanIn": 15,
+      "fanOut": 0
+    },
+    {
+      "id": "github.com/radiusmethod/gitlab-kiosk/glkcli.latestReleaseChecks",
+      "name": "latestReleaseChecks",
+      "pkg": "github.com/radiusmethod/gitlab-kiosk/glkcli",
+      "file": "glkcli/doctor.go",
+      "line": 304,
+      "lines": 50,
+      "exported": false,
+      "fanIn": 1,
+      "fanOut": 2
+    },
+    {
+      "id": "github.com/radiusmethod/gitlab-kiosk/glkcli.noteBody",
+      "name": "noteBody",
+      "pkg": "github.com/radiusmethod/gitlab-kiosk/glkcli",
+      "file": "glkcli/notes.go",
+      "line": 147,
+      "lines": 25,
+      "exported": false,
+      "fanIn": 2,
+      "fanOut": 1
+    },
+    {
+      "id": "github.com/radiusmethod/gitlab-kiosk/glkcli.notesParams",
+      "name": "notesParams",
+      "pkg": "github.com/radiusmethod/gitlab-kiosk/glkcli",
+      "file": "glkcli/notes.go",
+      "line": 74,
+      "lines": 8,
+      "exported": false,
+      "fanIn": 2,
+      "fanOut": 0
+    },
+    {
+      "id": "github.com/radiusmethod/gitlab-kiosk/glkcli.parentFailedJobIDs",
+      "name": "parentFailedJobIDs",
+      "pkg": "github.com/radiusmethod/gitlab-kiosk/glkcli",
+      "file": "glkcli/btw_hints.go",
+      "line": 59,
+      "lines": 9,
+      "exported": false,
+      "fanIn": 0,
+      "fanOut": 1
+    },
+    {
+      "id": "github.com/radiusmethod/gitlab-kiosk/glkcli.parseEpicNotesGraphQL",
+      "name": "parseEpicNotesGraphQL",
+      "pkg": "github.com/radiusmethod/gitlab-kiosk/glkcli",
+      "file": "glkcli/epic_notes.go",
+      "line": 183,
+      "lines": 13,
+      "exported": false,
+      "fanIn": 1,
+      "fanOut": 0
+    },
+    {
+      "id": "github.com/radiusmethod/gitlab-kiosk/glkcli.parseNote",
+      "name": "parseNote",
+      "pkg": "github.com/radiusmethod/gitlab-kiosk/glkcli",
+      "file": "glkcli/notes.go",
+      "line": 84,
+      "lines": 8,
+      "exported": false,
+      "fanIn": 1,
+      "fanOut": 3
+    },
+    {
+      "id": "github.com/radiusmethod/gitlab-kiosk/glkcli.parseSemver",
+      "name": "parseSemver",
+      "pkg": "github.com/radiusmethod/gitlab-kiosk/glkcli",
+      "file": "glkcli/doctor.go",
+      "line": 860,
+      "lines": 17,
+      "exported": false,
+      "fanIn": 1,
+      "fanOut": 0
+    },
+    {
+      "id": "github.com/radiusmethod/gitlab-kiosk/glkcli.pipelineRows",
+      "name": "pipelineRows",
+      "pkg": "github.com/radiusmethod/gitlab-kiosk/glkcli",
+      "file": "glkcli/jobs.go",
+      "line": 296,
+      "lines": 30,
+      "exported": false,
+      "fanIn": 0,
+      "fanOut": 4
+    },
+    {
+      "id": "github.com/radiusmethod/gitlab-kiosk/glkcli.plannedAction",
+      "name": "plannedAction",
+      "pkg": "github.com/radiusmethod/gitlab-kiosk/glkcli",
+      "file": "glkcli/install_skills.go",
+      "line": 243,
+      "lines": 13,
+      "exported": false,
+      "fanIn": 1,
+      "fanOut": 0
+    },
+    {
+      "id": "github.com/radiusmethod/gitlab-kiosk/glkcli.printJobRows",
+      "name": "printJobRows",
+      "pkg": "github.com/radiusmethod/gitlab-kiosk/glkcli",
+      "file": "glkcli/jobs.go",
+      "line": 259,
+      "lines": 17,
+      "exported": false,
+      "fanIn": 1,
+      "fanOut": 1
+    },
+    {
+      "id": "github.com/radiusmethod/gitlab-kiosk/glkcli.printParentJobRows",
+      "name": "printParentJobRows",
+      "pkg": "github.com/radiusmethod/gitlab-kiosk/glkcli",
+      "file": "glkcli/jobs.go",
+      "line": 244,
+      "lines": 14,
+      "exported": false,
+      "fanIn": 0,
+      "fanOut": 2
+    },
+    {
+      "id": "github.com/radiusmethod/gitlab-kiosk/glkcli.printPipelineDetail",
+      "name": "printPipelineDetail",
+      "pkg": "github.com/radiusmethod/gitlab-kiosk/glkcli",
+      "file": "glkcli/pipeline.go",
+      "line": 132,
+      "lines": 12,
+      "exported": false,
+      "fanIn": 0,
+      "fanOut": 2
+    },
+    {
+      "id": "github.com/radiusmethod/gitlab-kiosk/glkcli.printWaitJobRows",
+      "name": "printWaitJobRows",
+      "pkg": "github.com/radiusmethod/gitlab-kiosk/glkcli",
+      "file": "glkcli/jobs.go",
+      "line": 277,
+      "lines": 18,
+      "exported": false,
+      "fanIn": 0,
+      "fanOut": 2
+    },
+    {
+      "id": "github.com/radiusmethod/gitlab-kiosk/glkcli.readHookConfigRoot",
+      "name": "readHookConfigRoot",
+      "pkg": "github.com/radiusmethod/gitlab-kiosk/glkcli",
+      "file": "glkcli/install_hooks.go",
+      "line": 207,
+      "lines": 18,
+      "exported": false,
+      "fanIn": 1,
+      "fanOut": 0
+    },
+    {
+      "id": "github.com/radiusmethod/gitlab-kiosk/glkcli.registerFailedJobHint",
+      "name": "registerFailedJobHint",
+      "pkg": "github.com/radiusmethod/gitlab-kiosk/glkcli",
+      "file": "glkcli/btw_hints.go",
+      "line": 37,
+      "lines": 11,
+      "exported": false,
+      "fanIn": 1,
+      "fanOut": 1
+    },
+    {
+      "id": "github.com/radiusmethod/gitlab-kiosk/glkcli.registerFailedPipelineJobHint",
+      "name": "registerFailedPipelineJobHint",
+      "pkg": "github.com/radiusmethod/gitlab-kiosk/glkcli",
+      "file": "glkcli/btw_hints.go",
+      "line": 33,
+      "lines": 3,
+      "exported": false,
+      "fanIn": 0,
+      "fanOut": 2
+    },
+    {
+      "id": "github.com/radiusmethod/gitlab-kiosk/glkcli.registerGroupHint",
+      "name": "registerGroupHint",
+      "pkg": "github.com/radiusmethod/gitlab-kiosk/glkcli",
+      "file": "glkcli/btw_hints.go",
+      "line": 14,
+      "lines": 9,
+      "exported": false,
+      "fanIn": 0,
+      "fanOut": 1
+    },
+    {
+      "id": "github.com/radiusmethod/gitlab-kiosk/glkcli.registerOutputFileHint",
+      "name": "registerOutputFileHint",
+      "pkg": "github.com/radiusmethod/gitlab-kiosk/glkcli",
+      "file": "glkcli/btw_hints.go",
+      "line": 24,
+      "lines": 8,
+      "exported": false,
+      "fanIn": 0,
+      "fanOut": 1
+    },
+    {
+      "id": "github.com/radiusmethod/gitlab-kiosk/glkcli.removeGLKPreToolUse",
+      "name": "removeGLKPreToolUse",
+      "pkg": "github.com/radiusmethod/gitlab-kiosk/glkcli",
+      "file": "glkcli/install_hooks.go",
+      "line": 266,
+      "lines": 10,
+      "exported": false,
+      "fanIn": 1,
+      "fanOut": 1
+    },
+    {
+      "id": "github.com/radiusmethod/gitlab-kiosk/glkcli.renderNotes",
+      "name": "renderNotes",
+      "pkg": "github.com/radiusmethod/gitlab-kiosk/glkcli",
+      "file": "glkcli/notes.go",
+      "line": 95,
+      "lines": 51,
+      "exported": false,
+      "fanIn": 0,
+      "fanOut": 5
+    },
+    {
+      "id": "github.com/radiusmethod/gitlab-kiosk/glkcli.repoContextChecks",
+      "name": "repoContextChecks",
+      "pkg": "github.com/radiusmethod/gitlab-kiosk/glkcli",
+      "file": "glkcli/doctor.go",
+      "line": 562,
+      "lines": 44,
+      "exported": false,
+      "fanIn": 1,
+      "fanOut": 1
+    },
+    {
+      "id": "github.com/radiusmethod/gitlab-kiosk/glkcli.resolveCodeSearchArgs",
+      "name": "resolveCodeSearchArgs",
+      "pkg": "github.com/radiusmethod/gitlab-kiosk/glkcli",
+      "file": "glkcli/code_search.go",
+      "line": 112,
+      "lines": 11,
+      "exported": false,
+      "fanIn": 0,
+      "fanOut": 1
+    },
+    {
+      "id": "github.com/radiusmethod/gitlab-kiosk/glkcli.resolveDoctorState",
+      "name": "resolveDoctorState",
+      "pkg": "github.com/radiusmethod/gitlab-kiosk/glkcli",
+      "file": "glkcli/doctor.go",
+      "line": 207,
+      "lines": 36,
+      "exported": false,
+      "fanIn": 1,
+      "fanOut": 3
+    },
+    {
+      "id": "github.com/radiusmethod/gitlab-kiosk/glkcli.resolvePath",
+      "name": "resolvePath",
+      "pkg": "github.com/radiusmethod/gitlab-kiosk/glkcli",
+      "file": "glkcli/doctor.go",
+      "line": 878,
+      "lines": 7,
+      "exported": false,
+      "fanIn": 1,
+      "fanOut": 0
+    },
+    {
+      "id": "github.com/radiusmethod/gitlab-kiosk/glkcli.resolveProject",
+      "name": "resolveProject",
+      "pkg": "github.com/radiusmethod/gitlab-kiosk/glkcli",
+      "file": "glkcli/project_resolve.go",
+      "line": 14,
+      "lines": 17,
+      "exported": false,
+      "fanIn": 1,
+      "fanOut": 1
+    },
+    {
+      "id": "github.com/radiusmethod/gitlab-kiosk/glkcli.resolveProjectArgs",
+      "name": "resolveProjectArgs",
+      "pkg": "github.com/radiusmethod/gitlab-kiosk/glkcli",
+      "file": "glkcli/project_resolve.go",
+      "line": 37,
+      "lines": 17,
+      "exported": false,
+      "fanIn": 0,
+      "fanOut": 1
+    },
+    {
+      "id": "github.com/radiusmethod/gitlab-kiosk/glkcli.runDoctor",
+      "name": "runDoctor",
+      "pkg": "github.com/radiusmethod/gitlab-kiosk/glkcli",
+      "file": "glkcli/doctor.go",
+      "line": 146,
+      "lines": 60,
+      "exported": false,
+      "fanIn": 0,
+      "fanOut": 12
+    },
+    {
+      "id": "github.com/radiusmethod/gitlab-kiosk/glkcli.runHookConfigRewrite",
+      "name": "runHookConfigRewrite",
+      "pkg": "github.com/radiusmethod/gitlab-kiosk/glkcli",
+      "file": "glkcli/install_hooks.go",
+      "line": 304,
+      "lines": 53,
+      "exported": false,
+      "fanIn": 0,
+      "fanOut": 2
+    },
+    {
+      "id": "github.com/radiusmethod/gitlab-kiosk/glkcli.searchTerms",
+      "name": "searchTerms",
+      "pkg": "github.com/radiusmethod/gitlab-kiosk/glkcli",
+      "file": "glkcli/work_items.go",
+      "line": 94,
+      "lines": 14,
+      "exported": false,
+      "fanIn": 1,
+      "fanOut": 0
+    },
+    {
+      "id": "github.com/radiusmethod/gitlab-kiosk/glkcli.shellTokens",
+      "name": "shellTokens",
+      "pkg": "github.com/radiusmethod/gitlab-kiosk/glkcli",
+      "file": "glkcli/hook.go",
+      "line": 113,
+      "lines": 50,
+      "exported": false,
+      "fanIn": 1,
+      "fanOut": 0
+    },
+    {
+      "id": "github.com/radiusmethod/gitlab-kiosk/glkcli.shorterSearchExample",
+      "name": "shorterSearchExample",
+      "pkg": "github.com/radiusmethod/gitlab-kiosk/glkcli",
+      "file": "glkcli/work_items.go",
+      "line": 80,
+      "lines": 13,
+      "exported": false,
+      "fanIn": 1,
+      "fanOut": 1
+    },
+    {
+      "id": "github.com/radiusmethod/gitlab-kiosk/glkcli.skillInstallRoots",
+      "name": "skillInstallRoots",
+      "pkg": "github.com/radiusmethod/gitlab-kiosk/glkcli",
+      "file": "glkcli/install_skills.go",
+      "line": 194,
+      "lines": 15,
+      "exported": false,
+      "fanIn": 0,
+      "fanOut": 0
+    },
+    {
+      "id": "github.com/radiusmethod/gitlab-kiosk/glkcli.spoolArtifactArchive",
+      "name": "spoolArtifactArchive",
+      "pkg": "github.com/radiusmethod/gitlab-kiosk/glkcli",
+      "file": "glkcli/artifacts.go",
+      "line": 239,
+      "lines": 21,
+      "exported": false,
+      "fanIn": 0,
+      "fanOut": 0
+    },
+    {
+      "id": "github.com/radiusmethod/gitlab-kiosk/glkcli.tailLines",
+      "name": "tailLines",
+      "pkg": "github.com/radiusmethod/gitlab-kiosk/glkcli",
+      "file": "glkcli/job_trace.go",
+      "line": 130,
+      "lines": 8,
+      "exported": false,
+      "fanIn": 0,
+      "fanOut": 0
+    },
+    {
+      "id": "github.com/radiusmethod/gitlab-kiosk/glkcli.upsertGLKPreToolUse",
+      "name": "upsertGLKPreToolUse",
+      "pkg": "github.com/radiusmethod/gitlab-kiosk/glkcli",
+      "file": "glkcli/install_hooks.go",
+      "line": 241,
+      "lines": 24,
+      "exported": false,
+      "fanIn": 1,
+      "fanOut": 3
+    },
+    {
+      "id": "github.com/radiusmethod/gitlab-kiosk/glkcli.validateSkillFrontmatter",
+      "name": "validateSkillFrontmatter",
+      "pkg": "github.com/radiusmethod/gitlab-kiosk/glkcli",
+      "file": "glkcli/doctor.go",
+      "line": 707,
+      "lines": 18,
+      "exported": false,
+      "fanIn": 1,
+      "fanOut": 1
+    },
+    {
+      "id": "github.com/radiusmethod/gitlab-kiosk/glkcli.withHint",
+      "name": "withHint",
+      "pkg": "github.com/radiusmethod/gitlab-kiosk/glkcli",
+      "file": "glkcli/doctor.go",
+      "line": 893,
+      "lines": 6,
+      "exported": false,
+      "fanIn": 6,
+      "fanOut": 0
+    },
+    {
+      "id": "github.com/radiusmethod/gitlab-kiosk/glkcli.writeAdjacentBackup",
+      "name": "writeAdjacentBackup",
+      "pkg": "github.com/radiusmethod/gitlab-kiosk/glkcli",
+      "file": "glkcli/install_skills.go",
+      "line": 306,
+      "lines": 32,
+      "exported": false,
+      "fanIn": 1,
+      "fanOut": 0
+    },
+    {
+      "id": "github.com/radiusmethod/gitlab-kiosk/glkcli.writeArtifactArchive",
+      "name": "writeArtifactArchive",
+      "pkg": "github.com/radiusmethod/gitlab-kiosk/glkcli",
+      "file": "glkcli/artifacts.go",
+      "line": 222,
+      "lines": 16,
+      "exported": false,
+      "fanIn": 0,
+      "fanOut": 0
+    },
+    {
+      "id": "github.com/radiusmethod/gitlab-kiosk/glkcli.writeFishCompletions",
+      "name": "writeFishCompletions",
+      "pkg": "github.com/radiusmethod/gitlab-kiosk/glkcli",
+      "file": "glkcli/install_skills.go",
+      "line": 140,
+      "lines": 25,
+      "exported": false,
+      "fanIn": 0,
+      "fanOut": 1
+    },
+    {
+      "id": "github.com/radiusmethod/gitlab-kiosk/glkcli.writeIfChanged",
+      "name": "writeIfChanged",
+      "pkg": "github.com/radiusmethod/gitlab-kiosk/glkcli",
+      "file": "glkcli/install_skills.go",
+      "line": 268,
+      "lines": 37,
+      "exported": false,
+      "fanIn": 3,
+      "fanOut": 1
+    },
+    {
+      "id": "github.com/radiusmethod/gitlab-kiosk/glkcli.writeRawOutputFile",
+      "name": "writeRawOutputFile",
+      "pkg": "github.com/radiusmethod/gitlab-kiosk/glkcli",
+      "file": "glkcli/artifact.go",
+      "line": 64,
+      "lines": 9,
+      "exported": false,
+      "fanIn": 0,
+      "fanOut": 0
+    },
+    {
+      "id": "github.com/radiusmethod/gitlab-kiosk/glkcli.writeSkills",
+      "name": "writeSkills",
+      "pkg": "github.com/radiusmethod/gitlab-kiosk/glkcli",
+      "file": "glkcli/install_skills.go",
+      "line": 113,
+      "lines": 24,
+      "exported": false,
+      "fanIn": 0,
+      "fanOut": 1
+    },
+    {
+      "id": "github.com/radiusmethod/gitlab-kiosk/glkcli.zeroWorkItemsHint",
+      "name": "zeroWorkItemsHint",
+      "pkg": "github.com/radiusmethod/gitlab-kiosk/glkcli",
+      "file": "glkcli/work_items.go",
+      "line": 72,
+      "lines": 7,
+      "exported": false,
+      "fanIn": 0,
+      "fanOut": 1
+    },
+    {
+      "id": "github.com/radiusmethod/gitlab-kiosk/greccli.Execute",
+      "name": "Execute",
+      "pkg": "github.com/radiusmethod/gitlab-kiosk/greccli",
+      "file": "greccli/root.go",
+      "line": 71,
+      "lines": 5,
+      "exported": true,
+      "fanIn": 1,
+      "fanOut": 2
+    },
+    {
+      "id": "github.com/radiusmethod/gitlab-kiosk/greccli.RootCmd",
+      "name": "RootCmd",
+      "pkg": "github.com/radiusmethod/gitlab-kiosk/greccli",
+      "file": "greccli/root.go",
+      "line": 67,
+      "lines": 1,
+      "exported": true,
+      "fanIn": 1,
+      "fanOut": 0
+    },
+    {
+      "id": "github.com/radiusmethod/gitlab-kiosk/greccli.formatStaleness",
+      "name": "formatStaleness",
+      "pkg": "github.com/radiusmethod/gitlab-kiosk/greccli",
+      "file": "greccli/index.go",
+      "line": 95,
+      "lines": 24,
+      "exported": false,
+      "fanIn": 0,
+      "fanOut": 0
+    },
+    {
+      "id": "github.com/radiusmethod/gitlab-kiosk/greccli.init",
+      "name": "init",
+      "pkg": "github.com/radiusmethod/gitlab-kiosk/greccli",
+      "file": "greccli/version.go",
+      "line": 26,
+      "lines": 4,
+      "exported": false,
+      "fanIn": 0,
+      "fanOut": 2
+    },
+    {
+      "id": "github.com/radiusmethod/gitlab-kiosk/greccli.initVersionFallback",
+      "name": "initVersionFallback",
+      "pkg": "github.com/radiusmethod/gitlab-kiosk/greccli",
+      "file": "greccli/version.go",
+      "line": 33,
+      "lines": 25,
+      "exported": false,
+      "fanIn": 1,
+      "fanOut": 0
+    },
+    {
+      "id": "github.com/radiusmethod/gitlab-kiosk/greccli.locateNotFoundError",
+      "name": "locateNotFoundError",
+      "pkg": "github.com/radiusmethod/gitlab-kiosk/greccli",
+      "file": "greccli/locate.go",
+      "line": 50,
+      "lines": 19,
+      "exported": false,
+      "fanIn": 0,
+      "fanOut": 0
+    },
+    {
+      "id": "github.com/radiusmethod/gitlab-kiosk/greccli.resolveProject",
+      "name": "resolveProject",
+      "pkg": "github.com/radiusmethod/gitlab-kiosk/greccli",
+      "file": "greccli/project_resolve.go",
+      "line": 14,
+      "lines": 13,
+      "exported": false,
+      "fanIn": 0,
+      "fanOut": 1
+    },
+    {
+      "id": "github.com/radiusmethod/gitlab-kiosk/internal/agentenv.Check",
+      "name": "Check",
+      "pkg": "github.com/radiusmethod/gitlab-kiosk/internal/agentenv",
+      "file": "internal/agentenv/agentenv.go",
+      "line": 11,
+      "lines": 25,
+      "exported": true,
+      "fanIn": 1,
+      "fanOut": 0
+    },
+    {
+      "id": "github.com/radiusmethod/gitlab-kiosk/internal/btw.Flush",
+      "name": "Flush",
+      "pkg": "github.com/radiusmethod/gitlab-kiosk/internal/btw",
+      "file": "internal/btw/btw.go",
+      "line": 51,
+      "lines": 16,
+      "exported": true,
+      "fanIn": 2,
+      "fanOut": 0
+    },
+    {
+      "id": "github.com/radiusmethod/gitlab-kiosk/internal/btw.Register",
+      "name": "Register",
+      "pkg": "github.com/radiusmethod/gitlab-kiosk/internal/btw",
+      "file": "internal/btw/btw.go",
+      "line": 41,
+      "lines": 7,
+      "exported": true,
+      "fanIn": 3,
+      "fanOut": 0
+    },
+    {
+      "id": "github.com/radiusmethod/gitlab-kiosk/internal/cmd/gen-skills.main",
+      "name": "main",
+      "pkg": "github.com/radiusmethod/gitlab-kiosk/internal/cmd/gen-skills",
+      "file": "internal/cmd/gen-skills/main.go",
+      "line": 12,
+      "lines": 10,
+      "exported": false,
+      "fanIn": 0,
+      "fanOut": 3
+    },
+    {
+      "id": "github.com/radiusmethod/gitlab-kiosk/internal/config.CacheDir",
+      "name": "CacheDir",
+      "pkg": "github.com/radiusmethod/gitlab-kiosk/internal/config",
+      "file": "internal/config/xdg.go",
+      "line": 24,
+      "lines": 10,
+      "exported": true,
+      "fanIn": 1,
+      "fanOut": 0
+    },
+    {
+      "id": "github.com/radiusmethod/gitlab-kiosk/internal/config.DataDir",
+      "name": "DataDir",
+      "pkg": "github.com/radiusmethod/gitlab-kiosk/internal/config",
+      "file": "internal/config/xdg.go",
+      "line": 11,
+      "lines": 10,
+      "exported": true,
+      "fanIn": 1,
+      "fanOut": 0
+    },
+    {
+      "id": "github.com/radiusmethod/gitlab-kiosk/internal/config.Defaults",
+      "name": "Defaults",
+      "pkg": "github.com/radiusmethod/gitlab-kiosk/internal/config",
+      "file": "internal/config/config.go",
+      "line": 51,
+      "lines": 19,
+      "exported": true,
+      "fanIn": 2,
+      "fanOut": 0
+    },
+    {
+      "id": "github.com/radiusmethod/gitlab-kiosk/internal/config.Load",
+      "name": "Load",
+      "pkg": "github.com/radiusmethod/gitlab-kiosk/internal/config",
+      "file": "internal/config/config.go",
+      "line": 74,
+      "lines": 48,
+      "exported": true,
+      "fanIn": 0,
+      "fanOut": 4
+    },
+    {
+      "id": "github.com/radiusmethod/gitlab-kiosk/internal/config.Path",
+      "name": "Path",
+      "pkg": "github.com/radiusmethod/gitlab-kiosk/internal/config",
+      "file": "internal/config/config.go",
+      "line": 125,
+      "lines": 15,
+      "exported": true,
+      "fanIn": 1,
+      "fanOut": 0
+    },
+    {
+      "id": "github.com/radiusmethod/gitlab-kiosk/internal/config.expandTilde",
+      "name": "expandTilde",
+      "pkg": "github.com/radiusmethod/gitlab-kiosk/internal/config",
+      "file": "internal/config/config.go",
+      "line": 142,
+      "lines": 10,
+      "exported": false,
+      "fanIn": 1,
+      "fanOut": 0
+    },
+    {
+      "id": "github.com/radiusmethod/gitlab-kiosk/internal/config.normalizeHost",
+      "name": "normalizeHost",
+      "pkg": "github.com/radiusmethod/gitlab-kiosk/internal/config",
+      "file": "internal/config/config.go",
+      "line": 155,
+      "lines": 11,
+      "exported": false,
+      "fanIn": 1,
+      "fanOut": 0
+    },
+    {
+      "id": "github.com/radiusmethod/gitlab-kiosk/internal/exitcode.Dispatch",
+      "name": "Dispatch",
+      "pkg": "github.com/radiusmethod/gitlab-kiosk/internal/exitcode",
+      "file": "internal/exitcode/exitcode.go",
+      "line": 49,
+      "lines": 27,
+      "exported": true,
+      "fanIn": 2,
+      "fanOut": 0
+    },
+    {
+      "id": "github.com/radiusmethod/gitlab-kiosk/internal/exitcode.HookBlockError.Error",
+      "name": "HookBlockError.Error",
+      "pkg": "github.com/radiusmethod/gitlab-kiosk/internal/exitcode",
+      "file": "internal/exitcode/exitcode.go",
+      "line": 25,
+      "lines": 3,
+      "exported": true,
+      "fanIn": 0,
+      "fanOut": 0
+    },
+    {
+      "id": "github.com/radiusmethod/gitlab-kiosk/internal/exitcode.NotFoundError.Error",
+      "name": "NotFoundError.Error",
+      "pkg": "github.com/radiusmethod/gitlab-kiosk/internal/exitcode",
+      "file": "internal/exitcode/exitcode.go",
+      "line": 16,
+      "lines": 3,
+      "exported": true,
+      "fanIn": 0,
+      "fanOut": 0
+    },
+    {
+      "id": "github.com/radiusmethod/gitlab-kiosk/internal/exitcode.SafetyRefusalError.Error",
+      "name": "SafetyRefusalError.Error",
+      "pkg": "github.com/radiusmethod/gitlab-kiosk/internal/exitcode",
+      "file": "internal/exitcode/exitcode.go",
+      "line": 35,
+      "lines": 3,
+      "exported": true,
+      "fanIn": 0,
+      "fanOut": 0
+    },
+    {
+      "id": "github.com/radiusmethod/gitlab-kiosk/internal/format.Writer.Detail",
+      "name": "Writer.Detail",
+      "pkg": "github.com/radiusmethod/gitlab-kiosk/internal/format",
+      "file": "internal/format/format.go",
+      "line": 56,
+      "lines": 9,
+      "exported": true,
+      "fanIn": 1,
+      "fanOut": 1
+    },
+    {
+      "id": "github.com/radiusmethod/gitlab-kiosk/internal/format.Writer.PageHint",
+      "name": "Writer.PageHint",
+      "pkg": "github.com/radiusmethod/gitlab-kiosk/internal/format",
+      "file": "internal/format/format.go",
+      "line": 98,
+      "lines": 7,
+      "exported": true,
+      "fanIn": 3,
+      "fanOut": 0
+    },
+    {
+      "id": "github.com/radiusmethod/gitlab-kiosk/internal/format.Writer.Raw",
+      "name": "Writer.Raw",
+      "pkg": "github.com/radiusmethod/gitlab-kiosk/internal/format",
+      "file": "internal/format/format.go",
+      "line": 92,
+      "lines": 3,
+      "exported": true,
+      "fanIn": 1,
+      "fanOut": 0
+    },
+    {
+      "id": "github.com/radiusmethod/gitlab-kiosk/internal/format.Writer.Rows",
+      "name": "Writer.Rows",
+      "pkg": "github.com/radiusmethod/gitlab-kiosk/internal/format",
+      "file": "internal/format/format.go",
+      "line": 25,
+      "lines": 12,
+      "exported": true,
+      "fanIn": 8,
+      "fanOut": 1
+    },
+    {
+      "id": "github.com/radiusmethod/gitlab-kiosk/internal/format.Writer.detailJSON",
+      "name": "Writer.detailJSON",
+      "pkg": "github.com/radiusmethod/gitlab-kiosk/internal/format",
+      "file": "internal/format/format.go",
+      "line": 66,
+      "lines": 4,
+      "exported": false,
+      "fanIn": 1,
+      "fanOut": 0
+    },
+    {
+      "id": "github.com/radiusmethod/gitlab-kiosk/internal/format.Writer.rowsJSON",
+      "name": "Writer.rowsJSON",
+      "pkg": "github.com/radiusmethod/gitlab-kiosk/internal/format",
+      "file": "internal/format/format.go",
+      "line": 38,
+      "lines": 16,
+      "exported": false,
+      "fanIn": 1,
+      "fanOut": 0
+    },
+    {
+      "id": "github.com/radiusmethod/gitlab-kiosk/internal/format.orderedObj.MarshalJSON",
+      "name": "orderedObj.MarshalJSON",
+      "pkg": "github.com/radiusmethod/gitlab-kiosk/internal/format",
+      "file": "internal/format/format.go",
+      "line": 74,
+      "lines": 16,
+      "exported": true,
+      "fanIn": 0,
+      "fanOut": 0
+    },
+    {
+      "id": "github.com/radiusmethod/gitlab-kiosk/internal/gitlab.BuildTransport",
+      "name": "BuildTransport",
+      "pkg": "github.com/radiusmethod/gitlab-kiosk/internal/gitlab",
+      "file": "internal/gitlab/transport.go",
+      "line": 72,
+      "lines": 11,
+      "exported": true,
+      "fanIn": 1,
+      "fanOut": 0
+    },
+    {
+      "id": "github.com/radiusmethod/gitlab-kiosk/internal/gitlab.Client.AssertPublic",
+      "name": "Client.AssertPublic",
+      "pkg": "github.com/radiusmethod/gitlab-kiosk/internal/gitlab",
+      "file": "internal/gitlab/client.go",
+      "line": 387,
+      "lines": 17,
+      "exported": true,
+      "fanIn": 0,
+      "fanOut": 2
+    },
+    {
+      "id": "github.com/radiusmethod/gitlab-kiosk/internal/gitlab.Client.Get",
+      "name": "Client.Get",
+      "pkg": "github.com/radiusmethod/gitlab-kiosk/internal/gitlab",
+      "file": "internal/gitlab/client.go",
+      "line": 115,
+      "lines": 62,
+      "exported": true,
+      "fanIn": 12,
+      "fanOut": 0
+    },
+    {
+      "id": "github.com/radiusmethod/gitlab-kiosk/internal/gitlab.Client.GetGroupID",
+      "name": "Client.GetGroupID",
+      "pkg": "github.com/radiusmethod/gitlab-kiosk/internal/gitlab",
+      "file": "internal/gitlab/client.go",
+      "line": 427,
+      "lines": 23,
+      "exported": true,
+      "fanIn": 0,
+      "fanOut": 1
+    },
+    {
+      "id": "github.com/radiusmethod/gitlab-kiosk/internal/gitlab.Client.GetGroupPath",
+      "name": "Client.GetGroupPath",
+      "pkg": "github.com/radiusmethod/gitlab-kiosk/internal/gitlab",
+      "file": "internal/gitlab/client.go",
+      "line": 459,
+      "lines": 10,
+      "exported": true,
+      "fanIn": 1,
+      "fanOut": 1
+    },
+    {
+      "id": "github.com/radiusmethod/gitlab-kiosk/internal/gitlab.Client.GetProjectID",
+      "name": "Client.GetProjectID",
+      "pkg": "github.com/radiusmethod/gitlab-kiosk/internal/gitlab",
+      "file": "internal/gitlab/client.go",
+      "line": 407,
+      "lines": 17,
+      "exported": true,
+      "fanIn": 3,
+      "fanOut": 2
+    },
+    {
+      "id": "github.com/radiusmethod/gitlab-kiosk/internal/gitlab.Client.GetStream",
+      "name": "Client.GetStream",
+      "pkg": "github.com/radiusmethod/gitlab-kiosk/internal/gitlab",
+      "file": "internal/gitlab/client.go",
+      "line": 180,
+      "lines": 3,
+      "exported": true,
+      "fanIn": 0,
+      "fanOut": 1
+    },
+    {
+      "id": "github.com/radiusmethod/gitlab-kiosk/internal/gitlab.Client.GetStreamFollowingRedirectHosts",
+      "name": "Client.GetStreamFollowingRedirectHosts",
+      "pkg": "github.com/radiusmethod/gitlab-kiosk/internal/gitlab",
+      "file": "internal/gitlab/client.go",
+      "line": 187,
+      "lines": 3,
+      "exported": true,
+      "fanIn": 0,
+      "fanOut": 1
+    },
+    {
+      "id": "github.com/radiusmethod/gitlab-kiosk/internal/gitlab.Client.GraphQL",
+      "name": "Client.GraphQL",
+      "pkg": "github.com/radiusmethod/gitlab-kiosk/internal/gitlab",
+      "file": "internal/gitlab/client.go",
+      "line": 324,
+      "lines": 60,
+      "exported": true,
+      "fanIn": 1,
+      "fanOut": 0
+    },
+    {
+      "id": "github.com/radiusmethod/gitlab-kiosk/internal/gitlab.Client.RefreshNamespaceProjects",
+      "name": "Client.RefreshNamespaceProjects",
+      "pkg": "github.com/radiusmethod/gitlab-kiosk/internal/gitlab",
+      "file": "internal/gitlab/client.go",
+      "line": 490,
+      "lines": 73,
+      "exported": true,
+      "fanIn": 2,
+      "fanOut": 3
+    },
+    {
+      "id": "github.com/radiusmethod/gitlab-kiosk/internal/gitlab.Client.SearchGroupCode",
+      "name": "Client.SearchGroupCode",
+      "pkg": "github.com/radiusmethod/gitlab-kiosk/internal/gitlab",
+      "file": "internal/gitlab/client.go",
+      "line": 586,
+      "lines": 31,
+      "exported": true,
+      "fanIn": 0,
+      "fanOut": 3
+    },
+    {
+      "id": "github.com/radiusmethod/gitlab-kiosk/internal/gitlab.Client.SearchGroupWorkItems",
+      "name": "Client.SearchGroupWorkItems",
+      "pkg": "github.com/radiusmethod/gitlab-kiosk/internal/gitlab",
+      "file": "internal/gitlab/work_items.go",
+      "line": 29,
+      "lines": 62,
+      "exported": true,
+      "fanIn": 0,
+      "fanOut": 6
+    },
+    {
+      "id": "github.com/radiusmethod/gitlab-kiosk/internal/gitlab.Client.SearchProjectCode",
+      "name": "Client.SearchProjectCode",
+      "pkg": "github.com/radiusmethod/gitlab-kiosk/internal/gitlab",
+      "file": "internal/gitlab/client.go",
+      "line": 564,
+      "lines": 21,
+      "exported": true,
+      "fanIn": 0,
+      "fanOut": 3
+    },
+    {
+      "id": "github.com/radiusmethod/gitlab-kiosk/internal/gitlab.Client.SetBaseTransport",
+      "name": "Client.SetBaseTransport",
+      "pkg": "github.com/radiusmethod/gitlab-kiosk/internal/gitlab",
+      "file": "internal/gitlab/client.go",
+      "line": 98,
+      "lines": 4,
+      "exported": true,
+      "fanIn": 0,
+      "fanOut": 1
+    },
+    {
+      "id": "github.com/radiusmethod/gitlab-kiosk/internal/gitlab.Client.SetHTTPLogger",
+      "name": "Client.SetHTTPLogger",
+      "pkg": "github.com/radiusmethod/gitlab-kiosk/internal/gitlab",
+      "file": "internal/gitlab/client.go",
+      "line": 104,
+      "lines": 4,
+      "exported": true,
+      "fanIn": 1,
+      "fanOut": 1
+    },
+    {
+      "id": "github.com/radiusmethod/gitlab-kiosk/internal/gitlab.Client.cachePublicProject",
+      "name": "Client.cachePublicProject",
+      "pkg": "github.com/radiusmethod/gitlab-kiosk/internal/gitlab",
+      "file": "internal/gitlab/client.go",
+      "line": 696,
+      "lines": 16,
+      "exported": false,
+      "fanIn": 2,
+      "fanOut": 0
+    },
+    {
+      "id": "github.com/radiusmethod/gitlab-kiosk/internal/gitlab.Client.fetchGroup",
+      "name": "Client.fetchGroup",
+      "pkg": "github.com/radiusmethod/gitlab-kiosk/internal/gitlab",
+      "file": "internal/gitlab/client.go",
+      "line": 470,
+      "lines": 17,
+      "exported": false,
+      "fanIn": 4,
+      "fanOut": 1
+    },
+    {
+      "id": "github.com/radiusmethod/gitlab-kiosk/internal/gitlab.Client.fetchProject",
+      "name": "Client.fetchProject",
+      "pkg": "github.com/radiusmethod/gitlab-kiosk/internal/gitlab",
+      "file": "internal/gitlab/client.go",
+      "line": 667,
+      "lines": 28,
+      "exported": false,
+      "fanIn": 2,
+      "fanOut": 1
+    },
+    {
+      "id": "github.com/radiusmethod/gitlab-kiosk/internal/gitlab.Client.getStream",
+      "name": "Client.getStream",
+      "pkg": "github.com/radiusmethod/gitlab-kiosk/internal/gitlab",
+      "file": "internal/gitlab/client.go",
+      "line": 191,
+      "lines": 95,
+      "exported": false,
+      "fanIn": 2,
+      "fanOut": 3
+    },
+    {
+      "id": "github.com/radiusmethod/gitlab-kiosk/internal/gitlab.Client.rebuildTransport",
+      "name": "Client.rebuildTransport",
+      "pkg": "github.com/radiusmethod/gitlab-kiosk/internal/gitlab",
+      "file": "internal/gitlab/client.go",
+      "line": 109,
+      "lines": 3,
+      "exported": false,
+      "fanIn": 3,
+      "fanOut": 1
+    },
+    {
+      "id": "github.com/radiusmethod/gitlab-kiosk/internal/gitlab.Client.searchCode",
+      "name": "Client.searchCode",
+      "pkg": "github.com/radiusmethod/gitlab-kiosk/internal/gitlab",
+      "file": "internal/gitlab/client.go",
+      "line": 618,
+      "lines": 9,
+      "exported": false,
+      "fanIn": 2,
+      "fanOut": 2
+    },
+    {
+      "id": "github.com/radiusmethod/gitlab-kiosk/internal/gitlab.Client.searchGroupEpics",
+      "name": "Client.searchGroupEpics",
+      "pkg": "github.com/radiusmethod/gitlab-kiosk/internal/gitlab",
+      "file": "internal/gitlab/work_items.go",
+      "line": 92,
+      "lines": 11,
+      "exported": false,
+      "fanIn": 1,
+      "fanOut": 1
+    },
+    {
+      "id": "github.com/radiusmethod/gitlab-kiosk/internal/gitlab.Client.searchGroupIssues",
+      "name": "Client.searchGroupIssues",
+      "pkg": "github.com/radiusmethod/gitlab-kiosk/internal/gitlab",
+      "file": "internal/gitlab/work_items.go",
+      "line": 104,
+      "lines": 11,
+      "exported": false,
+      "fanIn": 1,
+      "fanOut": 1
+    },
+    {
+      "id": "github.com/radiusmethod/gitlab-kiosk/internal/gitlab.GroupVisibilityError.Error",
+      "name": "GroupVisibilityError.Error",
+      "pkg": "github.com/radiusmethod/gitlab-kiosk/internal/gitlab",
+      "file": "internal/gitlab/client.go",
+      "line": 733,
+      "lines": 3,
+      "exported": true,
+      "fanIn": 0,
+      "fanOut": 0
+    },
+    {
+      "id": "github.com/radiusmethod/gitlab-kiosk/internal/gitlab.LoggingTransport.RoundTrip",
+      "name": "LoggingTransport.RoundTrip",
+      "pkg": "github.com/radiusmethod/gitlab-kiosk/internal/gitlab",
+      "file": "internal/gitlab/transport.go",
+      "line": 40,
+      "lines": 29,
+      "exported": true,
+      "fanIn": 0,
+      "fanOut": 1
+    },
+    {
+      "id": "github.com/radiusmethod/gitlab-kiosk/internal/gitlab.NewClient",
+      "name": "NewClient",
+      "pkg": "github.com/radiusmethod/gitlab-kiosk/internal/gitlab",
+      "file": "internal/gitlab/client.go",
+      "line": 76,
+      "lines": 19,
+      "exported": true,
+      "fanIn": 0,
+      "fanOut": 2
+    },
+    {
+      "id": "github.com/radiusmethod/gitlab-kiosk/internal/gitlab.NewSQLiteKnownSafeCache",
+      "name": "NewSQLiteKnownSafeCache",
+      "pkg": "github.com/radiusmethod/gitlab-kiosk/internal/gitlab",
+      "file": "internal/gitlab/known_safe_cache.go",
+      "line": 132,
+      "lines": 20,
+      "exported": true,
+      "fanIn": 0,
+      "fanOut": 2
+    },
+    {
+      "id": "github.com/radiusmethod/gitlab-kiosk/internal/gitlab.ReadOnlyTransport.RoundTrip",
+      "name": "ReadOnlyTransport.RoundTrip",
+      "pkg": "github.com/radiusmethod/gitlab-kiosk/internal/gitlab",
+      "file": "internal/gitlab/transport.go",
+      "line": 19,
+      "lines": 12,
+      "exported": true,
+      "fanIn": 0,
+      "fanOut": 0
+    },
+    {
+      "id": "github.com/radiusmethod/gitlab-kiosk/internal/gitlab.SQLiteKnownSafeCache.Close",
+      "name": "SQLiteKnownSafeCache.Close",
+      "pkg": "github.com/radiusmethod/gitlab-kiosk/internal/gitlab",
+      "file": "internal/gitlab/known_safe_cache.go",
+      "line": 185,
+      "lines": 3,
+      "exported": true,
+      "fanIn": 0,
+      "fanOut": 0
+    },
+    {
+      "id": "github.com/radiusmethod/gitlab-kiosk/internal/gitlab.SQLiteKnownSafeCache.LookupNamespace",
+      "name": "SQLiteKnownSafeCache.LookupNamespace",
+      "pkg": "github.com/radiusmethod/gitlab-kiosk/internal/gitlab",
+      "file": "internal/gitlab/known_safe_cache.go",
+      "line": 189,
+      "lines": 32,
+      "exported": true,
+      "fanIn": 0,
+      "fanOut": 2
+    },
+    {
+      "id": "github.com/radiusmethod/gitlab-kiosk/internal/gitlab.SQLiteKnownSafeCache.LookupProjectByID",
+      "name": "SQLiteKnownSafeCache.LookupProjectByID",
+      "pkg": "github.com/radiusmethod/gitlab-kiosk/internal/gitlab",
+      "file": "internal/gitlab/known_safe_cache.go",
+      "line": 255,
+      "lines": 32,
+      "exported": true,
+      "fanIn": 0,
+      "fanOut": 2
+    },
+    {
+      "id": "github.com/radiusmethod/gitlab-kiosk/internal/gitlab.SQLiteKnownSafeCache.LookupProjectByPath",
+      "name": "SQLiteKnownSafeCache.LookupProjectByPath",
+      "pkg": "github.com/radiusmethod/gitlab-kiosk/internal/gitlab",
+      "file": "internal/gitlab/known_safe_cache.go",
+      "line": 222,
+      "lines": 32,
+      "exported": true,
+      "fanIn": 0,
+      "fanOut": 2
+    },
+    {
+      "id": "github.com/radiusmethod/gitlab-kiosk/internal/gitlab.SQLiteKnownSafeCache.StoreNamespace",
+      "name": "SQLiteKnownSafeCache.StoreNamespace",
+      "pkg": "github.com/radiusmethod/gitlab-kiosk/internal/gitlab",
+      "file": "internal/gitlab/known_safe_cache.go",
+      "line": 288,
+      "lines": 24,
+      "exported": true,
+      "fanIn": 0,
+      "fanOut": 3
+    },
+    {
+      "id": "github.com/radiusmethod/gitlab-kiosk/internal/gitlab.SQLiteKnownSafeCache.StoreNamespaceSnapshot",
+      "name": "SQLiteKnownSafeCache.StoreNamespaceSnapshot",
+      "pkg": "github.com/radiusmethod/gitlab-kiosk/internal/gitlab",
+      "file": "internal/gitlab/known_safe_cache.go",
+      "line": 359,
+      "lines": 70,
+      "exported": true,
+      "fanIn": 0,
+      "fanOut": 3
+    },
+    {
+      "id": "github.com/radiusmethod/gitlab-kiosk/internal/gitlab.SQLiteKnownSafeCache.StoreProject",
+      "name": "SQLiteKnownSafeCache.StoreProject",
+      "pkg": "github.com/radiusmethod/gitlab-kiosk/internal/gitlab",
+      "file": "internal/gitlab/known_safe_cache.go",
+      "line": 313,
+      "lines": 45,
+      "exported": true,
+      "fanIn": 0,
+      "fanOut": 3
+    },
+    {
+      "id": "github.com/radiusmethod/gitlab-kiosk/internal/gitlab.SQLiteKnownSafeCache.disablePersistenceOnReadonly",
+      "name": "SQLiteKnownSafeCache.disablePersistenceOnReadonly",
+      "pkg": "github.com/radiusmethod/gitlab-kiosk/internal/gitlab",
+      "file": "internal/gitlab/known_safe_cache.go",
+      "line": 436,
+      "lines": 10,
+      "exported": false,
+      "fanIn": 3,
+      "fanOut": 1
+    },
+    {
+      "id": "github.com/radiusmethod/gitlab-kiosk/internal/gitlab.SQLiteKnownSafeCache.init",
+      "name": "SQLiteKnownSafeCache.init",
+      "pkg": "github.com/radiusmethod/gitlab-kiosk/internal/gitlab",
+      "file": "internal/gitlab/known_safe_cache.go",
+      "line": 153,
+      "lines": 31,
+      "exported": false,
+      "fanIn": 1,
+      "fanOut": 0
+    },
+    {
+      "id": "github.com/radiusmethod/gitlab-kiosk/internal/gitlab.SQLiteKnownSafeCache.persistenceDisabled",
+      "name": "SQLiteKnownSafeCache.persistenceDisabled",
+      "pkg": "github.com/radiusmethod/gitlab-kiosk/internal/gitlab",
+      "file": "internal/gitlab/known_safe_cache.go",
+      "line": 430,
+      "lines": 5,
+      "exported": false,
+      "fanIn": 6,
+      "fanOut": 0
+    },
+    {
+      "id": "github.com/radiusmethod/gitlab-kiosk/internal/gitlab.VisibilityError.Error",
+      "name": "VisibilityError.Error",
+      "pkg": "github.com/radiusmethod/gitlab-kiosk/internal/gitlab",
+      "file": "internal/gitlab/client.go",
+      "line": 723,
+      "lines": 3,
+      "exported": true,
+      "fanIn": 0,
+      "fanOut": 0
+    },
+    {
+      "id": "github.com/radiusmethod/gitlab-kiosk/internal/gitlab.WithKnownSafeCache",
+      "name": "WithKnownSafeCache",
+      "pkg": "github.com/radiusmethod/gitlab-kiosk/internal/gitlab",
+      "file": "internal/gitlab/client.go",
+      "line": 59,
+      "lines": 7,
+      "exported": true,
+      "fanIn": 0,
+      "fanOut": 0
+    },
+    {
+      "id": "github.com/radiusmethod/gitlab-kiosk/internal/gitlab.WithNowFunc",
+      "name": "WithNowFunc",
+      "pkg": "github.com/radiusmethod/gitlab-kiosk/internal/gitlab",
+      "file": "internal/gitlab/client.go",
+      "line": 67,
+      "lines": 7,
+      "exported": true,
+      "fanIn": 0,
+      "fanOut": 0
+    },
+    {
+      "id": "github.com/radiusmethod/gitlab-kiosk/internal/gitlab.buildCodeSearchQuery",
+      "name": "buildCodeSearchQuery",
+      "pkg": "github.com/radiusmethod/gitlab-kiosk/internal/gitlab",
+      "file": "internal/gitlab/client.go",
+      "line": 628,
+      "lines": 8,
+      "exported": false,
+      "fanIn": 1,
+      "fanOut": 0
+    },
+    {
+      "id": "github.com/radiusmethod/gitlab-kiosk/internal/gitlab.graphqlOperationName",
+      "name": "graphqlOperationName",
+      "pkg": "github.com/radiusmethod/gitlab-kiosk/internal/gitlab",
+      "file": "internal/gitlab/transport.go",
+      "line": 101,
+      "lines": 21,
+      "exported": false,
+      "fanIn": 1,
+      "fanOut": 0
+    },
+    {
+      "id": "github.com/radiusmethod/gitlab-kiosk/internal/gitlab.isRedirect",
+      "name": "isRedirect",
+      "pkg": "github.com/radiusmethod/gitlab-kiosk/internal/gitlab",
+      "file": "internal/gitlab/client.go",
+      "line": 287,
+      "lines": 3,
+      "exported": false,
+      "fanIn": 1,
+      "fanOut": 0
+    },
+    {
+      "id": "github.com/radiusmethod/gitlab-kiosk/internal/gitlab.isSQLiteReadonlyError",
+      "name": "isSQLiteReadonlyError",
+      "pkg": "github.com/radiusmethod/gitlab-kiosk/internal/gitlab",
+      "file": "internal/gitlab/known_safe_cache.go",
+      "line": 447,
+      "lines": 6,
+      "exported": false,
+      "fanIn": 1,
+      "fanOut": 0
+    },
+    {
+      "id": "github.com/radiusmethod/gitlab-kiosk/internal/gitlab.memoryKnownSafeCache.Close",
+      "name": "memoryKnownSafeCache.Close",
+      "pkg": "github.com/radiusmethod/gitlab-kiosk/internal/gitlab",
+      "file": "internal/gitlab/known_safe_cache.go",
+      "line": 122,
+      "lines": 1,
+      "exported": true,
+      "fanIn": 0,
+      "fanOut": 0
+    },
+    {
+      "id": "github.com/radiusmethod/gitlab-kiosk/internal/gitlab.memoryKnownSafeCache.LookupNamespace",
+      "name": "memoryKnownSafeCache.LookupNamespace",
+      "pkg": "github.com/radiusmethod/gitlab-kiosk/internal/gitlab",
+      "file": "internal/gitlab/known_safe_cache.go",
+      "line": 59,
+      "lines": 9,
+      "exported": true,
+      "fanIn": 1,
+      "fanOut": 0
+    },
+    {
+      "id": "github.com/radiusmethod/gitlab-kiosk/internal/gitlab.memoryKnownSafeCache.LookupProjectByID",
+      "name": "memoryKnownSafeCache.LookupProjectByID",
+      "pkg": "github.com/radiusmethod/gitlab-kiosk/internal/gitlab",
+      "file": "internal/gitlab/known_safe_cache.go",
+      "line": 79,
+      "lines": 9,
+      "exported": true,
+      "fanIn": 1,
+      "fanOut": 0
+    },
+    {
+      "id": "github.com/radiusmethod/gitlab-kiosk/internal/gitlab.memoryKnownSafeCache.LookupProjectByPath",
+      "name": "memoryKnownSafeCache.LookupProjectByPath",
+      "pkg": "github.com/radiusmethod/gitlab-kiosk/internal/gitlab",
+      "file": "internal/gitlab/known_safe_cache.go",
+      "line": 69,
+      "lines": 9,
+      "exported": true,
+      "fanIn": 1,
+      "fanOut": 0
+    },
+    {
+      "id": "github.com/radiusmethod/gitlab-kiosk/internal/gitlab.memoryKnownSafeCache.StoreNamespace",
+      "name": "memoryKnownSafeCache.StoreNamespace",
+      "pkg": "github.com/radiusmethod/gitlab-kiosk/internal/gitlab",
+      "file": "internal/gitlab/known_safe_cache.go",
+      "line": 89,
+      "lines": 6,
+      "exported": true,
+      "fanIn": 1,
+      "fanOut": 0
+    },
+    {
+      "id": "github.com/radiusmethod/gitlab-kiosk/internal/gitlab.memoryKnownSafeCache.StoreNamespaceSnapshot",
+      "name": "memoryKnownSafeCache.StoreNamespaceSnapshot",
+      "pkg": "github.com/radiusmethod/gitlab-kiosk/internal/gitlab",
+      "file": "internal/gitlab/known_safe_cache.go",
+      "line": 104,
+      "lines": 17,
+      "exported": true,
+      "fanIn": 1,
+      "fanOut": 0
+    },
+    {
+      "id": "github.com/radiusmethod/gitlab-kiosk/internal/gitlab.memoryKnownSafeCache.StoreProject",
+      "name": "memoryKnownSafeCache.StoreProject",
+      "pkg": "github.com/radiusmethod/gitlab-kiosk/internal/gitlab",
+      "file": "internal/gitlab/known_safe_cache.go",
+      "line": 96,
+      "lines": 7,
+      "exported": true,
+      "fanIn": 1,
+      "fanOut": 0
+    },
+    {
+      "id": "github.com/radiusmethod/gitlab-kiosk/internal/gitlab.newMemoryKnownSafeCache",
+      "name": "newMemoryKnownSafeCache",
+      "pkg": "github.com/radiusmethod/gitlab-kiosk/internal/gitlab",
+      "file": "internal/gitlab/known_safe_cache.go",
+      "line": 51,
+      "lines": 7,
+      "exported": false,
+      "fanIn": 2,
+      "fanOut": 0
+    },
+    {
+      "id": "github.com/radiusmethod/gitlab-kiosk/internal/gitlab.parseCodeSearchHits",
+      "name": "parseCodeSearchHits",
+      "pkg": "github.com/radiusmethod/gitlab-kiosk/internal/gitlab",
+      "file": "internal/gitlab/client.go",
+      "line": 637,
+      "lines": 29,
+      "exported": false,
+      "fanIn": 2,
+      "fanOut": 0
+    },
+    {
+      "id": "github.com/radiusmethod/gitlab-kiosk/internal/gitlab.parseWorkItemEpics",
+      "name": "parseWorkItemEpics",
+      "pkg": "github.com/radiusmethod/gitlab-kiosk/internal/gitlab",
+      "file": "internal/gitlab/work_items.go",
+      "line": 116,
+      "lines": 27,
+      "exported": false,
+      "fanIn": 1,
+      "fanOut": 0
+    },
+    {
+      "id": "github.com/radiusmethod/gitlab-kiosk/internal/gitlab.parseWorkItemIssues",
+      "name": "parseWorkItemIssues",
+      "pkg": "github.com/radiusmethod/gitlab-kiosk/internal/gitlab",
+      "file": "internal/gitlab/work_items.go",
+      "line": 144,
+      "lines": 42,
+      "exported": false,
+      "fanIn": 1,
+      "fanOut": 0
+    },
+    {
+      "id": "github.com/radiusmethod/gitlab-kiosk/internal/gitlab.projectInNamespace",
+      "name": "projectInNamespace",
+      "pkg": "github.com/radiusmethod/gitlab-kiosk/internal/gitlab",
+      "file": "internal/gitlab/client.go",
+      "line": 713,
+      "lines": 3,
+      "exported": false,
+      "fanIn": 1,
+      "fanOut": 0
+    },
+    {
+      "id": "github.com/radiusmethod/gitlab-kiosk/internal/gitlab.redactPresignedError",
+      "name": "redactPresignedError",
+      "pkg": "github.com/radiusmethod/gitlab-kiosk/internal/gitlab",
+      "file": "internal/gitlab/client.go",
+      "line": 291,
+      "lines": 6,
+      "exported": false,
+      "fanIn": 1,
+      "fanOut": 1
+    },
+    {
+      "id": "github.com/radiusmethod/gitlab-kiosk/internal/gitlab.redactPresignedString",
+      "name": "redactPresignedString",
+      "pkg": "github.com/radiusmethod/gitlab-kiosk/internal/gitlab",
+      "file": "internal/gitlab/client.go",
+      "line": 298,
+      "lines": 10,
+      "exported": false,
+      "fanIn": 1,
+      "fanOut": 1
+    },
+    {
+      "id": "github.com/radiusmethod/gitlab-kiosk/internal/gitlab.redactPresignedURL",
+      "name": "redactPresignedURL",
+      "pkg": "github.com/radiusmethod/gitlab-kiosk/internal/gitlab",
+      "file": "internal/gitlab/client.go",
+      "line": 309,
+      "lines": 10,
+      "exported": false,
+      "fanIn": 2,
+      "fanOut": 0
+    },
+    {
+      "id": "github.com/radiusmethod/gitlab-kiosk/internal/gitlab.summarizeURL",
+      "name": "summarizeURL",
+      "pkg": "github.com/radiusmethod/gitlab-kiosk/internal/gitlab",
+      "file": "internal/gitlab/transport.go",
+      "line": 84,
+      "lines": 16,
+      "exported": false,
+      "fanIn": 1,
+      "fanOut": 1
+    },
+    {
+      "id": "github.com/radiusmethod/gitlab-kiosk/internal/gitremote.DetectProject",
+      "name": "DetectProject",
+      "pkg": "github.com/radiusmethod/gitlab-kiosk/internal/gitremote",
+      "file": "internal/gitremote/remote.go",
+      "line": 60,
+      "lines": 31,
+      "exported": true,
+      "fanIn": 3,
+      "fanOut": 1
+    },
+    {
+      "id": "github.com/radiusmethod/gitlab-kiosk/internal/gitremote.ParseRemoteURL",
+      "name": "ParseRemoteURL",
+      "pkg": "github.com/radiusmethod/gitlab-kiosk/internal/gitremote",
+      "file": "internal/gitremote/remote.go",
+      "line": 13,
+      "lines": 33,
+      "exported": true,
+      "fanIn": 2,
+      "fanOut": 0
+    },
+    {
+      "id": "github.com/radiusmethod/gitlab-kiosk/internal/helpall.FormatFlag",
+      "name": "FormatFlag",
+      "pkg": "github.com/radiusmethod/gitlab-kiosk/internal/helpall",
+      "file": "internal/helpall/helpall.go",
+      "line": 203,
+      "lines": 12,
+      "exported": true,
+      "fanIn": 2,
+      "fanOut": 0
+    },
+    {
+      "id": "github.com/radiusmethod/gitlab-kiosk/internal/helpall.NewCommand",
+      "name": "NewCommand",
+      "pkg": "github.com/radiusmethod/gitlab-kiosk/internal/helpall",
+      "file": "internal/helpall/helpall.go",
+      "line": 299,
+      "lines": 28,
+      "exported": true,
+      "fanIn": 2,
+      "fanOut": 6
+    },
+    {
+      "id": "github.com/radiusmethod/gitlab-kiosk/internal/helpall.RenderCommands",
+      "name": "RenderCommands",
+      "pkg": "github.com/radiusmethod/gitlab-kiosk/internal/helpall",
+      "file": "internal/helpall/helpall.go",
+      "line": 218,
+      "lines": 27,
+      "exported": true,
+      "fanIn": 3,
+      "fanOut": 0
+    },
+    {
+      "id": "github.com/radiusmethod/gitlab-kiosk/internal/helpall.RenderGlobalFlags",
+      "name": "RenderGlobalFlags",
+      "pkg": "github.com/radiusmethod/gitlab-kiosk/internal/helpall",
+      "file": "internal/helpall/helpall.go",
+      "line": 275,
+      "lines": 21,
+      "exported": true,
+      "fanIn": 1,
+      "fanOut": 0
+    },
+    {
+      "id": "github.com/radiusmethod/gitlab-kiosk/internal/helpall.RenderOutputFormat",
+      "name": "RenderOutputFormat",
+      "pkg": "github.com/radiusmethod/gitlab-kiosk/internal/helpall",
+      "file": "internal/helpall/helpall.go",
+      "line": 248,
+      "lines": 24,
+      "exported": true,
+      "fanIn": 2,
+      "fanOut": 0
+    },
+    {
+      "id": "github.com/radiusmethod/gitlab-kiosk/internal/helpall.WalkCommands",
+      "name": "WalkCommands",
+      "pkg": "github.com/radiusmethod/gitlab-kiosk/internal/helpall",
+      "file": "internal/helpall/helpall.go",
+      "line": 43,
+      "lines": 3,
+      "exported": true,
+      "fanIn": 2,
+      "fanOut": 1
+    },
+    {
+      "id": "github.com/radiusmethod/gitlab-kiosk/internal/helpall.WalkGlobalFlags",
+      "name": "WalkGlobalFlags",
+      "pkg": "github.com/radiusmethod/gitlab-kiosk/internal/helpall",
+      "file": "internal/helpall/helpall.go",
+      "line": 159,
+      "lines": 18,
+      "exported": true,
+      "fanIn": 1,
+      "fanOut": 1
+    },
+    {
+      "id": "github.com/radiusmethod/gitlab-kiosk/internal/helpall.WalkHelpAllCommands",
+      "name": "WalkHelpAllCommands",
+      "pkg": "github.com/radiusmethod/gitlab-kiosk/internal/helpall",
+      "file": "internal/helpall/helpall.go",
+      "line": 50,
+      "lines": 3,
+      "exported": true,
+      "fanIn": 1,
+      "fanOut": 1
+    },
+    {
+      "id": "github.com/radiusmethod/gitlab-kiosk/internal/helpall.WalkHelpAllOutputs",
+      "name": "WalkHelpAllOutputs",
+      "pkg": "github.com/radiusmethod/gitlab-kiosk/internal/helpall",
+      "file": "internal/helpall/helpall.go",
+      "line": 114,
+      "lines": 3,
+      "exported": true,
+      "fanIn": 1,
+      "fanOut": 1
+    },
+    {
+      "id": "github.com/radiusmethod/gitlab-kiosk/internal/helpall.WalkOutputs",
+      "name": "WalkOutputs",
+      "pkg": "github.com/radiusmethod/gitlab-kiosk/internal/helpall",
+      "file": "internal/helpall/helpall.go",
+      "line": 107,
+      "lines": 3,
+      "exported": true,
+      "fanIn": 1,
+      "fanOut": 1
+    },
+    {
+      "id": "github.com/radiusmethod/gitlab-kiosk/internal/helpall.extractArgs",
+      "name": "extractArgs",
+      "pkg": "github.com/radiusmethod/gitlab-kiosk/internal/helpall",
+      "file": "internal/helpall/helpall.go",
+      "line": 193,
+      "lines": 6,
+      "exported": false,
+      "fanIn": 1,
+      "fanOut": 0
+    },
+    {
+      "id": "github.com/radiusmethod/gitlab-kiosk/internal/helpall.matchesCommand",
+      "name": "matchesCommand",
+      "pkg": "github.com/radiusmethod/gitlab-kiosk/internal/helpall",
+      "file": "internal/helpall/helpall.go",
+      "line": 180,
+      "lines": 10,
+      "exported": false,
+      "fanIn": 1,
+      "fanOut": 0
+    },
+    {
+      "id": "github.com/radiusmethod/gitlab-kiosk/internal/helpall.shouldSkip",
+      "name": "shouldSkip",
+      "pkg": "github.com/radiusmethod/gitlab-kiosk/internal/helpall",
+      "file": "internal/helpall/helpall.go",
+      "line": 148,
+      "lines": 6,
+      "exported": false,
+      "fanIn": 2,
+      "fanOut": 0
+    },
+    {
+      "id": "github.com/radiusmethod/gitlab-kiosk/internal/helpall.walkCommands",
+      "name": "walkCommands",
+      "pkg": "github.com/radiusmethod/gitlab-kiosk/internal/helpall",
+      "file": "internal/helpall/helpall.go",
+      "line": 60,
+      "lines": 42,
+      "exported": false,
+      "fanIn": 1,
+      "fanOut": 4
+    },
+    {
+      "id": "github.com/radiusmethod/gitlab-kiosk/internal/helpall.walkCommandsForMode",
+      "name": "walkCommandsForMode",
+      "pkg": "github.com/radiusmethod/gitlab-kiosk/internal/helpall",
+      "file": "internal/helpall/helpall.go",
+      "line": 54,
+      "lines": 5,
+      "exported": false,
+      "fanIn": 2,
+      "fanOut": 1
+    },
+    {
+      "id": "github.com/radiusmethod/gitlab-kiosk/internal/helpall.walkOutputs",
+      "name": "walkOutputs",
+      "pkg": "github.com/radiusmethod/gitlab-kiosk/internal/helpall",
+      "file": "internal/helpall/helpall.go",
+      "line": 124,
+      "lines": 23,
+      "exported": false,
+      "fanIn": 1,
+      "fanOut": 1
+    },
+    {
+      "id": "github.com/radiusmethod/gitlab-kiosk/internal/helpall.walkOutputsForMode",
+      "name": "walkOutputsForMode",
+      "pkg": "github.com/radiusmethod/gitlab-kiosk/internal/helpall",
+      "file": "internal/helpall/helpall.go",
+      "line": 118,
+      "lines": 5,
+      "exported": false,
+      "fanIn": 2,
+      "fanOut": 1
+    },
+    {
+      "id": "github.com/radiusmethod/gitlab-kiosk/internal/index.Index.List",
+      "name": "Index.List",
+      "pkg": "github.com/radiusmethod/gitlab-kiosk/internal/index",
+      "file": "internal/index/repos.go",
+      "line": 101,
+      "lines": 6,
+      "exported": true,
+      "fanIn": 0,
+      "fanOut": 1
+    },
+    {
+      "id": "github.com/radiusmethod/gitlab-kiosk/internal/index.Index.Lookup",
+      "name": "Index.Lookup",
+      "pkg": "github.com/radiusmethod/gitlab-kiosk/internal/index",
+      "file": "internal/index/repos.go",
+      "line": 91,
+      "lines": 5,
+      "exported": true,
+      "fanIn": 0,
+      "fanOut": 0
+    },
+    {
+      "id": "github.com/radiusmethod/gitlab-kiosk/internal/index.Index.Search",
+      "name": "Index.Search",
+      "pkg": "github.com/radiusmethod/gitlab-kiosk/internal/index",
+      "file": "internal/index/repos.go",
+      "line": 111,
+      "lines": 34,
+      "exported": true,
+      "fanIn": 1,
+      "fanOut": 1
+    },
+    {
+      "id": "github.com/radiusmethod/gitlab-kiosk/internal/index.Load",
+      "name": "Load",
+      "pkg": "github.com/radiusmethod/gitlab-kiosk/internal/index",
+      "file": "internal/index/repos.go",
+      "line": 35,
+      "lines": 29,
+      "exported": true,
+      "fanIn": 1,
+      "fanOut": 1
+    },
+    {
+      "id": "github.com/radiusmethod/gitlab-kiosk/internal/index.Save",
+      "name": "Save",
+      "pkg": "github.com/radiusmethod/gitlab-kiosk/internal/index",
+      "file": "internal/index/repos.go",
+      "line": 67,
+      "lines": 22,
+      "exported": true,
+      "fanIn": 0,
+      "fanOut": 1
+    },
+    {
+      "id": "github.com/radiusmethod/gitlab-kiosk/internal/index.Spider.Scan",
+      "name": "Spider.Scan",
+      "pkg": "github.com/radiusmethod/gitlab-kiosk/internal/index",
+      "file": "internal/index/spider.go",
+      "line": 38,
+      "lines": 52,
+      "exported": true,
+      "fanIn": 0,
+      "fanOut": 1
+    },
+    {
+      "id": "github.com/radiusmethod/gitlab-kiosk/internal/index.Status",
+      "name": "Status",
+      "pkg": "github.com/radiusmethod/gitlab-kiosk/internal/index",
+      "file": "internal/index/repos.go",
+      "line": 157,
+      "lines": 21,
+      "exported": true,
+      "fanIn": 0,
+      "fanOut": 2
+    },
+    {
+      "id": "github.com/radiusmethod/gitlab-kiosk/internal/index.TSVPath",
+      "name": "TSVPath",
+      "pkg": "github.com/radiusmethod/gitlab-kiosk/internal/index",
+      "file": "internal/index/repos.go",
+      "line": 24,
+      "lines": 7,
+      "exported": true,
+      "fanIn": 3,
+      "fanOut": 1
+    },
+    {
+      "id": "github.com/radiusmethod/gitlab-kiosk/internal/index.containsAll",
+      "name": "containsAll",
+      "pkg": "github.com/radiusmethod/gitlab-kiosk/internal/index",
+      "file": "internal/index/repos.go",
+      "line": 146,
+      "lines": 8,
+      "exported": false,
+      "fanIn": 1,
+      "fanOut": 0
+    },
+    {
+      "id": "github.com/radiusmethod/gitlab-kiosk/internal/index.parseGitConfig",
+      "name": "parseGitConfig",
+      "pkg": "github.com/radiusmethod/gitlab-kiosk/internal/index",
+      "file": "internal/index/spider.go",
+      "line": 93,
+      "lines": 33,
+      "exported": false,
+      "fanIn": 1,
+      "fanOut": 1
+    },
+    {
+      "id": "github.com/radiusmethod/gitlab-kiosk/internal/skillgen.Generate",
+      "name": "Generate",
+      "pkg": "github.com/radiusmethod/gitlab-kiosk/internal/skillgen",
+      "file": "internal/skillgen/skillgen.go",
+      "line": 128,
+      "lines": 41,
+      "exported": true,
+      "fanIn": 1,
+      "fanOut": 6
+    },
+    {
+      "id": "github.com/radiusmethod/gitlab-kiosk/internal/skillgen.ValidateRefs",
+      "name": "ValidateRefs",
+      "pkg": "github.com/radiusmethod/gitlab-kiosk/internal/skillgen",
+      "file": "internal/skillgen/skillgen.go",
+      "line": 24,
+      "lines": 7,
+      "exported": true,
+      "fanIn": 1,
+      "fanOut": 2
+    },
+    {
+      "id": "github.com/radiusmethod/gitlab-kiosk/internal/skillgen.extractRefs",
+      "name": "extractRefs",
+      "pkg": "github.com/radiusmethod/gitlab-kiosk/internal/skillgen",
+      "file": "internal/skillgen/skillgen.go",
+      "line": 35,
+      "lines": 33,
+      "exported": false,
+      "fanIn": 1,
+      "fanOut": 0
+    },
+    {
+      "id": "github.com/radiusmethod/gitlab-kiosk/internal/skillgen.hasYAMLFrontmatter",
+      "name": "hasYAMLFrontmatter",
+      "pkg": "github.com/radiusmethod/gitlab-kiosk/internal/skillgen",
+      "file": "internal/skillgen/skillgen.go",
+      "line": 16,
+      "lines": 3,
+      "exported": false,
+      "fanIn": 1,
+      "fanOut": 0
+    },
+    {
+      "id": "github.com/radiusmethod/gitlab-kiosk/internal/skillgen.resolveCmd",
+      "name": "resolveCmd",
+      "pkg": "github.com/radiusmethod/gitlab-kiosk/internal/skillgen",
+      "file": "internal/skillgen/skillgen.go",
+      "line": 72,
+      "lines": 20,
+      "exported": false,
+      "fanIn": 1,
+      "fanOut": 0
+    },
+    {
+      "id": "github.com/radiusmethod/gitlab-kiosk/internal/skillgen.validateRef",
+      "name": "validateRef",
+      "pkg": "github.com/radiusmethod/gitlab-kiosk/internal/skillgen",
+      "file": "internal/skillgen/skillgen.go",
+      "line": 94,
+      "lines": 30,
+      "exported": false,
+      "fanIn": 1,
+      "fanOut": 1
+    },
+    {
+      "id": "github.com/radiusmethod/gitlab-kiosk/internal/vcr.LoadCassette",
+      "name": "LoadCassette",
+      "pkg": "github.com/radiusmethod/gitlab-kiosk/internal/vcr",
+      "file": "internal/vcr/vcr.go",
+      "line": 45,
+      "lines": 18,
+      "exported": true,
+      "fanIn": 1,
+      "fanOut": 0
+    },
+    {
+      "id": "github.com/radiusmethod/gitlab-kiosk/internal/vcr.NewReplayer",
+      "name": "NewReplayer",
+      "pkg": "github.com/radiusmethod/gitlab-kiosk/internal/vcr",
+      "file": "internal/vcr/vcr.go",
+      "line": 75,
+      "lines": 11,
+      "exported": true,
+      "fanIn": 0,
+      "fanOut": 1
+    },
+    {
+      "id": "github.com/radiusmethod/gitlab-kiosk/internal/vcr.Replayer.AssertAllUsed",
+      "name": "Replayer.AssertAllUsed",
+      "pkg": "github.com/radiusmethod/gitlab-kiosk/internal/vcr",
+      "file": "internal/vcr/vcr.go",
+      "line": 150,
+      "lines": 9,
+      "exported": true,
+      "fanIn": 0,
+      "fanOut": 0
+    },
+    {
+      "id": "github.com/radiusmethod/gitlab-kiosk/internal/vcr.Replayer.RoundTrip",
+      "name": "Replayer.RoundTrip",
+      "pkg": "github.com/radiusmethod/gitlab-kiosk/internal/vcr",
+      "file": "internal/vcr/vcr.go",
+      "line": 91,
+      "lines": 57,
+      "exported": true,
+      "fanIn": 0,
+      "fanOut": 1
+    },
+    {
+      "id": "github.com/radiusmethod/gitlab-kiosk/internal/vcr.stripHost",
+      "name": "stripHost",
+      "pkg": "github.com/radiusmethod/gitlab-kiosk/internal/vcr",
+      "file": "internal/vcr/vcr.go",
+      "line": 162,
+      "lines": 13,
+      "exported": false,
+      "fanIn": 1,
+      "fanOut": 0
+    }
+  ],
+  "edges": [
+    {
+      "from": "github.com/radiusmethod/gitlab-kiosk/cmd/glk.main",
+      "to": "github.com/radiusmethod/gitlab-kiosk/glkcli.Execute"
+    },
+    {
+      "from": "github.com/radiusmethod/gitlab-kiosk/cmd/grec.main",
+      "to": "github.com/radiusmethod/gitlab-kiosk/greccli.Execute"
+    },
+    {
+      "from": "github.com/radiusmethod/gitlab-kiosk/glkcli.Execute",
+      "to": "github.com/radiusmethod/gitlab-kiosk/glkcli.ConfigureErrorHints"
+    },
+    {
+      "from": "github.com/radiusmethod/gitlab-kiosk/glkcli.Execute",
+      "to": "github.com/radiusmethod/gitlab-kiosk/glkcli.enrichError"
+    },
+    {
+      "from": "github.com/radiusmethod/gitlab-kiosk/glkcli.Execute",
+      "to": "github.com/radiusmethod/gitlab-kiosk/internal/agentenv.Check"
+    },
+    {
+      "from": "github.com/radiusmethod/gitlab-kiosk/glkcli.Execute",
+      "to": "github.com/radiusmethod/gitlab-kiosk/internal/btw.Flush"
+    },
+    {
+      "from": "github.com/radiusmethod/gitlab-kiosk/glkcli.Execute",
+      "to": "github.com/radiusmethod/gitlab-kiosk/internal/exitcode.Dispatch"
+    },
+    {
+      "from": "github.com/radiusmethod/gitlab-kiosk/glkcli.allPipelineRowsTerminal",
+      "to": "github.com/radiusmethod/gitlab-kiosk/glkcli.isTerminalJobStatus"
+    },
+    {
+      "from": "github.com/radiusmethod/gitlab-kiosk/glkcli.anyJobFailed",
+      "to": "github.com/radiusmethod/gitlab-kiosk/glkcli.jsonStr"
+    },
+    {
+      "from": "github.com/radiusmethod/gitlab-kiosk/glkcli.artifactTreeHasDirectory",
+      "to": "github.com/radiusmethod/gitlab-kiosk/glkcli.jsonStr"
+    },
+    {
+      "from": "github.com/radiusmethod/gitlab-kiosk/glkcli.bashCommandTargetsHost",
+      "to": "github.com/radiusmethod/gitlab-kiosk/glkcli.isShellSeparator"
+    },
+    {
+      "from": "github.com/radiusmethod/gitlab-kiosk/glkcli.bashCommandTargetsHost",
+      "to": "github.com/radiusmethod/gitlab-kiosk/glkcli.shellTokens"
+    },
+    {
+      "from": "github.com/radiusmethod/gitlab-kiosk/glkcli.binaryActivationChecks",
+      "to": "github.com/radiusmethod/gitlab-kiosk/glkcli.resolvePath"
+    },
+    {
+      "from": "github.com/radiusmethod/gitlab-kiosk/glkcli.checkSkillDrift",
+      "to": "github.com/radiusmethod/gitlab-kiosk/glkcli.inspectInstalledSkill"
+    },
+    {
+      "from": "github.com/radiusmethod/gitlab-kiosk/glkcli.compareSemver",
+      "to": "github.com/radiusmethod/gitlab-kiosk/glkcli.parseSemver"
+    },
+    {
+      "from": "github.com/radiusmethod/gitlab-kiosk/glkcli.configChecks",
+      "to": "github.com/radiusmethod/gitlab-kiosk/glkcli.withHint"
+    },
+    {
+      "from": "github.com/radiusmethod/gitlab-kiosk/glkcli.configureHTTPLogging",
+      "to": "github.com/radiusmethod/gitlab-kiosk/internal/gitlab.Client.SetHTTPLogger"
+    },
+    {
+      "from": "github.com/radiusmethod/gitlab-kiosk/glkcli.countPendingPipelineRows",
+      "to": "github.com/radiusmethod/gitlab-kiosk/glkcli.isTerminalJobStatus"
+    },
+    {
+      "from": "github.com/radiusmethod/gitlab-kiosk/glkcli.desiredHookConfig",
+      "to": "github.com/radiusmethod/gitlab-kiosk/glkcli.decodeHookEntries"
+    },
+    {
+      "from": "github.com/radiusmethod/gitlab-kiosk/glkcli.desiredHookConfig",
+      "to": "github.com/radiusmethod/gitlab-kiosk/glkcli.readHookConfigRoot"
+    },
+    {
+      "from": "github.com/radiusmethod/gitlab-kiosk/glkcli.desiredHookConfig",
+      "to": "github.com/radiusmethod/gitlab-kiosk/glkcli.upsertGLKPreToolUse"
+    },
+    {
+      "from": "github.com/radiusmethod/gitlab-kiosk/glkcli.desiredHookConfigWithoutGLK",
+      "to": "github.com/radiusmethod/gitlab-kiosk/glkcli.decodeHookEntries"
+    },
+    {
+      "from": "github.com/radiusmethod/gitlab-kiosk/glkcli.desiredHookConfigWithoutGLK",
+      "to": "github.com/radiusmethod/gitlab-kiosk/glkcli.removeGLKPreToolUse"
+    },
+    {
+      "from": "github.com/radiusmethod/gitlab-kiosk/glkcli.enrichError",
+      "to": "github.com/radiusmethod/gitlab-kiosk/internal/helpall.RenderCommands"
+    },
+    {
+      "from": "github.com/radiusmethod/gitlab-kiosk/glkcli.enrichError",
+      "to": "github.com/radiusmethod/gitlab-kiosk/internal/helpall.WalkCommands"
+    },
+    {
+      "from": "github.com/radiusmethod/gitlab-kiosk/glkcli.environmentChecks",
+      "to": "github.com/radiusmethod/gitlab-kiosk/glkcli.groupedEnvCheck"
+    },
+    {
+      "from": "github.com/radiusmethod/gitlab-kiosk/glkcli.eventTitle",
+      "to": "github.com/radiusmethod/gitlab-kiosk/glkcli.jsonNested"
+    },
+    {
+      "from": "github.com/radiusmethod/gitlab-kiosk/glkcli.eventTitle",
+      "to": "github.com/radiusmethod/gitlab-kiosk/glkcli.jsonStr"
+    },
+    {
+      "from": "github.com/radiusmethod/gitlab-kiosk/glkcli.eventURL",
+      "to": "github.com/radiusmethod/gitlab-kiosk/glkcli.jsonNested"
+    },
+    {
+      "from": "github.com/radiusmethod/gitlab-kiosk/glkcli.eventURL",
+      "to": "github.com/radiusmethod/gitlab-kiosk/glkcli.jsonStr"
+    },
+    {
+      "from": "github.com/radiusmethod/gitlab-kiosk/glkcli.eventURL",
+      "to": "github.com/radiusmethod/gitlab-kiosk/internal/gitlab.Client.Get"
+    },
+    {
+      "from": "github.com/radiusmethod/gitlab-kiosk/glkcli.extractArtifactArchive",
+      "to": "github.com/radiusmethod/gitlab-kiosk/glkcli.artifactFileMode"
+    },
+    {
+      "from": "github.com/radiusmethod/gitlab-kiosk/glkcli.extractArtifactArchive",
+      "to": "github.com/radiusmethod/gitlab-kiosk/glkcli.artifactTargetPath"
+    },
+    {
+      "from": "github.com/radiusmethod/gitlab-kiosk/glkcli.failedJobNames",
+      "to": "github.com/radiusmethod/gitlab-kiosk/glkcli.jsonStr"
+    },
+    {
+      "from": "github.com/radiusmethod/gitlab-kiosk/glkcli.fetchDiscussions",
+      "to": "github.com/radiusmethod/gitlab-kiosk/glkcli.jsonNested"
+    },
+    {
+      "from": "github.com/radiusmethod/gitlab-kiosk/glkcli.fetchDiscussions",
+      "to": "github.com/radiusmethod/gitlab-kiosk/glkcli.jsonStr"
+    },
+    {
+      "from": "github.com/radiusmethod/gitlab-kiosk/glkcli.fetchDiscussions",
+      "to": "github.com/radiusmethod/gitlab-kiosk/glkcli.noteBody"
+    },
+    {
+      "from": "github.com/radiusmethod/gitlab-kiosk/glkcli.fetchDiscussions",
+      "to": "github.com/radiusmethod/gitlab-kiosk/glkcli.notesParams"
+    },
+    {
+      "from": "github.com/radiusmethod/gitlab-kiosk/glkcli.fetchDiscussions",
+      "to": "github.com/radiusmethod/gitlab-kiosk/internal/format.Writer.PageHint"
+    },
+    {
+      "from": "github.com/radiusmethod/gitlab-kiosk/glkcli.fetchDiscussions",
+      "to": "github.com/radiusmethod/gitlab-kiosk/internal/format.Writer.Rows"
+    },
+    {
+      "from": "github.com/radiusmethod/gitlab-kiosk/glkcli.fetchDiscussions",
+      "to": "github.com/radiusmethod/gitlab-kiosk/internal/gitlab.Client.Get"
+    },
+    {
+      "from": "github.com/radiusmethod/gitlab-kiosk/glkcli.fetchDiscussions",
+      "to": "github.com/radiusmethod/gitlab-kiosk/internal/gitlab.Client.GetProjectID"
+    },
+    {
+      "from": "github.com/radiusmethod/gitlab-kiosk/glkcli.fetchEpicNotes",
+      "to": "github.com/radiusmethod/gitlab-kiosk/glkcli.extractNotesWidget"
+    },
+    {
+      "from": "github.com/radiusmethod/gitlab-kiosk/glkcli.fetchEpicNotes",
+      "to": "github.com/radiusmethod/gitlab-kiosk/glkcli.gidToNumeric"
+    },
+    {
+      "from": "github.com/radiusmethod/gitlab-kiosk/glkcli.fetchEpicNotes",
+      "to": "github.com/radiusmethod/gitlab-kiosk/glkcli.isNumericID"
+    },
+    {
+      "from": "github.com/radiusmethod/gitlab-kiosk/glkcli.fetchEpicNotes",
+      "to": "github.com/radiusmethod/gitlab-kiosk/glkcli.parseEpicNotesGraphQL"
+    },
+    {
+      "from": "github.com/radiusmethod/gitlab-kiosk/glkcli.fetchEpicNotes",
+      "to": "github.com/radiusmethod/gitlab-kiosk/internal/format.Writer.Rows"
+    },
+    {
+      "from": "github.com/radiusmethod/gitlab-kiosk/glkcli.fetchEpicNotes",
+      "to": "github.com/radiusmethod/gitlab-kiosk/internal/gitlab.Client.GetGroupPath"
+    },
+    {
+      "from": "github.com/radiusmethod/gitlab-kiosk/glkcli.fetchEpicNotes",
+      "to": "github.com/radiusmethod/gitlab-kiosk/internal/gitlab.Client.GraphQL"
+    },
+    {
+      "from": "github.com/radiusmethod/gitlab-kiosk/glkcli.fetchLatestReleaseVersion",
+      "to": "github.com/radiusmethod/gitlab-kiosk/glkcli.fetchLatestReleaseVersionAPI"
+    },
+    {
+      "from": "github.com/radiusmethod/gitlab-kiosk/glkcli.fetchLatestReleaseVersion",
+      "to": "github.com/radiusmethod/gitlab-kiosk/glkcli.fetchLatestReleaseVersionGH"
+    },
+    {
+      "from": "github.com/radiusmethod/gitlab-kiosk/glkcli.fetchLatestReleaseVersion",
+      "to": "github.com/radiusmethod/gitlab-kiosk/glkcli.fetchLatestReleaseVersionRedirect"
+    },
+    {
+      "from": "github.com/radiusmethod/gitlab-kiosk/glkcli.fetchMRDiffs",
+      "to": "github.com/radiusmethod/gitlab-kiosk/glkcli.diffStatus"
+    },
+    {
+      "from": "github.com/radiusmethod/gitlab-kiosk/glkcli.fetchMRDiffs",
+      "to": "github.com/radiusmethod/gitlab-kiosk/glkcli.jsonStr"
+    },
+    {
+      "from": "github.com/radiusmethod/gitlab-kiosk/glkcli.fetchMRDiffs",
+      "to": "github.com/radiusmethod/gitlab-kiosk/internal/format.Writer.PageHint"
+    },
+    {
+      "from": "github.com/radiusmethod/gitlab-kiosk/glkcli.fetchMRDiffs",
+      "to": "github.com/radiusmethod/gitlab-kiosk/internal/format.Writer.Raw"
+    },
+    {
+      "from": "github.com/radiusmethod/gitlab-kiosk/glkcli.fetchMRDiffs",
+      "to": "github.com/radiusmethod/gitlab-kiosk/internal/format.Writer.Rows"
+    },
+    {
+      "from": "github.com/radiusmethod/gitlab-kiosk/glkcli.fetchMRDiffs",
+      "to": "github.com/radiusmethod/gitlab-kiosk/internal/gitlab.Client.Get"
+    },
+    {
+      "from": "github.com/radiusmethod/gitlab-kiosk/glkcli.fetchMRDiffs",
+      "to": "github.com/radiusmethod/gitlab-kiosk/internal/gitlab.Client.GetProjectID"
+    },
+    {
+      "from": "github.com/radiusmethod/gitlab-kiosk/glkcli.fetchPipelineBridges",
+      "to": "github.com/radiusmethod/gitlab-kiosk/internal/gitlab.Client.Get"
+    },
+    {
+      "from": "github.com/radiusmethod/gitlab-kiosk/glkcli.fetchPipelineJobs",
+      "to": "github.com/radiusmethod/gitlab-kiosk/internal/gitlab.Client.Get"
+    },
+    {
+      "from": "github.com/radiusmethod/gitlab-kiosk/glkcli.filterArtifactTreeByPath",
+      "to": "github.com/radiusmethod/gitlab-kiosk/glkcli.jsonStr"
+    },
+    {
+      "from": "github.com/radiusmethod/gitlab-kiosk/glkcli.gitLabChecks",
+      "to": "github.com/radiusmethod/gitlab-kiosk/glkcli.withHint"
+    },
+    {
+      "from": "github.com/radiusmethod/gitlab-kiosk/glkcli.hookChecks",
+      "to": "github.com/radiusmethod/gitlab-kiosk/glkcli.inspectInstalledHook"
+    },
+    {
+      "from": "github.com/radiusmethod/gitlab-kiosk/glkcli.init",
+      "to": "github.com/radiusmethod/gitlab-kiosk/glkcli.initVersionFallback"
+    },
+    {
+      "from": "github.com/radiusmethod/gitlab-kiosk/glkcli.init",
+      "to": "github.com/radiusmethod/gitlab-kiosk/internal/helpall.NewCommand"
+    },
+    {
+      "from": "github.com/radiusmethod/gitlab-kiosk/glkcli.inspectInstalledHook",
+      "to": "github.com/radiusmethod/gitlab-kiosk/glkcli.containsEntry"
+    },
+    {
+      "from": "github.com/radiusmethod/gitlab-kiosk/glkcli.inspectInstalledHook",
+      "to": "github.com/radiusmethod/gitlab-kiosk/glkcli.decodeHookEntries"
+    },
+    {
+      "from": "github.com/radiusmethod/gitlab-kiosk/glkcli.inspectInstalledHook",
+      "to": "github.com/radiusmethod/gitlab-kiosk/glkcli.desiredGLKPreToolUseEntry"
+    },
+    {
+      "from": "github.com/radiusmethod/gitlab-kiosk/glkcli.inspectInstalledHook",
+      "to": "github.com/radiusmethod/gitlab-kiosk/glkcli.withHint"
+    },
+    {
+      "from": "github.com/radiusmethod/gitlab-kiosk/glkcli.inspectInstalledSkill",
+      "to": "github.com/radiusmethod/gitlab-kiosk/glkcli.validateSkillFrontmatter"
+    },
+    {
+      "from": "github.com/radiusmethod/gitlab-kiosk/glkcli.inspectInstalledSkill",
+      "to": "github.com/radiusmethod/gitlab-kiosk/glkcli.withHint"
+    },
+    {
+      "from": "github.com/radiusmethod/gitlab-kiosk/glkcli.jobRow",
+      "to": "github.com/radiusmethod/gitlab-kiosk/glkcli.jsonStr"
+    },
+    {
+      "from": "github.com/radiusmethod/gitlab-kiosk/glkcli.jobTraceCachePath",
+      "to": "github.com/radiusmethod/gitlab-kiosk/internal/config.CacheDir"
+    },
+    {
+      "from": "github.com/radiusmethod/gitlab-kiosk/glkcli.jsonNested",
+      "to": "github.com/radiusmethod/gitlab-kiosk/glkcli.jsonStr"
+    },
+    {
+      "from": "github.com/radiusmethod/gitlab-kiosk/glkcli.latestReleaseChecks",
+      "to": "github.com/radiusmethod/gitlab-kiosk/glkcli.compareSemver"
+    },
+    {
+      "from": "github.com/radiusmethod/gitlab-kiosk/glkcli.latestReleaseChecks",
+      "to": "github.com/radiusmethod/gitlab-kiosk/glkcli.withHint"
+    },
+    {
+      "from": "github.com/radiusmethod/gitlab-kiosk/glkcli.noteBody",
+      "to": "github.com/radiusmethod/gitlab-kiosk/glkcli.jsonStr"
+    },
+    {
+      "from": "github.com/radiusmethod/gitlab-kiosk/glkcli.parentFailedJobIDs",
+      "to": "github.com/radiusmethod/gitlab-kiosk/glkcli.jsonStr"
+    },
+    {
+      "from": "github.com/radiusmethod/gitlab-kiosk/glkcli.parseNote",
+      "to": "github.com/radiusmethod/gitlab-kiosk/glkcli.jsonNested"
+    },
+    {
+      "from": "github.com/radiusmethod/gitlab-kiosk/glkcli.parseNote",
+      "to": "github.com/radiusmethod/gitlab-kiosk/glkcli.jsonStr"
+    },
+    {
+      "from": "github.com/radiusmethod/gitlab-kiosk/glkcli.parseNote",
+      "to": "github.com/radiusmethod/gitlab-kiosk/glkcli.noteBody"
+    },
+    {
+      "from": "github.com/radiusmethod/gitlab-kiosk/glkcli.pipelineRows",
+      "to": "github.com/radiusmethod/gitlab-kiosk/glkcli.fetchPipelineBridges"
+    },
+    {
+      "from": "github.com/radiusmethod/gitlab-kiosk/glkcli.pipelineRows",
+      "to": "github.com/radiusmethod/gitlab-kiosk/glkcli.fetchPipelineJobs"
+    },
+    {
+      "from": "github.com/radiusmethod/gitlab-kiosk/glkcli.pipelineRows",
+      "to": "github.com/radiusmethod/gitlab-kiosk/glkcli.jobRow"
+    },
+    {
+      "from": "github.com/radiusmethod/gitlab-kiosk/glkcli.pipelineRows",
+      "to": "github.com/radiusmethod/gitlab-kiosk/glkcli.jsonNested"
+    },
+    {
+      "from": "github.com/radiusmethod/gitlab-kiosk/glkcli.printJobRows",
+      "to": "github.com/radiusmethod/gitlab-kiosk/internal/format.Writer.Rows"
+    },
+    {
+      "from": "github.com/radiusmethod/gitlab-kiosk/glkcli.printParentJobRows",
+      "to": "github.com/radiusmethod/gitlab-kiosk/glkcli.jsonStr"
+    },
+    {
+      "from": "github.com/radiusmethod/gitlab-kiosk/glkcli.printParentJobRows",
+      "to": "github.com/radiusmethod/gitlab-kiosk/internal/format.Writer.Rows"
+    },
+    {
+      "from": "github.com/radiusmethod/gitlab-kiosk/glkcli.printPipelineDetail",
+      "to": "github.com/radiusmethod/gitlab-kiosk/glkcli.jsonStr"
+    },
+    {
+      "from": "github.com/radiusmethod/gitlab-kiosk/glkcli.printPipelineDetail",
+      "to": "github.com/radiusmethod/gitlab-kiosk/internal/format.Writer.Detail"
+    },
+    {
+      "from": "github.com/radiusmethod/gitlab-kiosk/glkcli.printWaitJobRows",
+      "to": "github.com/radiusmethod/gitlab-kiosk/glkcli.printJobRows"
+    },
+    {
+      "from": "github.com/radiusmethod/gitlab-kiosk/glkcli.printWaitJobRows",
+      "to": "github.com/radiusmethod/gitlab-kiosk/internal/format.Writer.Rows"
+    },
+    {
+      "from": "github.com/radiusmethod/gitlab-kiosk/glkcli.registerFailedJobHint",
+      "to": "github.com/radiusmethod/gitlab-kiosk/internal/btw.Register"
+    },
+    {
+      "from": "github.com/radiusmethod/gitlab-kiosk/glkcli.registerFailedPipelineJobHint",
+      "to": "github.com/radiusmethod/gitlab-kiosk/glkcli.failedPipelineJobIDs"
+    },
+    {
+      "from": "github.com/radiusmethod/gitlab-kiosk/glkcli.registerFailedPipelineJobHint",
+      "to": "github.com/radiusmethod/gitlab-kiosk/glkcli.registerFailedJobHint"
+    },
+    {
+      "from": "github.com/radiusmethod/gitlab-kiosk/glkcli.registerGroupHint",
+      "to": "github.com/radiusmethod/gitlab-kiosk/internal/btw.Register"
+    },
+    {
+      "from": "github.com/radiusmethod/gitlab-kiosk/glkcli.registerOutputFileHint",
+      "to": "github.com/radiusmethod/gitlab-kiosk/internal/btw.Register"
+    },
+    {
+      "from": "github.com/radiusmethod/gitlab-kiosk/glkcli.removeGLKPreToolUse",
+      "to": "github.com/radiusmethod/gitlab-kiosk/glkcli.isManagedGLKEntry"
+    },
+    {
+      "from": "github.com/radiusmethod/gitlab-kiosk/glkcli.renderNotes",
+      "to": "github.com/radiusmethod/gitlab-kiosk/glkcli.notesParams"
+    },
+    {
+      "from": "github.com/radiusmethod/gitlab-kiosk/glkcli.renderNotes",
+      "to": "github.com/radiusmethod/gitlab-kiosk/glkcli.parseNote"
+    },
+    {
+      "from": "github.com/radiusmethod/gitlab-kiosk/glkcli.renderNotes",
+      "to": "github.com/radiusmethod/gitlab-kiosk/internal/format.Writer.PageHint"
+    },
+    {
+      "from": "github.com/radiusmethod/gitlab-kiosk/glkcli.renderNotes",
+      "to": "github.com/radiusmethod/gitlab-kiosk/internal/format.Writer.Rows"
+    },
+    {
+      "from": "github.com/radiusmethod/gitlab-kiosk/glkcli.renderNotes",
+      "to": "github.com/radiusmethod/gitlab-kiosk/internal/gitlab.Client.Get"
+    },
+    {
+      "from": "github.com/radiusmethod/gitlab-kiosk/glkcli.repoContextChecks",
+      "to": "github.com/radiusmethod/gitlab-kiosk/glkcli.withHint"
+    },
+    {
+      "from": "github.com/radiusmethod/gitlab-kiosk/glkcli.resolveCodeSearchArgs",
+      "to": "github.com/radiusmethod/gitlab-kiosk/glkcli.resolveProject"
+    },
+    {
+      "from": "github.com/radiusmethod/gitlab-kiosk/glkcli.resolveDoctorState",
+      "to": "github.com/radiusmethod/gitlab-kiosk/glkcli.doctorConfigPath"
+    },
+    {
+      "from": "github.com/radiusmethod/gitlab-kiosk/glkcli.resolveDoctorState",
+      "to": "github.com/radiusmethod/gitlab-kiosk/glkcli.doctorGetenv"
+    },
+    {
+      "from": "github.com/radiusmethod/gitlab-kiosk/glkcli.resolveDoctorState",
+      "to": "github.com/radiusmethod/gitlab-kiosk/internal/config.Defaults"
+    },
+    {
+      "from": "github.com/radiusmethod/gitlab-kiosk/glkcli.resolveProject",
+      "to": "github.com/radiusmethod/gitlab-kiosk/internal/gitremote.DetectProject"
+    },
+    {
+      "from": "github.com/radiusmethod/gitlab-kiosk/glkcli.resolveProjectArgs",
+      "to": "github.com/radiusmethod/gitlab-kiosk/internal/gitremote.DetectProject"
+    },
+    {
+      "from": "github.com/radiusmethod/gitlab-kiosk/glkcli.runDoctor",
+      "to": "github.com/radiusmethod/gitlab-kiosk/glkcli.binaryActivationChecks"
+    },
+    {
+      "from": "github.com/radiusmethod/gitlab-kiosk/glkcli.runDoctor",
+      "to": "github.com/radiusmethod/gitlab-kiosk/glkcli.cacheChecks"
+    },
+    {
+      "from": "github.com/radiusmethod/gitlab-kiosk/glkcli.runDoctor",
+      "to": "github.com/radiusmethod/gitlab-kiosk/glkcli.configChecks"
+    },
+    {
+      "from": "github.com/radiusmethod/gitlab-kiosk/glkcli.runDoctor",
+      "to": "github.com/radiusmethod/gitlab-kiosk/glkcli.doctorSummaryRow"
+    },
+    {
+      "from": "github.com/radiusmethod/gitlab-kiosk/glkcli.runDoctor",
+      "to": "github.com/radiusmethod/gitlab-kiosk/glkcli.environmentChecks"
+    },
+    {
+      "from": "github.com/radiusmethod/gitlab-kiosk/glkcli.runDoctor",
+      "to": "github.com/radiusmethod/gitlab-kiosk/glkcli.gitLabChecks"
+    },
+    {
+      "from": "github.com/radiusmethod/gitlab-kiosk/glkcli.runDoctor",
+      "to": "github.com/radiusmethod/gitlab-kiosk/glkcli.hookChecks"
+    },
+    {
+      "from": "github.com/radiusmethod/gitlab-kiosk/glkcli.runDoctor",
+      "to": "github.com/radiusmethod/gitlab-kiosk/glkcli.inspectInstalledSkill"
+    },
+    {
+      "from": "github.com/radiusmethod/gitlab-kiosk/glkcli.runDoctor",
+      "to": "github.com/radiusmethod/gitlab-kiosk/glkcli.latestReleaseChecks"
+    },
+    {
+      "from": "github.com/radiusmethod/gitlab-kiosk/glkcli.runDoctor",
+      "to": "github.com/radiusmethod/gitlab-kiosk/glkcli.repoContextChecks"
+    },
+    {
+      "from": "github.com/radiusmethod/gitlab-kiosk/glkcli.runDoctor",
+      "to": "github.com/radiusmethod/gitlab-kiosk/glkcli.resolveDoctorState"
+    },
+    {
+      "from": "github.com/radiusmethod/gitlab-kiosk/glkcli.runDoctor",
+      "to": "github.com/radiusmethod/gitlab-kiosk/internal/format.Writer.Rows"
+    },
+    {
+      "from": "github.com/radiusmethod/gitlab-kiosk/glkcli.runHookConfigRewrite",
+      "to": "github.com/radiusmethod/gitlab-kiosk/glkcli.plannedAction"
+    },
+    {
+      "from": "github.com/radiusmethod/gitlab-kiosk/glkcli.runHookConfigRewrite",
+      "to": "github.com/radiusmethod/gitlab-kiosk/glkcli.writeIfChanged"
+    },
+    {
+      "from": "github.com/radiusmethod/gitlab-kiosk/glkcli.shorterSearchExample",
+      "to": "github.com/radiusmethod/gitlab-kiosk/glkcli.searchTerms"
+    },
+    {
+      "from": "github.com/radiusmethod/gitlab-kiosk/glkcli.upsertGLKPreToolUse",
+      "to": "github.com/radiusmethod/gitlab-kiosk/glkcli.containsEntry"
+    },
+    {
+      "from": "github.com/radiusmethod/gitlab-kiosk/glkcli.upsertGLKPreToolUse",
+      "to": "github.com/radiusmethod/gitlab-kiosk/glkcli.desiredGLKPreToolUseEntry"
+    },
+    {
+      "from": "github.com/radiusmethod/gitlab-kiosk/glkcli.upsertGLKPreToolUse",
+      "to": "github.com/radiusmethod/gitlab-kiosk/glkcli.isManagedGLKEntry"
+    },
+    {
+      "from": "github.com/radiusmethod/gitlab-kiosk/glkcli.validateSkillFrontmatter",
+      "to": "github.com/radiusmethod/gitlab-kiosk/glkcli.extractFrontmatter"
+    },
+    {
+      "from": "github.com/radiusmethod/gitlab-kiosk/glkcli.writeFishCompletions",
+      "to": "github.com/radiusmethod/gitlab-kiosk/glkcli.writeIfChanged"
+    },
+    {
+      "from": "github.com/radiusmethod/gitlab-kiosk/glkcli.writeIfChanged",
+      "to": "github.com/radiusmethod/gitlab-kiosk/glkcli.writeAdjacentBackup"
+    },
+    {
+      "from": "github.com/radiusmethod/gitlab-kiosk/glkcli.writeSkills",
+      "to": "github.com/radiusmethod/gitlab-kiosk/glkcli.writeIfChanged"
+    },
+    {
+      "from": "github.com/radiusmethod/gitlab-kiosk/glkcli.zeroWorkItemsHint",
+      "to": "github.com/radiusmethod/gitlab-kiosk/glkcli.shorterSearchExample"
+    },
+    {
+      "from": "github.com/radiusmethod/gitlab-kiosk/greccli.Execute",
+      "to": "github.com/radiusmethod/gitlab-kiosk/internal/btw.Flush"
+    },
+    {
+      "from": "github.com/radiusmethod/gitlab-kiosk/greccli.Execute",
+      "to": "github.com/radiusmethod/gitlab-kiosk/internal/exitcode.Dispatch"
+    },
+    {
+      "from": "github.com/radiusmethod/gitlab-kiosk/greccli.init",
+      "to": "github.com/radiusmethod/gitlab-kiosk/greccli.initVersionFallback"
+    },
+    {
+      "from": "github.com/radiusmethod/gitlab-kiosk/greccli.init",
+      "to": "github.com/radiusmethod/gitlab-kiosk/internal/helpall.NewCommand"
+    },
+    {
+      "from": "github.com/radiusmethod/gitlab-kiosk/greccli.resolveProject",
+      "to": "github.com/radiusmethod/gitlab-kiosk/internal/gitremote.DetectProject"
+    },
+    {
+      "from": "github.com/radiusmethod/gitlab-kiosk/internal/cmd/gen-skills.main",
+      "to": "github.com/radiusmethod/gitlab-kiosk/glkcli.RootCmd"
+    },
+    {
+      "from": "github.com/radiusmethod/gitlab-kiosk/internal/cmd/gen-skills.main",
+      "to": "github.com/radiusmethod/gitlab-kiosk/greccli.RootCmd"
+    },
+    {
+      "from": "github.com/radiusmethod/gitlab-kiosk/internal/cmd/gen-skills.main",
+      "to": "github.com/radiusmethod/gitlab-kiosk/internal/skillgen.Generate"
+    },
+    {
+      "from": "github.com/radiusmethod/gitlab-kiosk/internal/config.Load",
+      "to": "github.com/radiusmethod/gitlab-kiosk/internal/config.Defaults"
+    },
+    {
+      "from": "github.com/radiusmethod/gitlab-kiosk/internal/config.Load",
+      "to": "github.com/radiusmethod/gitlab-kiosk/internal/config.Path"
+    },
+    {
+      "from": "github.com/radiusmethod/gitlab-kiosk/internal/config.Load",
+      "to": "github.com/radiusmethod/gitlab-kiosk/internal/config.expandTilde"
+    },
+    {
+      "from": "github.com/radiusmethod/gitlab-kiosk/internal/config.Load",
+      "to": "github.com/radiusmethod/gitlab-kiosk/internal/config.normalizeHost"
+    },
+    {
+      "from": "github.com/radiusmethod/gitlab-kiosk/internal/format.Writer.Detail",
+      "to": "github.com/radiusmethod/gitlab-kiosk/internal/format.Writer.detailJSON"
+    },
+    {
+      "from": "github.com/radiusmethod/gitlab-kiosk/internal/format.Writer.Rows",
+      "to": "github.com/radiusmethod/gitlab-kiosk/internal/format.Writer.rowsJSON"
+    },
+    {
+      "from": "github.com/radiusmethod/gitlab-kiosk/internal/gitlab.Client.AssertPublic",
+      "to": "github.com/radiusmethod/gitlab-kiosk/internal/gitlab.Client.cachePublicProject"
+    },
+    {
+      "from": "github.com/radiusmethod/gitlab-kiosk/internal/gitlab.Client.AssertPublic",
+      "to": "github.com/radiusmethod/gitlab-kiosk/internal/gitlab.Client.fetchProject"
+    },
+    {
+      "from": "github.com/radiusmethod/gitlab-kiosk/internal/gitlab.Client.GetGroupID",
+      "to": "github.com/radiusmethod/gitlab-kiosk/internal/gitlab.Client.fetchGroup"
+    },
+    {
+      "from": "github.com/radiusmethod/gitlab-kiosk/internal/gitlab.Client.GetGroupPath",
+      "to": "github.com/radiusmethod/gitlab-kiosk/internal/gitlab.Client.fetchGroup"
+    },
+    {
+      "from": "github.com/radiusmethod/gitlab-kiosk/internal/gitlab.Client.GetProjectID",
+      "to": "github.com/radiusmethod/gitlab-kiosk/internal/gitlab.Client.cachePublicProject"
+    },
+    {
+      "from": "github.com/radiusmethod/gitlab-kiosk/internal/gitlab.Client.GetProjectID",
+      "to": "github.com/radiusmethod/gitlab-kiosk/internal/gitlab.Client.fetchProject"
+    },
+    {
+      "from": "github.com/radiusmethod/gitlab-kiosk/internal/gitlab.Client.GetStream",
+      "to": "github.com/radiusmethod/gitlab-kiosk/internal/gitlab.Client.getStream"
+    },
+    {
+      "from": "github.com/radiusmethod/gitlab-kiosk/internal/gitlab.Client.GetStreamFollowingRedirectHosts",
+      "to": "github.com/radiusmethod/gitlab-kiosk/internal/gitlab.Client.getStream"
+    },
+    {
+      "from": "github.com/radiusmethod/gitlab-kiosk/internal/gitlab.Client.RefreshNamespaceProjects",
+      "to": "github.com/radiusmethod/gitlab-kiosk/internal/gitlab.Client.Get"
+    },
+    {
+      "from": "github.com/radiusmethod/gitlab-kiosk/internal/gitlab.Client.RefreshNamespaceProjects",
+      "to": "github.com/radiusmethod/gitlab-kiosk/internal/gitlab.Client.fetchGroup"
+    },
+    {
+      "from": "github.com/radiusmethod/gitlab-kiosk/internal/gitlab.Client.RefreshNamespaceProjects",
+      "to": "github.com/radiusmethod/gitlab-kiosk/internal/gitlab.projectInNamespace"
+    },
+    {
+      "from": "github.com/radiusmethod/gitlab-kiosk/internal/gitlab.Client.SearchGroupCode",
+      "to": "github.com/radiusmethod/gitlab-kiosk/internal/gitlab.Client.RefreshNamespaceProjects"
+    },
+    {
+      "from": "github.com/radiusmethod/gitlab-kiosk/internal/gitlab.Client.SearchGroupCode",
+      "to": "github.com/radiusmethod/gitlab-kiosk/internal/gitlab.Client.searchCode"
+    },
+    {
+      "from": "github.com/radiusmethod/gitlab-kiosk/internal/gitlab.Client.SearchGroupCode",
+      "to": "github.com/radiusmethod/gitlab-kiosk/internal/gitlab.parseCodeSearchHits"
+    },
+    {
+      "from": "github.com/radiusmethod/gitlab-kiosk/internal/gitlab.Client.SearchGroupWorkItems",
+      "to": "github.com/radiusmethod/gitlab-kiosk/internal/gitlab.Client.RefreshNamespaceProjects"
+    },
+    {
+      "from": "github.com/radiusmethod/gitlab-kiosk/internal/gitlab.Client.SearchGroupWorkItems",
+      "to": "github.com/radiusmethod/gitlab-kiosk/internal/gitlab.Client.fetchGroup"
+    },
+    {
+      "from": "github.com/radiusmethod/gitlab-kiosk/internal/gitlab.Client.SearchGroupWorkItems",
+      "to": "github.com/radiusmethod/gitlab-kiosk/internal/gitlab.Client.searchGroupEpics"
+    },
+    {
+      "from": "github.com/radiusmethod/gitlab-kiosk/internal/gitlab.Client.SearchGroupWorkItems",
+      "to": "github.com/radiusmethod/gitlab-kiosk/internal/gitlab.Client.searchGroupIssues"
+    },
+    {
+      "from": "github.com/radiusmethod/gitlab-kiosk/internal/gitlab.Client.SearchGroupWorkItems",
+      "to": "github.com/radiusmethod/gitlab-kiosk/internal/gitlab.parseWorkItemEpics"
+    },
+    {
+      "from": "github.com/radiusmethod/gitlab-kiosk/internal/gitlab.Client.SearchGroupWorkItems",
+      "to": "github.com/radiusmethod/gitlab-kiosk/internal/gitlab.parseWorkItemIssues"
+    },
+    {
+      "from": "github.com/radiusmethod/gitlab-kiosk/internal/gitlab.Client.SearchProjectCode",
+      "to": "github.com/radiusmethod/gitlab-kiosk/internal/gitlab.Client.GetProjectID"
+    },
+    {
+      "from": "github.com/radiusmethod/gitlab-kiosk/internal/gitlab.Client.SearchProjectCode",
+      "to": "github.com/radiusmethod/gitlab-kiosk/internal/gitlab.Client.searchCode"
+    },
+    {
+      "from": "github.com/radiusmethod/gitlab-kiosk/internal/gitlab.Client.SearchProjectCode",
+      "to": "github.com/radiusmethod/gitlab-kiosk/internal/gitlab.parseCodeSearchHits"
+    },
+    {
+      "from": "github.com/radiusmethod/gitlab-kiosk/internal/gitlab.Client.SetBaseTransport",
+      "to": "github.com/radiusmethod/gitlab-kiosk/internal/gitlab.Client.rebuildTransport"
+    },
+    {
+      "from": "github.com/radiusmethod/gitlab-kiosk/internal/gitlab.Client.SetHTTPLogger",
+      "to": "github.com/radiusmethod/gitlab-kiosk/internal/gitlab.Client.rebuildTransport"
+    },
+    {
+      "from": "github.com/radiusmethod/gitlab-kiosk/internal/gitlab.Client.fetchGroup",
+      "to": "github.com/radiusmethod/gitlab-kiosk/internal/gitlab.Client.Get"
+    },
+    {
+      "from": "github.com/radiusmethod/gitlab-kiosk/internal/gitlab.Client.fetchProject",
+      "to": "github.com/radiusmethod/gitlab-kiosk/internal/gitlab.Client.Get"
+    },
+    {
+      "from": "github.com/radiusmethod/gitlab-kiosk/internal/gitlab.Client.getStream",
+      "to": "github.com/radiusmethod/gitlab-kiosk/internal/gitlab.isRedirect"
+    },
+    {
+      "from": "github.com/radiusmethod/gitlab-kiosk/internal/gitlab.Client.getStream",
+      "to": "github.com/radiusmethod/gitlab-kiosk/internal/gitlab.redactPresignedError"
+    },
+    {
+      "from": "github.com/radiusmethod/gitlab-kiosk/internal/gitlab.Client.getStream",
+      "to": "github.com/radiusmethod/gitlab-kiosk/internal/gitlab.redactPresignedURL"
+    },
+    {
+      "from": "github.com/radiusmethod/gitlab-kiosk/internal/gitlab.Client.rebuildTransport",
+      "to": "github.com/radiusmethod/gitlab-kiosk/internal/gitlab.BuildTransport"
+    },
+    {
+      "from": "github.com/radiusmethod/gitlab-kiosk/internal/gitlab.Client.searchCode",
+      "to": "github.com/radiusmethod/gitlab-kiosk/internal/gitlab.Client.Get"
+    },
+    {
+      "from": "github.com/radiusmethod/gitlab-kiosk/internal/gitlab.Client.searchCode",
+      "to": "github.com/radiusmethod/gitlab-kiosk/internal/gitlab.buildCodeSearchQuery"
+    },
+    {
+      "from": "github.com/radiusmethod/gitlab-kiosk/internal/gitlab.Client.searchGroupEpics",
+      "to": "github.com/radiusmethod/gitlab-kiosk/internal/gitlab.Client.Get"
+    },
+    {
+      "from": "github.com/radiusmethod/gitlab-kiosk/internal/gitlab.Client.searchGroupIssues",
+      "to": "github.com/radiusmethod/gitlab-kiosk/internal/gitlab.Client.Get"
+    },
+    {
+      "from": "github.com/radiusmethod/gitlab-kiosk/internal/gitlab.LoggingTransport.RoundTrip",
+      "to": "github.com/radiusmethod/gitlab-kiosk/internal/gitlab.summarizeURL"
+    },
+    {
+      "from": "github.com/radiusmethod/gitlab-kiosk/internal/gitlab.NewClient",
+      "to": "github.com/radiusmethod/gitlab-kiosk/internal/gitlab.Client.rebuildTransport"
+    },
+    {
+      "from": "github.com/radiusmethod/gitlab-kiosk/internal/gitlab.NewClient",
+      "to": "github.com/radiusmethod/gitlab-kiosk/internal/gitlab.newMemoryKnownSafeCache"
+    },
+    {
+      "from": "github.com/radiusmethod/gitlab-kiosk/internal/gitlab.NewSQLiteKnownSafeCache",
+      "to": "github.com/radiusmethod/gitlab-kiosk/internal/gitlab.SQLiteKnownSafeCache.init"
+    },
+    {
+      "from": "github.com/radiusmethod/gitlab-kiosk/internal/gitlab.NewSQLiteKnownSafeCache",
+      "to": "github.com/radiusmethod/gitlab-kiosk/internal/gitlab.newMemoryKnownSafeCache"
+    },
+    {
+      "from": "github.com/radiusmethod/gitlab-kiosk/internal/gitlab.SQLiteKnownSafeCache.LookupNamespace",
+      "to": "github.com/radiusmethod/gitlab-kiosk/internal/gitlab.SQLiteKnownSafeCache.persistenceDisabled"
+    },
+    {
+      "from": "github.com/radiusmethod/gitlab-kiosk/internal/gitlab.SQLiteKnownSafeCache.LookupNamespace",
+      "to": "github.com/radiusmethod/gitlab-kiosk/internal/gitlab.memoryKnownSafeCache.LookupNamespace"
+    },
+    {
+      "from": "github.com/radiusmethod/gitlab-kiosk/internal/gitlab.SQLiteKnownSafeCache.LookupProjectByID",
+      "to": "github.com/radiusmethod/gitlab-kiosk/internal/gitlab.SQLiteKnownSafeCache.persistenceDisabled"
+    },
+    {
+      "from": "github.com/radiusmethod/gitlab-kiosk/internal/gitlab.SQLiteKnownSafeCache.LookupProjectByID",
+      "to": "github.com/radiusmethod/gitlab-kiosk/internal/gitlab.memoryKnownSafeCache.LookupProjectByID"
+    },
+    {
+      "from": "github.com/radiusmethod/gitlab-kiosk/internal/gitlab.SQLiteKnownSafeCache.LookupProjectByPath",
+      "to": "github.com/radiusmethod/gitlab-kiosk/internal/gitlab.SQLiteKnownSafeCache.persistenceDisabled"
+    },
+    {
+      "from": "github.com/radiusmethod/gitlab-kiosk/internal/gitlab.SQLiteKnownSafeCache.LookupProjectByPath",
+      "to": "github.com/radiusmethod/gitlab-kiosk/internal/gitlab.memoryKnownSafeCache.LookupProjectByPath"
+    },
+    {
+      "from": "github.com/radiusmethod/gitlab-kiosk/internal/gitlab.SQLiteKnownSafeCache.StoreNamespace",
+      "to": "github.com/radiusmethod/gitlab-kiosk/internal/gitlab.SQLiteKnownSafeCache.disablePersistenceOnReadonly"
+    },
+    {
+      "from": "github.com/radiusmethod/gitlab-kiosk/internal/gitlab.SQLiteKnownSafeCache.StoreNamespace",
+      "to": "github.com/radiusmethod/gitlab-kiosk/internal/gitlab.SQLiteKnownSafeCache.persistenceDisabled"
+    },
+    {
+      "from": "github.com/radiusmethod/gitlab-kiosk/internal/gitlab.SQLiteKnownSafeCache.StoreNamespace",
+      "to": "github.com/radiusmethod/gitlab-kiosk/internal/gitlab.memoryKnownSafeCache.StoreNamespace"
+    },
+    {
+      "from": "github.com/radiusmethod/gitlab-kiosk/internal/gitlab.SQLiteKnownSafeCache.StoreNamespaceSnapshot",
+      "to": "github.com/radiusmethod/gitlab-kiosk/internal/gitlab.SQLiteKnownSafeCache.disablePersistenceOnReadonly"
+    },
+    {
+      "from": "github.com/radiusmethod/gitlab-kiosk/internal/gitlab.SQLiteKnownSafeCache.StoreNamespaceSnapshot",
+      "to": "github.com/radiusmethod/gitlab-kiosk/internal/gitlab.SQLiteKnownSafeCache.persistenceDisabled"
+    },
+    {
+      "from": "github.com/radiusmethod/gitlab-kiosk/internal/gitlab.SQLiteKnownSafeCache.StoreNamespaceSnapshot",
+      "to": "github.com/radiusmethod/gitlab-kiosk/internal/gitlab.memoryKnownSafeCache.StoreNamespaceSnapshot"
+    },
+    {
+      "from": "github.com/radiusmethod/gitlab-kiosk/internal/gitlab.SQLiteKnownSafeCache.StoreProject",
+      "to": "github.com/radiusmethod/gitlab-kiosk/internal/gitlab.SQLiteKnownSafeCache.disablePersistenceOnReadonly"
+    },
+    {
+      "from": "github.com/radiusmethod/gitlab-kiosk/internal/gitlab.SQLiteKnownSafeCache.StoreProject",
+      "to": "github.com/radiusmethod/gitlab-kiosk/internal/gitlab.SQLiteKnownSafeCache.persistenceDisabled"
+    },
+    {
+      "from": "github.com/radiusmethod/gitlab-kiosk/internal/gitlab.SQLiteKnownSafeCache.StoreProject",
+      "to": "github.com/radiusmethod/gitlab-kiosk/internal/gitlab.memoryKnownSafeCache.StoreProject"
+    },
+    {
+      "from": "github.com/radiusmethod/gitlab-kiosk/internal/gitlab.SQLiteKnownSafeCache.disablePersistenceOnReadonly",
+      "to": "github.com/radiusmethod/gitlab-kiosk/internal/gitlab.isSQLiteReadonlyError"
+    },
+    {
+      "from": "github.com/radiusmethod/gitlab-kiosk/internal/gitlab.redactPresignedError",
+      "to": "github.com/radiusmethod/gitlab-kiosk/internal/gitlab.redactPresignedString"
+    },
+    {
+      "from": "github.com/radiusmethod/gitlab-kiosk/internal/gitlab.redactPresignedString",
+      "to": "github.com/radiusmethod/gitlab-kiosk/internal/gitlab.redactPresignedURL"
+    },
+    {
+      "from": "github.com/radiusmethod/gitlab-kiosk/internal/gitlab.summarizeURL",
+      "to": "github.com/radiusmethod/gitlab-kiosk/internal/gitlab.graphqlOperationName"
+    },
+    {
+      "from": "github.com/radiusmethod/gitlab-kiosk/internal/gitremote.DetectProject",
+      "to": "github.com/radiusmethod/gitlab-kiosk/internal/gitremote.ParseRemoteURL"
+    },
+    {
+      "from": "github.com/radiusmethod/gitlab-kiosk/internal/helpall.NewCommand",
+      "to": "github.com/radiusmethod/gitlab-kiosk/internal/helpall.RenderCommands"
+    },
+    {
+      "from": "github.com/radiusmethod/gitlab-kiosk/internal/helpall.NewCommand",
+      "to": "github.com/radiusmethod/gitlab-kiosk/internal/helpall.RenderGlobalFlags"
+    },
+    {
+      "from": "github.com/radiusmethod/gitlab-kiosk/internal/helpall.NewCommand",
+      "to": "github.com/radiusmethod/gitlab-kiosk/internal/helpall.RenderOutputFormat"
+    },
+    {
+      "from": "github.com/radiusmethod/gitlab-kiosk/internal/helpall.NewCommand",
+      "to": "github.com/radiusmethod/gitlab-kiosk/internal/helpall.WalkGlobalFlags"
+    },
+    {
+      "from": "github.com/radiusmethod/gitlab-kiosk/internal/helpall.NewCommand",
+      "to": "github.com/radiusmethod/gitlab-kiosk/internal/helpall.WalkHelpAllCommands"
+    },
+    {
+      "from": "github.com/radiusmethod/gitlab-kiosk/internal/helpall.NewCommand",
+      "to": "github.com/radiusmethod/gitlab-kiosk/internal/helpall.WalkHelpAllOutputs"
+    },
+    {
+      "from": "github.com/radiusmethod/gitlab-kiosk/internal/helpall.WalkCommands",
+      "to": "github.com/radiusmethod/gitlab-kiosk/internal/helpall.walkCommandsForMode"
+    },
+    {
+      "from": "github.com/radiusmethod/gitlab-kiosk/internal/helpall.WalkGlobalFlags",
+      "to": "github.com/radiusmethod/gitlab-kiosk/internal/helpall.FormatFlag"
+    },
+    {
+      "from": "github.com/radiusmethod/gitlab-kiosk/internal/helpall.WalkHelpAllCommands",
+      "to": "github.com/radiusmethod/gitlab-kiosk/internal/helpall.walkCommandsForMode"
+    },
+    {
+      "from": "github.com/radiusmethod/gitlab-kiosk/internal/helpall.WalkHelpAllOutputs",
+      "to": "github.com/radiusmethod/gitlab-kiosk/internal/helpall.walkOutputsForMode"
+    },
+    {
+      "from": "github.com/radiusmethod/gitlab-kiosk/internal/helpall.WalkOutputs",
+      "to": "github.com/radiusmethod/gitlab-kiosk/internal/helpall.walkOutputsForMode"
+    },
+    {
+      "from": "github.com/radiusmethod/gitlab-kiosk/internal/helpall.walkCommands",
+      "to": "github.com/radiusmethod/gitlab-kiosk/internal/helpall.FormatFlag"
+    },
+    {
+      "from": "github.com/radiusmethod/gitlab-kiosk/internal/helpall.walkCommands",
+      "to": "github.com/radiusmethod/gitlab-kiosk/internal/helpall.extractArgs"
+    },
+    {
+      "from": "github.com/radiusmethod/gitlab-kiosk/internal/helpall.walkCommands",
+      "to": "github.com/radiusmethod/gitlab-kiosk/internal/helpall.matchesCommand"
+    },
+    {
+      "from": "github.com/radiusmethod/gitlab-kiosk/internal/helpall.walkCommands",
+      "to": "github.com/radiusmethod/gitlab-kiosk/internal/helpall.shouldSkip"
+    },
+    {
+      "from": "github.com/radiusmethod/gitlab-kiosk/internal/helpall.walkCommandsForMode",
+      "to": "github.com/radiusmethod/gitlab-kiosk/internal/helpall.walkCommands"
+    },
+    {
+      "from": "github.com/radiusmethod/gitlab-kiosk/internal/helpall.walkOutputs",
+      "to": "github.com/radiusmethod/gitlab-kiosk/internal/helpall.shouldSkip"
+    },
+    {
+      "from": "github.com/radiusmethod/gitlab-kiosk/internal/helpall.walkOutputsForMode",
+      "to": "github.com/radiusmethod/gitlab-kiosk/internal/helpall.walkOutputs"
+    },
+    {
+      "from": "github.com/radiusmethod/gitlab-kiosk/internal/index.Index.List",
+      "to": "github.com/radiusmethod/gitlab-kiosk/internal/index.Index.Search"
+    },
+    {
+      "from": "github.com/radiusmethod/gitlab-kiosk/internal/index.Index.Search",
+      "to": "github.com/radiusmethod/gitlab-kiosk/internal/index.containsAll"
+    },
+    {
+      "from": "github.com/radiusmethod/gitlab-kiosk/internal/index.Load",
+      "to": "github.com/radiusmethod/gitlab-kiosk/internal/index.TSVPath"
+    },
+    {
+      "from": "github.com/radiusmethod/gitlab-kiosk/internal/index.Save",
+      "to": "github.com/radiusmethod/gitlab-kiosk/internal/index.TSVPath"
+    },
+    {
+      "from": "github.com/radiusmethod/gitlab-kiosk/internal/index.Spider.Scan",
+      "to": "github.com/radiusmethod/gitlab-kiosk/internal/index.parseGitConfig"
+    },
+    {
+      "from": "github.com/radiusmethod/gitlab-kiosk/internal/index.Status",
+      "to": "github.com/radiusmethod/gitlab-kiosk/internal/index.Load"
+    },
+    {
+      "from": "github.com/radiusmethod/gitlab-kiosk/internal/index.Status",
+      "to": "github.com/radiusmethod/gitlab-kiosk/internal/index.TSVPath"
+    },
+    {
+      "from": "github.com/radiusmethod/gitlab-kiosk/internal/index.TSVPath",
+      "to": "github.com/radiusmethod/gitlab-kiosk/internal/config.DataDir"
+    },
+    {
+      "from": "github.com/radiusmethod/gitlab-kiosk/internal/index.parseGitConfig",
+      "to": "github.com/radiusmethod/gitlab-kiosk/internal/gitremote.ParseRemoteURL"
+    },
+    {
+      "from": "github.com/radiusmethod/gitlab-kiosk/internal/skillgen.Generate",
+      "to": "github.com/radiusmethod/gitlab-kiosk/internal/helpall.RenderCommands"
+    },
+    {
+      "from": "github.com/radiusmethod/gitlab-kiosk/internal/skillgen.Generate",
+      "to": "github.com/radiusmethod/gitlab-kiosk/internal/helpall.RenderOutputFormat"
+    },
+    {
+      "from": "github.com/radiusmethod/gitlab-kiosk/internal/skillgen.Generate",
+      "to": "github.com/radiusmethod/gitlab-kiosk/internal/helpall.WalkCommands"
+    },
+    {
+      "from": "github.com/radiusmethod/gitlab-kiosk/internal/skillgen.Generate",
+      "to": "github.com/radiusmethod/gitlab-kiosk/internal/helpall.WalkOutputs"
+    },
+    {
+      "from": "github.com/radiusmethod/gitlab-kiosk/internal/skillgen.Generate",
+      "to": "github.com/radiusmethod/gitlab-kiosk/internal/skillgen.ValidateRefs"
+    },
+    {
+      "from": "github.com/radiusmethod/gitlab-kiosk/internal/skillgen.Generate",
+      "to": "github.com/radiusmethod/gitlab-kiosk/internal/skillgen.hasYAMLFrontmatter"
+    },
+    {
+      "from": "github.com/radiusmethod/gitlab-kiosk/internal/skillgen.ValidateRefs",
+      "to": "github.com/radiusmethod/gitlab-kiosk/internal/skillgen.extractRefs"
+    },
+    {
+      "from": "github.com/radiusmethod/gitlab-kiosk/internal/skillgen.ValidateRefs",
+      "to": "github.com/radiusmethod/gitlab-kiosk/internal/skillgen.validateRef"
+    },
+    {
+      "from": "github.com/radiusmethod/gitlab-kiosk/internal/skillgen.validateRef",
+      "to": "github.com/radiusmethod/gitlab-kiosk/internal/skillgen.resolveCmd"
+    },
+    {
+      "from": "github.com/radiusmethod/gitlab-kiosk/internal/vcr.NewReplayer",
+      "to": "github.com/radiusmethod/gitlab-kiosk/internal/vcr.LoadCassette"
+    },
+    {
+      "from": "github.com/radiusmethod/gitlab-kiosk/internal/vcr.Replayer.RoundTrip",
+      "to": "github.com/radiusmethod/gitlab-kiosk/internal/vcr.stripHost"
+    }
+  ]
+}
