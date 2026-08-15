@@ -1,10 +1,25 @@
 import * as THREE from 'three'
-import { MAX_LIFT, type PlacedNode, type Placement } from './placement'
+import { MAX_LIFT, type PlacedEdge, type PlacedNode, type Placement } from './placement'
 import { disposeSprite, labelWorldHeight, makeLabel, setLabelHeight } from './labels'
+import { edgeKey, type Neighborhood } from './selection'
 
 const LABEL_RANGE = 55 // symbol labels appear inside this radius
 const DISTRICT_PX = 20 // on-screen label heights
 const SYMBOL_PX = 13
+
+// Edge colours. The unselected pair is dim-inside-a-package, bright-across it;
+// once something is selected, direction matters more than distance.
+const EDGE_INTRA = new THREE.Color(0x39415a)
+const EDGE_CROSS = new THREE.Color(0xffc978)
+const EDGE_IN = new THREE.Color(0x7dcfff) // someone calls the selection
+const EDGE_OUT = new THREE.Color(0xff9e64) // the selection calls someone
+const EDGE_MUTED = new THREE.Color(0x1a1f2b)
+
+interface Materials {
+  base: THREE.MeshLambertMaterial
+  dim: THREE.MeshLambertMaterial
+  hot: THREE.MeshLambertMaterial
+}
 
 /**
  * Turns a Placement into three.js objects. All the arithmetic already happened
@@ -20,6 +35,14 @@ export class World {
   private disposables: (() => void)[] = []
   private positions = new Map<string, THREE.Vector3>()
 
+  private materials = new Map<number, Materials>()
+  private meshes: THREE.Mesh[] = []
+  private byId = new Map<string, { node: PlacedNode; mesh: THREE.Mesh }>()
+  private edges: PlacedEdge[] = []
+  private edgeColorAttr: THREE.Float32BufferAttribute | null = null
+  /** Ids whose labels show regardless of distance, because they're selected. */
+  private pinned = new Set<string>()
+
   build(p: Placement) {
     this.clear()
     this.buildDistricts(p)
@@ -30,21 +53,17 @@ export class World {
   private buildSymbols(p: Placement) {
     const geom = new THREE.BoxGeometry(1, 1, 1)
     this.disposables.push(() => geom.dispose())
-    const mats = new Map<number, THREE.MeshLambertMaterial>()
 
     for (const n of p.nodes) {
-      let mat = mats.get(n.color)
-      if (!mat) {
-        mat = new THREE.MeshLambertMaterial({ color: n.color, emissive: n.color, emissiveIntensity: 0.18 })
-        mats.set(n.color, mat)
-        const m = mat
-        this.disposables.push(() => m.dispose())
-      }
+      const mats = this.materialsFor(n.color)
 
-      const mesh = new THREE.Mesh(geom, mat)
+      const mesh = new THREE.Mesh(geom, mats.base)
       mesh.scale.setScalar(n.size)
       mesh.position.set(n.x, n.y, n.z)
+      mesh.userData.id = n.id
       this.group.add(mesh)
+      this.meshes.push(mesh)
+      this.byId.set(n.id, { node: n, mesh })
 
       const pos = mesh.position.clone()
       this.positions.set(n.id, pos)
@@ -103,18 +122,17 @@ export class World {
     }
   }
 
-  /** One LineSegments for everything; cross-district edges get the bright colour. */
+  /** One LineSegments for everything; colours are rewritten on selection. */
   private buildEdges(p: Placement) {
     const verts: number[] = []
     const colors: number[] = []
-    const dim = new THREE.Color(0x39415a)
-    const bright = new THREE.Color(0xffc978)
 
     for (const e of p.edges) {
       const a = this.positions.get(e.from)
       const b = this.positions.get(e.to)
       if (!a || !b) continue
-      const c = e.cross ? bright : dim
+      this.edges.push(e)
+      const c = e.cross ? EDGE_CROSS : EDGE_INTRA
       verts.push(a.x, a.y, a.z, b.x, b.y, b.z)
       colors.push(c.r, c.g, c.b, c.r, c.g, c.b)
     }
@@ -122,7 +140,9 @@ export class World {
 
     const geom = new THREE.BufferGeometry()
     geom.setAttribute('position', new THREE.Float32BufferAttribute(verts, 3))
-    geom.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3))
+    const colorAttr = new THREE.Float32BufferAttribute(colors, 3)
+    geom.setAttribute('color', colorAttr)
+    this.edgeColorAttr = colorAttr
     const mat = new THREE.LineBasicMaterial({ vertexColors: true, transparent: true, opacity: 0.7 })
     const lines = new THREE.LineSegments(geom, mat)
     this.group.add(lines)
@@ -130,6 +150,70 @@ export class World {
       geom.dispose()
       mat.dispose()
     })
+  }
+
+  private materialsFor(color: number): Materials {
+    let mats = this.materials.get(color)
+    if (mats) return mats
+    mats = {
+      base: new THREE.MeshLambertMaterial({ color, emissive: color, emissiveIntensity: 0.18 }),
+      dim: new THREE.MeshLambertMaterial({
+        color,
+        transparent: true,
+        opacity: 0.13,
+        depthWrite: false,
+      }),
+      hot: new THREE.MeshLambertMaterial({ color: 0xffffff, emissive: color, emissiveIntensity: 1.1 }),
+    }
+    this.materials.set(color, mats)
+    const m = mats
+    this.disposables.push(() => {
+      m.base.dispose()
+      m.dim.dispose()
+      m.hot.dispose()
+    })
+    return mats
+  }
+
+  /**
+   * Applies a neighbourhood: the selection burns bright, its callers and
+   * callees stay lit, everything else drops back so the shape of the
+   * neighbourhood is the only thing you can see.
+   */
+  applySelection(n: Neighborhood) {
+    this.pinned = n.related
+
+    for (const { node, mesh } of this.byId.values()) {
+      const mats = this.materialsFor(node.color)
+      if (n.empty) mesh.material = mats.base
+      else if (n.selected.has(node.id)) mesh.material = mats.hot
+      else if (n.related.has(node.id)) mesh.material = mats.base
+      else mesh.material = mats.dim
+    }
+
+    const attr = this.edgeColorAttr
+    if (!attr) return
+    this.edges.forEach((e, i) => {
+      let c: THREE.Color
+      if (n.empty) c = e.cross ? EDGE_CROSS : EDGE_INTRA
+      else {
+        const role = n.role.get(edgeKey(e.from, e.to))
+        c = role === 'in' ? EDGE_IN : role === 'out' ? EDGE_OUT : EDGE_MUTED
+      }
+      attr.setXYZ(i * 2, c.r, c.g, c.b)
+      attr.setXYZ(i * 2 + 1, c.r, c.g, c.b)
+    })
+    attr.needsUpdate = true
+  }
+
+  /** The id of the symbol under a ray, or null. */
+  pick(raycaster: THREE.Raycaster): string | null {
+    const hits = raycaster.intersectObjects(this.meshes, false)
+    return hits.length ? ((hits[0].object.userData.id as string) ?? null) : null
+  }
+
+  nodeById(id: string): PlacedNode | undefined {
+    return this.byId.get(id)?.node
   }
 
   /**
@@ -148,7 +232,9 @@ export class World {
 
     for (const s of this.symbols) {
       const dist = s.pos.distanceTo(eye)
-      const near = dist < LABEL_RANGE
+      // A selected symbol keeps its name up from anywhere — you selected it to
+      // read it, and it is usually behind you by the time you stop moving.
+      const near = dist < LABEL_RANGE || this.pinned.has(s.node.id)
       let label = this.symbolLabels.get(s.node.id)
       if (near && !label) {
         label = makeLabel(s.node.name, { size: 1, color: '#dbe4f3' })
@@ -177,6 +263,12 @@ export class World {
     this.districtLabels = []
     this.symbols = []
     this.positions.clear()
+    this.materials.clear()
+    this.meshes = []
+    this.byId.clear()
+    this.edges = []
+    this.edgeColorAttr = null
+    this.pinned = new Set()
     this.group.clear()
   }
 }

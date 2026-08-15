@@ -22,12 +22,26 @@
         font: 12px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace;
         color: #5b6474; pointer-events: none;
       }
+      #sel {
+        position: fixed; top: 10px; right: 12px; max-width: 40vw;
+        font: 12px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace;
+        color: #dbe4f3; background: rgba(10,13,20,0.72);
+        border: 1px solid #2b3348; border-radius: 6px; padding: 8px 10px;
+        white-space: pre; pointer-events: none; display: none;
+      }
+      #reticle {
+        position: fixed; left: 50%; top: 50%; width: 5px; height: 5px;
+        margin: -3px 0 0 -3px; border-radius: 50%;
+        border: 1px solid rgba(219,228,243,0.75); pointer-events: none;
+      }
     </style>
   </head>
   <body>
     <div id="hud"></div>
-    <div id="hint">click to capture &middot; hold LMB/RMB to fly forward/back &middot; wheel to dolly &middot; WASD + mouse look &middot; QE up/down &middot; shift boost &middot; F focus &middot; esc release
-      <br />gamepad: sticks fly and look &middot; triggers up/down &middot; bumpers boost &middot; A focus</div>
+    <div id="sel"></div>
+    <div id="reticle"></div>
+    <div id="hint">click to capture &middot; hold LMB/RMB to fly forward/back &middot; wheel to dolly &middot; WASD + mouse look &middot; QE up/down &middot; shift boost &middot; F focus &middot; middle-click or space to select &middot; X clears &middot; esc release
+      <br />gamepad: sticks fly and look &middot; triggers up/down &middot; bumpers boost &middot; A focus &middot; X select &middot; B clear</div>
     <div id="err"></div>
     <script type="module" src="/src/main.ts"></script>
   </body>

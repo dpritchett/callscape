@@ -39,4 +39,10 @@ export interface ViewSpec {
     focus: string | null
     distance: number
   }
+  /**
+   * Symbol ids to light up on load. Empty means "leave whatever is selected in
+   * the browser alone", so editing the rest of the file doesn't wipe a
+   * selection you made by clicking.
+   */
+  select: string[]
 }

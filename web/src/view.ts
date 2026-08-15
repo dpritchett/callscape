@@ -10,7 +10,7 @@ const NODE_FIELDS: NodeField[] = [
  */
 export function parseView(raw: unknown): ViewSpec {
   const errs: string[] = []
-  const root = obj(raw, 'view.json', errs, ['occupants', 'encoding', 'camera'])
+  const root = obj(raw, 'view.json', errs, ['occupants', 'encoding', 'camera', 'select'])
 
   const occ = obj(root.occupants, 'occupants', errs, ['packages', 'minFanIn', 'limit'])
   const enc = obj(root.encoding, 'encoding', errs, ['size', 'color', 'height'])
@@ -31,6 +31,7 @@ export function parseView(raw: unknown): ViewSpec {
       focus: str(cam.focus, 'camera.focus', errs),
       distance: num(cam.distance, 'camera.distance', errs, 120),
     },
+    select: strArray(root.select, 'select', errs, []),
   }
 
   if (errs.length) throw new Error(errs.join('\n'))

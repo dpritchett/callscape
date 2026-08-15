@@ -2,7 +2,8 @@ import * as THREE from 'three'
 import { FlyController, type Controller } from './controls'
 import { parseView } from './view'
 import { World } from './world'
-import { place } from './placement'
+import { place, type Placement } from './placement'
+import { neighborhood, toggle } from './selection'
 import type { Graph, ViewSpec } from './types'
 
 const POLL_MS = 400
@@ -49,12 +50,55 @@ addEventListener('resize', () => {
 
 let graph: Graph | null = null
 let view: ViewSpec | null = null
+let placement: Placement | null = null
 let framed = false
 let status = ''
+let selected = new Set<string>()
+
+const selBox = document.getElementById('sel')!
+const raycaster = new THREE.Raycaster()
+const CENTRE = new THREE.Vector2(0, 0) // the reticle, since the pointer is locked
 
 addEventListener('keydown', (e) => {
   if (e.code === 'KeyF') frameFocus()
 })
+
+function pickAtReticle() {
+  raycaster.setFromCamera(CENTRE, camera)
+  const id = world.pick(raycaster)
+  if (!id) return
+  selected = toggle(selected, id)
+  applySelection()
+}
+
+function clearSelection() {
+  if (!selected.size) return
+  selected = new Set()
+  applySelection()
+}
+
+function applySelection() {
+  if (!placement) return
+  const n = neighborhood(placement.edges, selected)
+  world.applySelection(n)
+
+  if (n.empty) {
+    selBox.style.display = 'none'
+    return
+  }
+  const lines = [...selected].map((id) => {
+    const node = world.nodeById(id)
+    if (!node) return id
+    const ins = placement!.edges.filter((e) => e.to === id).length
+    const outs = placement!.edges.filter((e) => e.from === id).length
+    return `${node.name}\n  ${node.pkg}\n  in ${ins} · out ${outs}`
+  })
+  selBox.textContent = `${lines.join('\n\n')}\n\n${n.callers.size} callers · ${n.callees.size} callees`
+  selBox.style.display = 'block'
+}
+
+flyControls.onPick = pickAtReticle
+flyControls.onClearSelection = clearSelection
 
 function frameFocus() {
   if (!view) return
@@ -65,7 +109,16 @@ function frameFocus() {
 function rebuild() {
   if (!graph || !view) return
   const p = place(graph, view)
+  placement = p
   world.build(p)
+
+  // A view change can filter out something that was selected; keep only what
+  // is still on screen rather than holding a reference to a ghost.
+  const live = new Set([...selected].filter((id) => world.nodeById(id)))
+  if (view.select.length) for (const id of view.select) live.add(id)
+  selected = new Set([...live].filter((id) => world.nodeById(id)))
+  applySelection()
+
   status = [
     graph.module,
     `${p.nodes.length}/${p.total} symbols · ${p.edges.length} edges · ${p.districts.length} districts`,

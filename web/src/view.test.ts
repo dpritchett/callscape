@@ -8,7 +8,13 @@ const OK = {
 }
 
 test('accepts the documented shape', () => {
-  expect(parseView(OK)).toEqual(OK)
+  expect(parseView(OK)).toEqual({ ...OK, select: [] })
+})
+
+test('select is optional, and empty means "do not touch the selection"', () => {
+  expect(parseView(OK).select).toEqual([])
+  expect(parseView({ ...OK, select: ['x.Y'] }).select).toEqual(['x.Y'])
+  expect(() => parseView({ ...OK, select: 'x.Y' })).toThrow(/select/)
 })
 
 test('unknown fields are an error, not something to ignore', () => {

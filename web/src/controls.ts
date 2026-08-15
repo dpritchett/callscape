@@ -35,8 +35,14 @@ export class FlyController implements Controller {
 
   /** Wired by main.ts to the same action as the F key. */
   onFocus: (() => void) | null = null
+  /** Toggle whatever is under the reticle. */
+  onPick: (() => void) | null = null
+  /** Drop the whole selection. */
+  onClearSelection: (() => void) | null = null
   private padLook = 2.6 // radians/sec at full stick deflection
   private padFocusHeld = false
+  private padPickHeld = false
+  private padClearHeld = false
 
   // Focus tween state. Flying to a symbol beats being teleported to it.
   private tween: { from: THREE.Vector3; to: THREE.Vector3; look: THREE.Vector3; t: number } | null = null
@@ -158,6 +164,14 @@ export class FlyController implements Controller {
     if (focus && !this.padFocusHeld) this.onFocus?.()
     this.padFocusHeld = focus
 
+    const pick = pad.buttons[2]?.pressed ?? false // X / square
+    if (pick && !this.padPickHeld) this.onPick?.()
+    this.padPickHeld = pick
+
+    const clear = pad.buttons[1]?.pressed ?? false // B / circle
+    if (clear && !this.padClearHeld) this.onClearSelection?.()
+    this.padClearHeld = clear
+
     const down = deadzone1(pad.buttons[6]?.value ?? 0)
     const up = deadzone1(pad.buttons[7]?.value ?? 0)
     return {
@@ -192,6 +206,10 @@ export class FlyController implements Controller {
   }
 
   private pressCaptured = (button: number) => {
+    if (button === 1) {
+      this.onPick?.() // middle click selects; it is the only button not flying
+      return
+    }
     this.buttons.add(button)
     this.tween = null // any input cancels a focus flight
   }
@@ -232,8 +250,12 @@ export class FlyController implements Controller {
   }
 
   private onKeyDown = (e: KeyboardEvent) => {
+    const fresh = !this.keys.has(e.code)
     this.keys.add(e.code)
-    if (e.code !== 'KeyF') this.tween = null
+    if (e.code !== 'KeyF' && e.code !== 'Space') this.tween = null
+    if (!fresh) return // key repeat must not re-fire a toggle
+    if (e.code === 'Space') this.onPick?.()
+    if (e.code === 'KeyX') this.onClearSelection?.()
   }
 
   private onKeyUp = (e: KeyboardEvent) => {
