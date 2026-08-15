@@ -12,12 +12,12 @@ choice already made there.
 
 ## Checks
 
-`make check` runs everything lefthook and CI run: `go vet`, `go test`, `golangci-lint`,
+`make check` runs everything lefthook runs: `go vet`, `go test`, `golangci-lint`,
 `tsc --noEmit`, `vitest`. Run `make hooks` once per clone to install the pre-commit hooks.
 
-Individual targets: `make vet test lint web-check web-test`. Never add a check to CI
-without adding it to the Makefile first — lefthook and Actions both call `make`, and that
-is deliberate.
+Individual targets: `make vet test lint web-check web-test`. A new check goes in the
+Makefile first; lefthook only ever calls `make`. There is no CI, on purpose — see
+`ARCHITECTURE.md`.
 
 Node is pinned in `.mise.toml`. If `npm` is missing from the shell, fix the repo
 activation rather than decorating every command with a prefix.

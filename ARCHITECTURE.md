@@ -14,10 +14,14 @@
 3. **Commit early and often.** Small verified changes, committed and pushed promptly.
 4. **Fast static analysis.** `go vet`, `go test`, `golangci-lint`, `tsc --noEmit` and
    `vitest`. If a check gets slow and low-value, drop it.
-5. **Pre-commit checks via lefthook.** Catch locally what CI would catch remotely. Run
-   `make hooks` once to install them.
-6. **One source of truth per check.** lefthook and GitHub Actions both call `make`
-   targets. `make check` runs everything either of them runs. Never let the two drift.
+5. **Pre-commit checks via lefthook.** Checks run where the code runs. `make hooks`
+   installs them, once per clone.
+6. **One source of truth per check.** lefthook calls `make` targets, and `make check`
+   runs everything lefthook runs. Nothing is defined in two places.
+   There is deliberately no CI. One committer, one machine, no users — a hosted runner
+   would be a second environment to keep green with nobody on the other side of it.
+   Revisit the day a stranger might `go install` this or a second machine touches it;
+   that is when a neutral arbiter starts having a constituency.
 7. **Config is a closed struct.** An unknown field in `view.json` is an error, not
    something to ignore. A typo in a config file should be loud.
 8. **Ten-minute rule.** If a decision would take more than ten minutes, take the boring

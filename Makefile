@@ -4,7 +4,7 @@ NPM := npm --prefix web
 .PHONY: check build install test vet lint lint-install \
 	web-install web-check web-test dev dump hooks clean
 
-# Everything lefthook and CI run, in one place.
+# Everything lefthook runs, in one place.
 check: vet test lint web-check web-test
 
 build:

@@ -62,7 +62,8 @@ make check    # go vet, go test, golangci-lint, tsc --noEmit, vitest
 make hooks    # install the lefthook pre-commit hooks, once per clone
 ```
 
-lefthook and CI both call `make` targets, so there is one source of truth per check.
+lefthook calls `make` targets, so there is one source of truth per check. There is no CI —
+`ARCHITECTURE.md` says why.
 
 ## The other documents
 
