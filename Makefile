@@ -2,7 +2,7 @@ GOLANGCI_LINT_VERSION := v2.11.4
 NPM := npm --prefix web
 
 .PHONY: check build install test vet lint lint-install \
-	web-install web-check web-test dev dump hooks clean
+	web-install web-check web-test dev logs dump hooks clean
 
 # Everything lefthook runs, in one place.
 check: vet test lint web-check web-test
@@ -39,6 +39,10 @@ web-test:
 
 dev:
 	$(NPM) run dev
+
+# What the browser saw. The dev server appends events from the page here.
+logs:
+	@tail -f web/dev-log.jsonl | jq -c '"\(.t[11:19]) \(.event) \(.data // "")"'
 
 # make dump TARGET=/path/to/a/go/module
 dump:

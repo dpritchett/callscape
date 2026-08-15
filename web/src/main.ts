@@ -4,7 +4,10 @@ import { parseView } from './view'
 import { World } from './world'
 import { place, type Placement } from './placement'
 import { neighborhood, toggle } from './selection'
+import { devlog, installDevLog } from './devlog'
 import type { Graph, ViewSpec } from './types'
+
+installDevLog()
 
 const POLL_MS = 400
 
@@ -65,13 +68,25 @@ addEventListener('keydown', (e) => {
 
 function pickAtReticle() {
   raycaster.setFromCamera(CENTRE, camera)
-  const id = world.pick(raycaster)
-  if (!id) return
-  selected = toggle(selected, id)
+  const hit = world.pickTolerant(camera, raycaster, 45, { w: innerWidth, h: innerHeight })
+  devlog('pick', { ...hit, selected: selected.size })
+  if (!hit.id) {
+    flashMiss()
+    return
+  }
+  selected = toggle(selected, hit.id)
   applySelection()
 }
 
+/** A miss has to look different from a broken button. */
+function flashMiss() {
+  const reticle = document.getElementById('reticle')!
+  reticle.classList.add('miss')
+  setTimeout(() => reticle.classList.remove('miss'), 220)
+}
+
 function clearSelection() {
+  devlog('clear', { had: selected.size })
   if (!selected.size) return
   selected = new Set()
   applySelection()
@@ -111,6 +126,7 @@ function rebuild() {
   const p = place(graph, view)
   placement = p
   world.build(p)
+  devlog('rebuild', { nodes: p.nodes.length, edges: p.edges.length, districts: p.districts.length })
 
   // A view change can filter out something that was selected; keep only what
   // is still on screen rather than holding a reference to a ghost.

@@ -8,6 +8,7 @@ import {
   stepVelocity,
   type MotionTuning,
 } from './motion'
+import { devlog } from './devlog'
 
 /**
  * Everything the app needs from a camera controller. Swapping fly for orbit is
@@ -194,6 +195,7 @@ export class FlyController implements Controller {
   // What a click means depends on whether the pointer is captured, so the two
   // states get their own bindings.
   private onMouseDown = (e: MouseEvent) => {
+    devlog('mousedown', { button: e.button, locked: this.locked })
     if (this.locked) this.pressCaptured(e.button)
     else this.pressUncaptured(e.button)
   }
@@ -234,6 +236,7 @@ export class FlyController implements Controller {
 
   private onLockChange = () => {
     this.locked = document.pointerLockElement === this.dom
+    devlog('pointerlock', { locked: this.locked })
     if (!this.locked) {
       this.keys.clear()
       this.buttons.clear()
@@ -254,6 +257,7 @@ export class FlyController implements Controller {
     this.keys.add(e.code)
     if (e.code !== 'KeyF' && e.code !== 'Space') this.tween = null
     if (!fresh) return // key repeat must not re-fire a toggle
+    devlog('keydown', { code: e.code, locked: this.locked })
     if (e.code === 'Space') this.onPick?.()
     if (e.code === 'KeyX') this.onClearSelection?.()
   }

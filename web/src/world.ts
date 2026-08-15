@@ -212,6 +212,37 @@ export class World {
     return hits.length ? ((hits[0].object.userData.id as string) ?? null) : null
   }
 
+  /**
+   * Picking, but forgiving. A symbol can be a couple of units across and the
+   * reticle is a few pixels wide, so an exact ray hit asks for more precision
+   * than flying allows. If the ray misses, take the nearest symbol whose centre
+   * projects within `radiusPx` of the reticle.
+   */
+  pickTolerant(
+    camera: THREE.PerspectiveCamera,
+    raycaster: THREE.Raycaster,
+    radiusPx: number,
+    viewport: { w: number; h: number },
+  ): { id: string | null; exact: boolean; nearestPx: number | null } {
+    const exact = this.pick(raycaster)
+    if (exact) return { id: exact, exact: true, nearestPx: 0 }
+
+    const v = new THREE.Vector3()
+    let best: { id: string; d: number } | null = null
+    for (const [id, { mesh }] of this.byId) {
+      v.copy(mesh.position).project(camera)
+      if (v.z > 1) continue // behind the camera
+      const d = Math.hypot((v.x * viewport.w) / 2, (v.y * viewport.h) / 2)
+      if (!best || d < best.d) best = { id, d }
+    }
+    if (!best) return { id: null, exact: false, nearestPx: null }
+    return {
+      id: best.d <= radiusPx ? best.id : null,
+      exact: false,
+      nearestPx: Math.round(best.d),
+    }
+  }
+
   nodeById(id: string): PlacedNode | undefined {
     return this.byId.get(id)?.node
   }

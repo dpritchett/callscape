@@ -33,6 +33,10 @@
         position: fixed; left: 50%; top: 50%; width: 5px; height: 5px;
         margin: -3px 0 0 -3px; border-radius: 50%;
         border: 1px solid rgba(219,228,243,0.75); pointer-events: none;
+        transition: border-color 120ms, transform 120ms;
+      }
+      #reticle.miss {
+        border-color: #ff6b6b; transform: scale(2.2);
       }
     </style>
   </head>
