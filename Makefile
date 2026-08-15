@@ -2,7 +2,7 @@ GOLANGCI_LINT_VERSION := v2.11.4
 NPM := npm --prefix web
 
 .PHONY: check build install test vet lint lint-install \
-	web-install web-check web-test dev logs dump hooks clean
+	web-install web-check web-test dev logs shot dump hooks clean
 
 # Everything lefthook runs, in one place.
 check: vet test lint web-check web-test
@@ -54,3 +54,9 @@ hooks:
 
 clean:
 	rm -f lspvue-dump
+
+# Ask the open page to screenshot itself. Writes web/shots/latest.png.
+shot:
+	@curl -sS -X POST http://localhost:5178/__shot/request > /dev/null
+	@sleep 1.5
+	@ls -l web/shots/latest.png

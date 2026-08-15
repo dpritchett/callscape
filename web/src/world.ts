@@ -2,6 +2,7 @@ import * as THREE from 'three'
 import { MAX_LIFT, type PlacedEdge, type PlacedNode, type Placement } from './placement'
 import { disposeSprite, labelWorldHeight, makeLabel, setLabelHeight } from './labels'
 import { edgeKey, type Neighborhood } from './selection'
+import type { ResolvedEdgeShow } from './types'
 
 const LABEL_RANGE = 55 // symbol labels appear inside this radius
 const DISTRICT_PX = 20 // on-screen label heights
@@ -41,12 +42,17 @@ export class World {
   private byId = new Map<string, { node: PlacedNode; mesh: THREE.Mesh }>()
   private edges: PlacedEdge[] = []
   private edgeColorAttr: THREE.Float32BufferAttribute | null = null
+  private lines: THREE.LineSegments | null = null
+  private edgeShow: ResolvedEdgeShow = 'all'
+  private edgeOpacity = 0.7
   /** Ids whose labels show regardless of distance, because they're selected. */
   private pinned = new Set<string>()
   private selecting = false
 
-  build(p: Placement) {
+  build(p: Placement, opacity = 0.7) {
     this.clear()
+    this.edgeShow = p.edgeShow
+    this.edgeOpacity = opacity
     this.buildDistricts(p)
     this.buildSymbols(p)
     this.buildEdges(p)
@@ -145,8 +151,13 @@ export class World {
     const colorAttr = new THREE.Float32BufferAttribute(colors, 3)
     geom.setAttribute('color', colorAttr)
     this.edgeColorAttr = colorAttr
-    const mat = new THREE.LineBasicMaterial({ vertexColors: true, transparent: true, opacity: 0.7 })
+    const mat = new THREE.LineBasicMaterial({
+      vertexColors: true,
+      transparent: true,
+      opacity: this.edgeOpacity,
+    })
     const lines = new THREE.LineSegments(geom, mat)
+    this.lines = lines
     this.group.add(lines)
     this.disposables.push(() => {
       geom.dispose()
@@ -194,12 +205,20 @@ export class World {
       else mesh.material = mats.dim
     }
 
+    // At rest, `selected` and `none` draw nothing at all: 954 bright chords
+    // across a 700-unit ring is the hairball the districts exist to avoid.
+    if (this.lines) {
+      this.lines.visible =
+        this.edgeShow === 'none' ? false : this.edgeShow === 'selected' ? !n.empty : true
+    }
+
     const attr = this.edgeColorAttr
     if (!attr) return
     this.edges.forEach((e, i) => {
       let c: THREE.Color
-      if (n.empty) c = e.cross ? EDGE_CROSS : EDGE_INTRA
-      else {
+      if (n.empty) {
+        c = this.edgeShow === 'cross' && !e.cross ? EDGE_MUTED : e.cross ? EDGE_CROSS : EDGE_INTRA
+      } else {
         const role = n.role.get(edgeKey(e.from, e.to))
         c =
           role === 'in'
@@ -311,6 +330,7 @@ export class World {
     this.byId.clear()
     this.edges = []
     this.edgeColorAttr = null
+    this.lines = null
     this.pinned = new Set()
     this.selecting = false
     this.group.clear()

@@ -5,6 +5,7 @@ import { World } from './world'
 import { place, type Placement } from './placement'
 import { neighborhood, toggle } from './selection'
 import { devlog, installDevLog } from './devlog'
+import { Shutter } from './shutter'
 import type { Graph, ViewSpec } from './types'
 
 installDevLog()
@@ -138,7 +139,7 @@ function rebuild() {
   if (!graph || !view) return
   const p = place(graph, view, revealing ? selected : [])
   placement = p
-  world.build(p)
+  world.build(p, view.edges.opacity)
   devlog('rebuild', { nodes: p.nodes.length, edges: p.edges.length, districts: p.districts.length })
 
   // A view change can filter out something that was selected; keep only what
@@ -214,10 +215,35 @@ watch('/view.json', (raw) => {
   rebuild()
 })
 
+// Frame timing goes to the log, so "is it slow" is answerable from a terminal
+// rather than by asking whoever is holding the mouse.
+let frames = 0
+let worst = 0
+let since = 0
+
+const shutter = new Shutter(renderer.domElement)
+shutter.start()
+
 const clock = new THREE.Clock()
 renderer.setAnimationLoop(() => {
   const dt = Math.min(clock.getDelta(), 0.1)
   controls.update(dt)
   world.updateLabels(camera, renderer.domElement.clientHeight)
   renderer.render(scene, camera)
+  shutter.captureIfWanted('latest')
+
+  frames++
+  since += dt
+  worst = Math.max(worst, dt)
+  if (since >= 5) {
+    devlog('fps', {
+      mean: Math.round(frames / since),
+      worstFrameMs: Math.round(worst * 1000),
+      nodes: placement?.nodes.length ?? 0,
+      calls: renderer.info.render.calls,
+    })
+    frames = 0
+    worst = 0
+    since = 0
+  }
 })

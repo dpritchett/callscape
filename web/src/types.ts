@@ -24,6 +24,17 @@ export interface Graph {
 /** Fields of GraphNode usable in `encoding`. */
 export type NodeField = keyof GraphNode
 
+/**
+ * How much of the call graph to draw at rest.
+ *  auto     — all of it while that is still legible, otherwise `selected`
+ *  all      — every edge, dim inside a package and bright across one
+ *  cross    — only the edges that leave a package
+ *  selected — nothing until you select something, then its neighbourhood
+ *  none     — never
+ */
+export type EdgeShow = 'auto' | 'all' | 'cross' | 'selected' | 'none'
+export type ResolvedEdgeShow = Exclude<EdgeShow, 'auto'>
+
 export interface ViewSpec {
   occupants: {
     packages: string[]
@@ -34,6 +45,10 @@ export interface ViewSpec {
     size: NodeField
     color: NodeField
     height: NodeField
+  }
+  edges: {
+    show: EdgeShow
+    opacity: number
   }
   camera: {
     focus: string | null

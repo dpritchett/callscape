@@ -1,4 +1,6 @@
-import type { NodeField, ViewSpec } from './types'
+import type { EdgeShow, NodeField, ViewSpec } from './types'
+
+const EDGE_SHOWS: EdgeShow[] = ['auto', 'all', 'cross', 'selected', 'none']
 
 const NODE_FIELDS: NodeField[] = [
   'id', 'name', 'pkg', 'file', 'line', 'lines', 'exported', 'fanIn', 'fanOut',
@@ -10,11 +12,18 @@ const NODE_FIELDS: NodeField[] = [
  */
 export function parseView(raw: unknown): ViewSpec {
   const errs: string[] = []
-  const root = obj(raw, 'view.json', errs, ['occupants', 'encoding', 'camera', 'select'])
+  const root = obj(raw, 'view.json', errs, [
+    'occupants',
+    'encoding',
+    'camera',
+    'select',
+    'edges',
+  ])
 
   const occ = obj(root.occupants, 'occupants', errs, ['packages', 'minFanIn', 'limit'])
   const enc = obj(root.encoding, 'encoding', errs, ['size', 'color', 'height'])
   const cam = obj(root.camera, 'camera', errs, ['focus', 'distance'])
+  const edg = obj(root.edges ?? {}, 'edges', errs, ['show', 'opacity'])
 
   const view: ViewSpec = {
     occupants: {
@@ -30,6 +39,10 @@ export function parseView(raw: unknown): ViewSpec {
     camera: {
       focus: str(cam.focus, 'camera.focus', errs),
       distance: num(cam.distance, 'camera.distance', errs, 120),
+    },
+    edges: {
+      show: edgeShow(edg.show, 'edges.show', errs),
+      opacity: num(edg.opacity, 'edges.opacity', errs, 0.7),
     },
     select: strArray(root.select, 'select', errs, []),
   }
@@ -83,6 +96,15 @@ function str(v: unknown, path: string, errs: string[]): string | null {
     return null
   }
   return v
+}
+
+function edgeShow(v: unknown, path: string, errs: string[]): EdgeShow {
+  if (v === undefined) return 'auto'
+  if (typeof v !== 'string' || !EDGE_SHOWS.includes(v as EdgeShow)) {
+    errs.push(`${path}: expected one of ${EDGE_SHOWS.join(', ')}`)
+    return 'auto'
+  }
+  return v as EdgeShow
 }
 
 function field(v: unknown, path: string, errs: string[], dflt: NodeField): NodeField {

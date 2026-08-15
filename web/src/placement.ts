@@ -1,4 +1,11 @@
-import type { Graph, GraphNode, NodeField, ViewSpec } from './types'
+import type {
+  EdgeShow,
+  Graph,
+  GraphNode,
+  NodeField,
+  ResolvedEdgeShow,
+  ViewSpec,
+} from './types'
 import { layout, type District } from './layout'
 import { selectOccupants } from './select'
 
@@ -40,6 +47,16 @@ export interface Placement {
   total: number
   /** How many nodes were pulled in past the occupant filter by `reveal`. */
   revealed: number
+  /** `auto` resolved against how many edges actually came out. */
+  edgeShow: ResolvedEdgeShow
+}
+
+/** Past this many drawn edges, showing them all is a hairball, not a picture. */
+export const LEGIBLE_EDGES = 200
+
+export function resolveEdgeShow(show: EdgeShow, drawn: number): ResolvedEdgeShow {
+  if (show !== 'auto') return show
+  return drawn > LEGIBLE_EDGES ? 'selected' : 'all'
 }
 
 export const PALETTE = [
@@ -105,6 +122,7 @@ export function place(graph: Graph, view: ViewSpec, reveal: Iterable<string> = [
     extent: lay.extent,
     total: graph.nodes.length,
     revealed: extra.length,
+    edgeShow: resolveEdgeShow(view.edges.show, edges.length),
   }
 }
 

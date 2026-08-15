@@ -1,14 +1,8 @@
 {
   "occupants": {
-    "packages": [
-      "*/internal/gitlab",
-      "*/glkcli",
-      "*/internal/format",
-      "*/internal/index",
-      "*/cmd/*"
-    ],
+    "packages": ["*"],
     "minFanIn": 0,
-    "limit": 120
+    "limit": 0
   },
   "encoding": {
     "size": "fanIn",
@@ -16,7 +10,8 @@
     "height": "lines"
   },
   "camera": {
-    "focus": "github.com/radiusmethod/gitlab-kiosk/internal/gitlab.Client.Get",
-    "distance": 120
-  }
+    "focus": "helm.sh/helm/v4/internal/logging.LogHolder.Logger",
+    "distance": 140
+  },
+  "select": []
 }

@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { place } from './placement'
+import { LEGIBLE_EDGES, place, resolveEdgeShow } from './placement'
 import { globToRegExp } from './select'
 import { parseView } from './view'
 import type { Graph, GraphNode, ViewSpec } from './types'
@@ -245,5 +245,27 @@ describe('reveal', () => {
     expect(JSON.stringify(place(GRAPH, view(), [anchor]))).toBe(
       JSON.stringify(place(GRAPH, view(), [anchor])),
     )
+  })
+})
+
+describe('edge display policy', () => {
+  test('auto keeps every edge while that is still legible', () => {
+    expect(resolveEdgeShow('auto', 0)).toBe('all')
+    expect(resolveEdgeShow('auto', LEGIBLE_EDGES)).toBe('all')
+  })
+
+  test('auto falls back to selection-only once it would be a hairball', () => {
+    expect(resolveEdgeShow('auto', LEGIBLE_EDGES + 1)).toBe('selected')
+    expect(resolveEdgeShow('auto', 2344)).toBe('selected') // helm
+  })
+
+  test('an explicit choice is never overridden', () => {
+    for (const show of ['all', 'cross', 'selected', 'none'] as const) {
+      expect(resolveEdgeShow(show, 99_999)).toBe(show)
+    }
+  })
+
+  test('place resolves it against the edges it actually drew', () => {
+    expect(place(GRAPH, view()).edgeShow).toBe('all') // fixture has 2
   })
 })

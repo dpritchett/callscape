@@ -7,8 +7,14 @@ const OK = {
   camera: { focus: 'x.Y', distance: 120 },
 }
 
-test('accepts the documented shape', () => {
-  expect(parseView(OK)).toEqual({ ...OK, select: [] })
+test('accepts the documented shape, filling in the optional blocks', () => {
+  expect(parseView(OK)).toEqual({ ...OK, select: [], edges: { show: 'auto', opacity: 0.7 } })
+})
+
+test('edges block is optional and validated', () => {
+  expect(parseView({ ...OK, edges: { show: 'none' } }).edges).toEqual({ show: 'none', opacity: 0.7 })
+  expect(() => parseView({ ...OK, edges: { show: 'sometimes' } })).toThrow(/edges.show/)
+  expect(() => parseView({ ...OK, edges: { shown: 'all' } })).toThrow(/unknown field/)
 })
 
 test('select is optional, and empty means "do not touch the selection"', () => {
