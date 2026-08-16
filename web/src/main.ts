@@ -40,6 +40,22 @@ const key = new THREE.DirectionalLight(0xffffff, 1.25)
 key.position.set(120, 220, 90)
 scene.add(key)
 
+/**
+ * The selection casts light. Pulsing the symbol itself only helps when it is on
+ * screen; a lamp standing in the city tells you something is over there the way
+ * a torch off to one side does at night, by what it lights up rather than by
+ * being looked at.
+ *
+ * Made once, at zero, and moved around after that. Adding a light to a scene
+ * recompiles every material in it, which is not a thing to do per selection.
+ * Distance and decay are physical, so the intensity is in candela and has to be
+ * large to reach anything at this scale.
+ */
+const BEACON_RANGE = 160
+const BEACON_INTENSITY = [120, 900] as const
+const beacon = new THREE.PointLight(0xffffff, 0, BEACON_RANGE, 2)
+scene.add(beacon)
+
 const world = new World()
 scene.add(world.group)
 
@@ -377,6 +393,22 @@ function frameFocus() {
   controls.frame(target, view.camera.distance)
 }
 
+/** Puts the beacon on the selection, in phase with the symbol's own pulse. */
+function updateBeacon(seconds: number) {
+  const k = world.pulse(seconds)
+  const id = lastSelected()
+  const at = id ? world.positionOf(id) : undefined
+  if (!id || !at) {
+    beacon.intensity = 0
+    return
+  }
+  beacon.position.copy(at)
+  const node = world.nodeById(id)
+  if (node) beacon.color.setHex(node.color)
+  const [lo, hi] = BEACON_INTENSITY
+  beacon.intensity = lo + (hi - lo) * k
+}
+
 /** The most recent pick, which is the one the panel is describing. */
 function lastSelected(): string | undefined {
   let last: string | undefined
@@ -509,6 +541,9 @@ const shutter = new Shutter(renderer.domElement, () => {
   // the only cost measurement available when nobody is watching the page.
   const t0 = performance.now()
   world.updateLabels(camera, renderer.domElement.clientHeight)
+  // Same phase the loop left it at: a hidden tab is not animating, and a
+  // screenshot of a heartbeat has to catch it somewhere.
+  updateBeacon(elapsed)
   const t1 = performance.now()
   renderer.render(scene, camera)
   devlog('renderMs', {
@@ -563,10 +598,14 @@ watchCues((cue) => {
 })
 
 const clock = new THREE.Clock()
+/** Wall time the scene has actually been animated for, which drives the pulse. */
+let elapsed = 0
 renderer.setAnimationLoop(() => {
   const dt = Math.min(clock.getDelta(), 0.1)
+  elapsed += dt
   controls.update(dt)
   world.updateLabels(camera, renderer.domElement.clientHeight)
+  updateBeacon(elapsed)
   renderer.render(scene, camera)
 
   frames++

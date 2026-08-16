@@ -20,6 +20,12 @@ const SYMBOL_LABELS = 40
 const TURN_COSINE = Math.cos((2 * Math.PI) / 180)
 /** How far an in-district edge rides above the ground it crosses. */
 const WIRE_LIFT = 3
+/**
+ * The selection's heartbeat. Slow enough to read as breathing rather than as a
+ * strobe, fast enough that a glance catches it moving.
+ */
+const PULSE_HZ = 0.8
+const HOT_EMISSIVE = [0.5, 2.1] as const
 /** Enough that the sag between two segments stays under half a unit. */
 const WIRE_SEGMENTS = 8
 
@@ -572,6 +578,24 @@ export class World {
       exact: false,
       nearestPx: Math.round(best.d),
     }
+  }
+
+  /**
+   * Advances the selection's heartbeat, and returns how bright it is right now
+   * as 0..1 so whatever else answers to it stays in phase.
+   *
+   * A thing that glows steadily is only findable by looking straight at it. A
+   * thing that changes is findable out of the corner of an eye, which is the
+   * point: after flying somewhere else you should be able to tell the selection
+   * is still there, and roughly where, without hunting for it.
+   */
+  pulse(seconds: number): number {
+    const k = 0.5 + 0.5 * Math.sin(seconds * PULSE_HZ * Math.PI * 2)
+    const [lo, hi] = HOT_EMISSIVE
+    for (const mesh of this.hotMeshes) {
+      ;(mesh.material as THREE.MeshLambertMaterial).emissiveIntensity = lo + (hi - lo) * k
+    }
+    return k
   }
 
   /** What the labels are actually doing, for the log. */

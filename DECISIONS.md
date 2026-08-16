@@ -134,6 +134,16 @@ the movement model, so "half a second" is tested without a clock: never early, n
 than one frame late, at 24, 60 and 144fps. Rejected: hold-to-burn, which is a key held
 down for the entire time you are going anywhere.
 
+**The selection pulses, and casts light.** A thing that glows steadily is only findable by
+looking straight at it. Two signals rather than one: the symbol's own emissive breathes at
+0.8Hz, which a glance catches out of the corner of an eye, and a point light stands where
+it does, so nearby towers are lit by something you cannot see — the way a torch off to one
+side tells you where it is at night by what it lights up. The light is made once at zero
+intensity and moved, because adding a light to a scene recompiles every material in it.
+Limit worth knowing: the district ground is `MeshBasicMaterial` and takes no light, so the
+beacon washes the buildings and not the floor. Rejected: pulsing the size, which reads as
+the geometry being unstable rather than as a signal.
+
 **An edge inside a district arcs over it; an edge between districts still cuts through.**
 A straight line between two points on a sphere is a chord, and a chord sinks below the
 surface it spans — 33 units across the widest district on coder, well under opaque
