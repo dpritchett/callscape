@@ -28,10 +28,12 @@ export class MFD {
 
   constructor(private el: HTMLElement) {}
 
-  cycle() {
+  /** Returns the mode it landed on, which is what the caller announces. */
+  cycle(): Mode {
     this.mode = MODES[(MODES.indexOf(this.mode) + 1) % MODES.length]
     devlog('mfd', { mode: this.mode })
     if (this.last) this.render(this.last)
+    return this.mode
   }
 
   render(p: Payload) {

@@ -14,7 +14,18 @@ test('accepts the documented shape, filling in the optional blocks', () => {
     encoding: { ...OK.encoding, scale: 'log' },
     select: [],
     edges: { show: 'auto', opacity: 0.7 },
+    sound: { enabled: true, volume: 0.8 },
   })
+})
+
+test('sound block is optional and validated', () => {
+  expect(parseView({ ...OK, sound: { enabled: false } }).sound).toEqual({
+    enabled: false,
+    volume: 0.8,
+  })
+  expect(parseView({ ...OK, sound: { volume: 0 } }).sound.volume).toBe(0)
+  expect(() => parseView({ ...OK, sound: { enabled: 'yes' } })).toThrow(/sound.enabled/)
+  expect(() => parseView({ ...OK, sound: { loud: true } })).toThrow(/unknown field/)
 })
 
 test('scale is optional, log by default, and validated', () => {

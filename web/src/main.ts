@@ -10,6 +10,7 @@ import { Shutter } from './shutter'
 import { watchCues } from './cue'
 import { makeStarfield } from './sky'
 import { MFD } from './mfd'
+import { Voice } from './sound'
 import type { Graph, ViewSpec } from './types'
 
 installDevLog()
@@ -56,7 +57,12 @@ scene.add(stars)
 // Swap this line for an OrbitController if flying turns out to feel bad.
 const flyControls = new FlyController(camera, renderer.domElement)
 const controls: Controller = flyControls
-flyControls.onFocus = () => frameFocus() // gamepad A, same action as F
+flyControls.onFocus = () => {
+  // gamepad A, same action as F. The cue lives at the two deliberate call
+  // sites rather than inside frameFocus, which also runs on first load.
+  voice.play('focus')
+  frameFocus()
+}
 
 addEventListener('resize', () => {
   camera.aspect = innerWidth / innerHeight
@@ -77,6 +83,7 @@ const raycaster = new THREE.Raycaster()
 const CENTRE = new THREE.Vector2(0, 0) // the reticle, since the pointer is locked
 
 const mfd = new MFD(selBox)
+const voice = new Voice()
 /** file/line/lines live on the raw graph, not on the placed node. */
 const sources = new Map<string, { file: string; line: number; lines: number }>()
 
@@ -85,7 +92,7 @@ const sources = new Map<string, { file: string; line: number; lines: number }>()
  * this is the other way in. It is modal — while it is up the keyboard spells
  * rather than flies — which is why the controller is told to stand down.
  */
-const search = { active: false, query: '', hits: [] as PlacedNode[], cursor: 0 }
+const search = { active: false, query: '', hits: [] as PlacedNode[], cursor: 0, missed: false }
 
 function openSearch() {
   if (search.active) return
@@ -93,6 +100,8 @@ function openSearch() {
   search.query = ''
   search.hits = []
   search.cursor = 0
+  search.missed = false
+  voice.play('search-open')
   controls.setTyping(true)
   // Typing is not flying. Releasing the pointer also gives Escape back: while
   // it is captured the browser spends that key on letting go.
@@ -113,6 +122,12 @@ function setQuery(q: string) {
   search.query = q
   search.hits = rank(placement?.nodes ?? [], q)
   search.cursor = 0
+  // Say "no match" on the keystroke that loses the last one, not on every one
+  // after it — typing four more letters of a name that isn't there should not
+  // be four announcements.
+  const missing = Boolean(q.trim()) && search.hits.length === 0
+  if (missing && !search.missed) voice.play('search-empty')
+  search.missed = missing
   devlog('search', {
     query: q,
     matches: search.hits.length,
@@ -125,6 +140,7 @@ function setQuery(q: string) {
 function goToHit() {
   const hit = search.hits.slice(0, SEARCH_LIMIT)[search.cursor]
   if (!hit) return
+  voice.play('search-go')
   closeSearch()
   selected = new Set([hit.id])
   applySelection()
@@ -135,7 +151,10 @@ function goToHit() {
 
 function searchKey(e: KeyboardEvent) {
   const shown = search.hits.slice(0, SEARCH_LIMIT)
-  if (e.key === 'Escape') return closeSearch()
+  if (e.key === 'Escape') {
+    voice.play('search-cancel')
+    return closeSearch()
+  }
   if (e.key === 'Enter') return goToHit()
   if (e.key === 'Backspace') return setQuery(search.query.slice(0, -1))
   if (e.key === 'Tab') return e.preventDefault() // nowhere for focus to go
@@ -159,10 +178,13 @@ addEventListener('keydown', (e) => {
     e.preventDefault() // firefox opens quick-find on this key
     return openSearch()
   }
-  if (e.code === 'KeyF') frameFocus()
+  if (e.code === 'KeyF') {
+    voice.play('focus')
+    frameFocus()
+  }
   if (e.code === 'Tab') {
     e.preventDefault() // tab moves focus otherwise, and there is nowhere to go
-    mfd.cycle()
+    voice.play(mfd.cycle() === 'info' ? 'panel-info' : 'panel-source')
   }
 })
 
@@ -170,8 +192,12 @@ addEventListener('keydown', (e) => {
 // be holding a keyboard nobody is typing on — and Escape, which would close it,
 // is the same key that releases the pointer.
 document.addEventListener('pointerlockchange', () => {
-  if (document.pointerLockElement) closeSearch()
+  const captured = Boolean(document.pointerLockElement)
+  if (captured) closeSearch()
+  voice.play(captured ? 'capture' : 'release')
 })
+
+flyControls.onSpeedChange = (fast) => voice.play(fast ? 'fast-on' : 'fast-off')
 
 function pickAtReticle() {
   // A cue can fly the camera and pull the trigger in the same breath, before
@@ -184,8 +210,10 @@ function pickAtReticle() {
   devlog('pick', { ...hit, selected: selected.size })
   if (!hit.id) {
     flashMiss()
+    voice.play('select-miss')
     return
   }
+  voice.play(selected.has(hit.id) ? 'deselect' : 'select')
   selected = toggle(selected, hit.id)
   // While revealing, the selection decides which nodes exist, so it has to go
   // all the way back through place().
@@ -196,6 +224,7 @@ function pickAtReticle() {
 function toggleReveal() {
   revealing = !revealing
   devlog('reveal', { on: revealing, selected: selected.size })
+  voice.play(revealing ? 'reveal-on' : 'reveal-off')
   rebuild()
 }
 
@@ -208,7 +237,11 @@ function flashMiss() {
 
 function clearSelection() {
   devlog('clear', { had: selected.size })
-  if (!selected.size) return
+  if (!selected.size) {
+    voice.play('clear-nothing')
+    return
+  }
+  voice.play('clear')
   selected = new Set()
   applySelection()
 }
@@ -260,6 +293,7 @@ function frameFocus() {
 
 function rebuild() {
   if (!graph || !view) return
+  voice.set(view.sound.enabled, view.sound.volume)
   const p = place(graph, view, revealing ? selected : [])
   placement = p
   world.build(p, view.edges.opacity)
@@ -302,7 +336,11 @@ function rebuild() {
 const errors = new Map<string, string>()
 
 function setError(where: string, e: unknown) {
+  // Only when it breaks, not while it stays broken: the poller retries every
+  // 400ms and a bad file would otherwise announce itself twice a second.
+  const fresh = !errors.has(where)
   errors.set(where, `${where}:\n${e instanceof Error ? e.message : String(e)}`)
+  if (fresh) voice.play('view-error')
   renderErrors()
 }
 

@@ -2,7 +2,7 @@ GOLANGCI_LINT_VERSION := v2.11.4
 NPM := npm --prefix web
 
 .PHONY: check build install test vet lint lint-install \
-	web-install web-check web-test dev logs shot cue look dump hooks clean
+	web-install web-check web-test dev logs shot cue look dump hooks clean sounds
 
 # Everything lefthook runs, in one place.
 check: vet test lint web-check web-test
@@ -48,6 +48,16 @@ logs:
 dump:
 	@test -n "$(TARGET)" || { echo "usage: make dump TARGET=/path/to/a/go/module"; exit 1; }
 	go run ./cmd/lspvue-dump $(TARGET) > web/public/graph.json
+
+# The navigator's voice. The WAVs are committed, so a clone runs with sound and
+# without beepboop; this is how to rebake them after a wording or level change.
+# The recipe is the source of truth — never hand-edit a WAV. Output is
+# deterministic, so an unchanged recipe rebakes to an empty diff.
+BEEPBOOP ?= ../beepboop
+BEEPBOOP_VOICE_MODEL ?= $(HOME)/.local/share/piper/voices/en_US-lessac-medium.onnx
+sounds:
+	cd $(BEEPBOOP) && BEEPBOOP_VOICE_MODEL=$(BEEPBOOP_VOICE_MODEL) \
+		go run ./cmd/beepboop bake recipes/navigator.json $(CURDIR)/web/public/sounds
 
 hooks:
 	lefthook install

@@ -74,6 +74,15 @@ export interface ViewSpec {
     distance: number
   }
   /**
+   * The navigator's voice. Here rather than in browser state so it is turned
+   * down the same way everything else is — edit the file, hear it change,
+   * without reaching for a key nobody will remember.
+   */
+  sound: {
+    enabled: boolean
+    volume: number
+  }
+  /**
    * Symbol ids to light up on load. Empty means "leave whatever is selected in
    * the browser alone", so editing the rest of the file doesn't wipe a
    * selection you made by clicking.

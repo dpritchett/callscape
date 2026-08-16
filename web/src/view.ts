@@ -21,6 +21,7 @@ export function parseView(raw: unknown): ViewSpec {
     'camera',
     'select',
     'edges',
+    'sound',
   ])
 
   const occ = obj(root.occupants, 'occupants', errs, [
@@ -32,6 +33,7 @@ export function parseView(raw: unknown): ViewSpec {
   const enc = obj(root.encoding, 'encoding', errs, ['size', 'color', 'height', 'scale'])
   const cam = obj(root.camera, 'camera', errs, ['focus', 'distance'])
   const edg = obj(root.edges ?? {}, 'edges', errs, ['show', 'opacity'])
+  const snd = obj(root.sound ?? {}, 'sound', errs, ['enabled', 'volume'])
 
   const view: ViewSpec = {
     occupants: {
@@ -53,6 +55,10 @@ export function parseView(raw: unknown): ViewSpec {
     edges: {
       show: edgeShow(edg.show, 'edges.show', errs),
       opacity: num(edg.opacity, 'edges.opacity', errs, 0.7),
+    },
+    sound: {
+      enabled: bool(snd.enabled, 'sound.enabled', errs, true),
+      volume: num(snd.volume, 'sound.volume', errs, 0.8),
     },
     select: strArray(root.select, 'select', errs, []),
   }
@@ -94,6 +100,15 @@ function num(v: unknown, path: string, errs: string[], dflt: number): number {
   if (v === undefined) return dflt
   if (typeof v !== 'number' || !Number.isFinite(v)) {
     errs.push(`${path}: expected a number`)
+    return dflt
+  }
+  return v
+}
+
+function bool(v: unknown, path: string, errs: string[], dflt: boolean): boolean {
+  if (v === undefined) return dflt
+  if (typeof v !== 'boolean') {
+    errs.push(`${path}: expected true or false`)
     return dflt
   }
   return v

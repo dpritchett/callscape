@@ -80,7 +80,16 @@ vite log for the reload, before trusting a capture.
 
 **Rendering and wiring** — no arithmetic that could live on the other side:
 `world.ts` (three.js objects), `main.ts` (wiring, polling, HUD), `controls.ts` (camera and
-input), `mfd.ts` (the panel), `sky.ts`, `shutter.ts`, `cue.ts`, `devlog.ts`.
+input), `mfd.ts` (the panel), `sound.ts` (the voice), `sky.ts`, `shutter.ts`, `cue.ts`,
+`devlog.ts`.
+
+**Audio**: `web/public/sounds/*.wav`, one file per event slug, spoken by a navigator.
+They are baked by [beepboop](../beepboop) from `recipes/navigator.json` over there and
+committed here, so a clone runs with sound and without that toolchain. `make sounds`
+rebakes; the recipe is the source of truth and the output is deterministic, so an
+unchanged recipe rebakes to an empty diff. Never hand-edit a WAV. Wording, levels and
+grit are all recipe changes — ask beepboop in plain language. `view.json` carries
+`sound.enabled` and `sound.volume`.
 
 **Go**: `cmd/lspvue-dump` — one file, loads a module with `go/packages`, emits nodes and
 statically resolved call edges.
@@ -126,6 +135,11 @@ Every one of these cost real time. They are not hypothetical.
   12 draw calls — traversal, not drawing. Merging static lines and freezing matrices got
   it to 80ms; making the buildings one `InstancedMesh` finished the job.
 - **A backgrounded tab stops rendering entirely**, including frame-rate logging.
+- **An `<audio>` element is driven from the main thread.** That is the same thread
+  running `place()` and every frame here, so a rebuild or a big redraw stuttered and
+  dropped whatever was talking — the voice audibly bound to the rendering. Web Audio
+  renders on its own thread: decode into an `AudioBuffer` once and a 350ms stall cannot
+  interrupt a line that has already started.
 - **A rule outlives the thing it was written for.** Districts hid on selection because
   translucent caps stacked into milk. They were made opaque three commits later and the
   hiding stayed, so selecting a symbol deleted the map around it. Worth asking, when

@@ -15,6 +15,10 @@
     "show": "auto",
     "opacity": 0.7
   },
+  "sound": {
+    "enabled": true,
+    "volume": 0.8
+  },
   "camera": {
     "focus": "github.com/coder/coder/v2/coderd/database/dbtime.Now",
     "distance": 120

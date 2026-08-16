@@ -77,6 +77,32 @@ and a missed chunk match is logged rather than left to be noticed. Rejected: one
 `InstancedMesh` per colour, which is fine for the 12-entry palette and degenerates into
 thousands of draw calls the moment `encoding.color` names a numeric field.
 
+**The voice goes through Web Audio, not an `<audio>` element.** An element is driven from
+the main thread, which here also runs `place()` and every frame, so a rebuild cut the
+line that was talking — the audio was audibly bound to the rendering. Buffers are decoded
+once at startup and played on the audio thread, where a stalled main thread cannot reach
+them. Rejected: shortening the lines, which treats a symptom and gives up the words.
+
+**One voice at a time, cut with a 15ms ramp.** `select`, `capture` and the speed toggle
+fire on every click and keypress and each line runs about a second, so overlapping them
+stacks a crowd talking over each other. A new line ends the one in progress, which is
+what an annunciator does. The ramp is because stopping speech mid-syllable clicks, and a
+click reads as a fault. Rejected: a queue, which makes the voice fall further behind the
+thing it is describing.
+
+**Voice lines are committed, not built.** They are baked by beepboop from a recipe in
+that repo, and audio is build output there. Here it is checked in: this project has no
+build pipeline on purpose, and a clone that needs another repo and a Piper voice model
+before it makes a sound is not one you can run. `make sounds` rebakes deterministically,
+so the artifact and the recipe cannot silently disagree. Rejected: fetching them at
+startup, which adds a network dependency to a page whose whole point is local files.
+
+**`sound` is a view spec block, not a mute key.** The stated agreement is that new knobs
+belong in `view.json` as a closed struct rather than in browser state, and this one earns
+it: turning the voice down is editing the same file that changes everything else, and it
+applies within a second without a reload. Rejected: an `M` key, which is one more binding
+to remember and invisible to anyone reading the config.
+
 **A selection hides symbols, never ground.** Districts used to hide along with their
 contents, because a cap was then a translucent disc and dozens of them stacked between
 the camera and the selection were most of the milk in the picture. Caps have been opaque
