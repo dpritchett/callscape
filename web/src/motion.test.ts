@@ -1,5 +1,14 @@
 import { describe, expect, test } from 'vitest'
-import { DEFAULT_TUNING, deadzone, deadzone1, ease, speedScale, stepVelocity } from './motion'
+import {
+  BURN_SECONDS,
+  DEFAULT_TUNING,
+  deadzone,
+  deadzone1,
+  ease,
+  speedScale,
+  stepBurn,
+  stepVelocity,
+} from './motion'
 
 const V = (x = 0, y = 0, z = 0) => ({ x, y, z })
 const len = (v: { x: number; y: number; z: number }) => Math.hypot(v.x, v.y, v.z)
@@ -95,5 +104,61 @@ describe('analog deadzone', () => {
     expect(deadzone1(0.05)).toBe(0)
     expect(deadzone1(1)).toBeCloseTo(1, 9)
     expect(deadzone1(-1)).toBeCloseTo(-1, 9)
+  })
+})
+
+describe('stepBurn', () => {
+  /** Runs `seconds` of standing still at `fps`, from a standing start. */
+  const rest = (seconds: number, fps = 60) => {
+    let still = 0
+    let expired = false
+    const dt = 1 / fps
+    for (let t = 0; t < seconds - 1e-9; t += dt) ({ still, expired } = stepBurn(still, false, dt))
+    return { still, expired }
+  }
+
+  /** How much rest it actually took to put the burn out, at `fps`. */
+  const untilOut = (fps: number) => {
+    let still = 0
+    const dt = 1 / fps
+    for (let i = 0; i < 10_000; i++) {
+      const step = stepBurn(still, false, dt)
+      still = step.still
+      if (step.expired) return still
+    }
+    return Infinity
+  }
+
+  test('moving holds the burn, however long you have been at it', () => {
+    let still = 0
+    for (let i = 0; i < 600; i++) ({ still } = stepBurn(still, true, 1 / 60))
+    expect(still).toBe(0)
+    expect(stepBurn(0, true, 10).expired).toBe(false)
+  })
+
+  // Not "expired at exactly 0.5s": real frame times accumulate float error, so
+  // the honest contract is that it never goes out early and never lasts more
+  // than one frame past the mark, whatever the frame rate.
+  test('goes out half a second after you stop, at any frame rate', () => {
+    for (const fps of [24, 60, 144]) {
+      const out = untilOut(fps)
+      expect(out).toBeGreaterThanOrEqual(BURN_SECONDS - 1e-9)
+      expect(out).toBeLessThan(BURN_SECONDS + 1 / fps)
+    }
+  })
+
+  test('and a moment less does not', () => {
+    expect(rest(BURN_SECONDS - 0.05).expired).toBe(false)
+    expect(rest(BURN_SECONDS - 0.1, 144).expired).toBe(false)
+    expect(rest(BURN_SECONDS - 0.1, 24).expired).toBe(false)
+  })
+
+  test('one long frame counts for all of the time it took', () => {
+    expect(stepBurn(0, false, 1).expired).toBe(true)
+  })
+
+  test('a touch of throttle resets the clock', () => {
+    const almost = rest(BURN_SECONDS - 0.05)
+    expect(stepBurn(almost.still, true, 1 / 60).still).toBe(0)
   })
 })

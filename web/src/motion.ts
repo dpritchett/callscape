@@ -79,6 +79,28 @@ export function deadzone1(v: number, dz = 0.12): number {
   return Math.sign(v) * Math.min(1, (mag - dz) / (1 - dz))
 }
 
+/** Seconds at rest before a burn puts itself out. */
+export const BURN_SECONDS = 0.5
+
+/**
+ * Burn is a sprint, not a mode. Holding the throttle is what it is for, so it
+ * expires once you have actually come to rest rather than leaving you fast the
+ * next time you nudge a key, having forgotten you turned it on.
+ *
+ * Takes the time already spent at rest and returns the new total, plus whether
+ * that is long enough. Frame-rate independent, because it accumulates seconds
+ * rather than counting frames.
+ */
+export function stepBurn(
+  still: number,
+  moving: boolean,
+  dt: number,
+  seconds = BURN_SECONDS,
+): { still: number; expired: boolean } {
+  const next = moving ? 0 : still + dt
+  return { still: next, expired: next >= seconds }
+}
+
 /** Smoothstep-eased 0..1 progress, for the focus tween. */
 export function ease(t: number): number {
   const c = Math.min(1, Math.max(0, t))

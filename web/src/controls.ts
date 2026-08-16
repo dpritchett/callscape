@@ -5,6 +5,7 @@ import {
   deadzone1,
   ease,
   speedScale,
+  stepBurn,
   stepVelocity,
   type MotionTuning,
 } from './motion'
@@ -65,8 +66,10 @@ export class FlyController implements Controller {
   private padClearHeld = false
   private padRevealHeld = false
   private padBoostHeld = false
-  /** Fast is the default; shift or a bumper toggles it. */
-  private fast = true
+  /** Shift or a bumper lights the burn; standing still puts it out. */
+  private fast = false
+  /** Seconds spent at rest, which is what expires the burn. */
+  private still = 0
   onSpeedChange: ((fast: boolean) => void) | null = null
 
   // Focus tween state. Flying to a symbol beats being teleported to it.
@@ -94,6 +97,9 @@ export class FlyController implements Controller {
 
   update(dt: number) {
     if (this.tween) {
+      // A focus flight is the camera moving, so it does not count as standing
+      // still — burn should not expire underneath a flight you asked for.
+      this.still = 0
       this.stepTween(dt)
       return
     }
@@ -125,11 +131,15 @@ export class FlyController implements Controller {
     const next = stepVelocity(this.vel, this.input, dt, this.tuning, scale, boosting)
     this.vel.set(next.x, next.y, next.z)
 
-    if (this.vel.lengthSq() < 1e-4) {
-      this.vel.set(0, 0, 0)
-      return
-    }
-    this.camera.position.addScaledVector(this.vel, dt)
+    if (this.vel.lengthSq() < 1e-4) this.vel.set(0, 0, 0)
+    else this.camera.position.addScaledVector(this.vel, dt)
+
+    // At rest means no input and no drift left, not merely a released key —
+    // letting go coasts, and a coast is still moving.
+    const moving = Boolean(forward || strafe || rise) || this.vel.lengthSq() > 0
+    const burn = stepBurn(this.still, moving, dt)
+    this.still = burn.still
+    if (this.fast && burn.expired) this.setFast(false, 'rest')
   }
 
   frame(
@@ -215,10 +225,7 @@ export class FlyController implements Controller {
     this.padRevealHeld = reveal
 
     const bumper = (pad.buttons[4]?.pressed ?? false) || (pad.buttons[5]?.pressed ?? false)
-    if (bumper && !this.padBoostHeld) {
-      this.fast = !this.fast
-      this.onSpeedChange?.(this.fast)
-    }
+    if (bumper && !this.padBoostHeld) this.setFast(!this.fast, 'bumper')
     this.padBoostHeld = bumper
 
     const down = deadzone1(pad.buttons[6]?.value ?? 0)
@@ -300,6 +307,15 @@ export class FlyController implements Controller {
     if (this.tween) this.tween = null
   }
 
+  /** The one place the burn changes, so every route through it says so. */
+  private setFast(on: boolean, why: string) {
+    if (this.fast === on) return
+    this.fast = on
+    this.still = 0
+    devlog('speed', { fast: on, why })
+    this.onSpeedChange?.(on)
+  }
+
   setTyping(on: boolean) {
     this.typing = on
     // Whatever was held when the query opened is not held any more as far as
@@ -314,13 +330,9 @@ export class FlyController implements Controller {
     if (e.code !== 'KeyF' && e.code !== 'Space') this.tween = null
     if (!fresh) return // key repeat must not re-fire a toggle
     devlog('keydown', { code: e.code, locked: this.locked })
-    // Fast is the default and shift toggles it, rather than fast being a thing
-    // you hold a key down for the entire time you are going anywhere.
-    if (e.code === 'ShiftLeft' || e.code === 'ShiftRight') {
-      this.fast = !this.fast
-      devlog('speed', { fast: this.fast })
-      this.onSpeedChange?.(this.fast)
-    }
+    // Shift toggles rather than being held down for the entire time you are
+    // going anywhere. It expires at rest, so the toggle never has to be undone.
+    if (e.code === 'ShiftLeft' || e.code === 'ShiftRight') this.setFast(!this.fast, 'shift')
     if (e.code === 'Space') this.onPick?.()
     if (e.code === 'KeyX') this.onClearSelection?.()
     if (e.code === 'KeyR') this.onToggleReveal?.()

@@ -77,6 +77,15 @@ and a missed chunk match is logged rather than left to be noticed. Rejected: one
 `InstancedMesh` per colour, which is fine for the 12-entry palette and degenerates into
 thousands of draw calls the moment `encoding.color` names a numeric field.
 
+**Burn is a sprint that expires, and normal speed is the default.** Fast used to be the
+default with shift toggling it off, which meant arriving somewhere at 250 u/s and having
+to remember to slow down before you could look at anything. Now shift lights the burn and
+half a second at rest puts it out. At rest means no input *and* no drift left — letting
+go coasts, and a coast is still moving. The timer lives in `motion.ts` with the rest of
+the movement model, so "half a second" is tested without a clock: never early, never more
+than one frame late, at 24, 60 and 144fps. Rejected: hold-to-burn, which is a key held
+down for the entire time you are going anywhere.
+
 **The voice goes through Web Audio, not an `<audio>` element.** An element is driven from
 the main thread, which here also runs `place()` and every frame, so a rebuild cut the
 line that was talking — the audio was audibly bound to the rendering. Buffers are decoded
