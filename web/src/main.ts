@@ -243,8 +243,18 @@ document.addEventListener('pointerlockchange', () => {
  * state it is the opposite of is the page sitting there with the cursor free,
  * which is not a moment that wants a soundtrack.
  */
+const MUSIC_GRACE = 6
+let idle: ReturnType<typeof setTimeout> | null = null
+
 function flying() {
-  voice.setPlaying(Boolean(document.pointerLockElement) || held)
+  const active = Boolean(document.pointerLockElement) || held
+  if (idle) clearTimeout(idle)
+  idle = null
+  if (active) return voice.setPlaying(true)
+  // Letting the pointer go for a moment is not leaving. Opening the search
+  // releases it, so does a stray escape, and cutting the music on each of
+  // those makes it stutter rather than play.
+  idle = setTimeout(() => voice.setPlaying(false), MUSIC_GRACE * 1000)
 }
 
 // No callout for the speed change: the bed is two tiers of airflow and it is

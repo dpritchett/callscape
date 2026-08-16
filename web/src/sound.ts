@@ -123,6 +123,8 @@ export class Voice {
       }),
     )
     devlog('voice.ready', { loaded: this.buffers.size, of: wanted.length })
+    // Whatever was asked for while this was still loading, do it now.
+    this.applyMusic()
   }
 
   set(enabled: boolean, volume: number) {
@@ -170,8 +172,12 @@ export class Voice {
   private applyMusic() {
     const want = this.wanted && this.enabled
     if (want === this.playing) return
-    this.playing = want
+    // Only claim to be playing once there is something to play. Marking it
+    // first meant that capturing the pointer during the second it takes to
+    // decode left the flag set with silence behind it, and every later call
+    // agreed there was nothing to do. Preload calls back here when it lands.
     if (!this.startMusic()) return
+    this.playing = want
 
     if (!want) {
       for (const name of TRACKS) this.rampTo(this.music![name].gain, 0, TRACK_FADE)
