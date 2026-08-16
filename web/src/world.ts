@@ -5,11 +5,16 @@ import { edgeKey, type Neighborhood } from './selection'
 import { devlog } from './devlog'
 import type { ResolvedEdgeShow } from './types'
 
-const LABEL_RANGE = 55 // symbol labels appear inside this radius
+// How far a symbol can be and still be named. Labels hold a fixed pixel height
+// whatever the distance, so this is not about legibility — it is about how far
+// out a name still means something. At 55 it meant you had to be inside a
+// district to read any of it, and from the distance where a district is a
+// shape rather than a floor, its contents were anonymous.
+const LABEL_RANGE = 320
 const DISTRICT_PX = 26 // on-screen label heights
 const SYMBOL_PX = 17
 const DISTRICT_LABELS = 14 // nearest N, so there is always something readable
-const SYMBOL_LABELS = 24
+const SYMBOL_LABELS = 40
 
 // Edge colours. The unselected pair is dim-inside-a-package, bright-across it;
 // once something is selected, direction matters more than distance.
@@ -106,6 +111,7 @@ export class World {
   private lastEye = new THREE.Vector3(Infinity, 0, 0)
   private scratchA = new THREE.Vector3()
   private scratchB = new THREE.Vector3()
+  private scratchC = new THREE.Vector3()
   private frustum = new THREE.Frustum()
   private projScreen = new THREE.Matrix4()
 
@@ -185,11 +191,11 @@ export class World {
       normal.set(d.normal.x, d.normal.y, d.normal.z)
       quat.setFromUnitVectors(POLE, normal)
 
-      // Each cap gets its own hair's-breadth radius. They are patches of one
-      // sphere, so any two that abut are coplanar, and coplanar surfaces have
-      // no stable answer to which is in front — that is the bright slashing
-      // where districts meet.
-      const capR = (p.shell || d.radius) * (1 + index * 0.00004)
+      // The district's own radius, which its symbols were placed on too. It
+      // used to be computed here from the district's index, which drifted up to
+      // six units clear of the shell the buildings sit on and buried the short
+      // ones in their own floor when seen from outside.
+      const capR = (p.shell || d.radius) + d.lift
       const capGeom = new THREE.SphereGeometry(capR, 40, 20, 0, Math.PI * 2, 0, d.cap)
       // Opaque ground, tinted with the district's colour. Transparency was the
       // whole problem: alpha blending depends on paint order, dozens of caps
@@ -220,7 +226,7 @@ export class World {
       // Rim: the circle where the cap meets the rest of the shell, drawn a
       // whisker outside it so the two are not coplanar and fighting for depth.
       const rimPoints: THREE.Vector3[] = []
-      const R = (p.shell || d.radius) * 1.002
+      const R = ((p.shell || d.radius) + d.lift) * 1.002
       for (let k = 0; k <= 64; k++) {
         const a = (k / 64) * Math.PI * 2
         rimPoints.push(
@@ -567,7 +573,8 @@ export class World {
       const d = label.position.distanceTo(eye)
       setLabelHeight(label, labelWorldHeight(DISTRICT_PX, d, camera.fov, viewportHeight, 0.05, 1e6))
     }
-    const away = this.scratchB
+    const toEye = this.scratchB
+    const up = this.scratchC
     for (const s of this.labelled) {
       const label = this.symbolLabels.get(s.node.id)
       if (!label) continue
@@ -575,9 +582,18 @@ export class World {
       const d = s.pos.distanceTo(eye)
       const h = labelWorldHeight(SYMBOL_PX, d, camera.fov, viewportHeight, 0.05, 1e6)
       setLabelHeight(label, h)
-      // Sit just clear of the box, on the side the camera is on.
-      away.copy(s.pos).sub(eye).normalize().multiplyScalar(-(s.node.size / 2 + h * 0.8))
-      label.position.copy(s.pos).add(away)
+
+      // A building straddles its district and stands up to fifty units along
+      // the local normal, so a label offset from its centre by half its width
+      // sits inside it and is cut in half by its own tower. Go to whichever end
+      // faces the camera, then a little further towards the camera.
+      toEye.copy(eye).sub(s.pos).normalize()
+      up.set(s.node.nx, s.node.ny, s.node.nz)
+      const side = up.dot(toEye) >= 0 ? 1 : -1
+      label.position
+        .copy(s.pos)
+        .addScaledVector(up, side * (s.node.height / 2 + h * 0.35))
+        .addScaledVector(toEye, h * 0.9)
     }
 
     this.declutter(camera, viewportHeight)
@@ -629,17 +645,23 @@ export class World {
    */
   private chooseLabels(camera: THREE.PerspectiveCamera) {
     const eye = camera.position
+    camera.updateMatrixWorld()
+    this.frustum.setFromProjectionMatrix(
+      this.projScreen.multiplyMatrices(camera.projectionMatrix, camera.matrixWorldInverse),
+    )
+
     const best: { s: Symbol3D; d: number }[] = []
     let worst = Infinity
     const range = LABEL_RANGE * LABEL_RANGE
 
     for (const s of this.symbols) {
       // With a selection up, only the neighbourhood is labelled — at any
-      // distance, since you selected it to read it and it is usually behind you
-      // by the time you stop moving.
+      // distance and in any direction, since you selected it to read it and it
+      // is usually behind you by the time you stop moving. Without one, a name
+      // is only worth a slot if it is on screen.
       if (this.selecting && !this.pinned.has(s.node.id)) continue
       const d = s.pos.distanceToSquared(eye)
-      if (!this.selecting && d > range) continue
+      if (!this.selecting && (d > range || !this.frustum.containsPoint(s.pos))) continue
       if (best.length === SYMBOL_LABELS && d >= worst) continue
       let at = best.length
       while (at > 0 && best[at - 1].d > d) at--
@@ -668,10 +690,6 @@ export class World {
     // most of its slots on districts behind the camera and the few names you
     // could actually read never get one. From outside it never showed, because
     // out there the nearest districts are the ones you are looking at.
-    camera.updateMatrixWorld()
-    this.frustum.setFromProjectionMatrix(
-      this.projScreen.multiplyMatrices(camera.projectionMatrix, camera.matrixWorldInverse),
-    )
     const districts = this.districtParts
       .filter((part) => this.frustum.containsPoint(part.label.position))
       .map((part) => ({ part, d: part.label.position.distanceToSquared(eye) }))

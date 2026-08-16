@@ -6,16 +6,38 @@ export interface Vec3 {
   z: number
 }
 
+/**
+ * How much further out each district sits than the one before it.
+ *
+ * Districts are patches of one sphere, so two that abut are exactly coplanar,
+ * and coplanar surfaces have no stable answer to which is in front — that was
+ * the bright slashing where districts met. A hair's-breadth of separation each
+ * fixes it.
+ *
+ * It has to be applied to everything the district owns. Lifting only the ground
+ * put it up to six units above the buildings standing on it, which from outside
+ * the shell buried most of a district's contents in its own floor — they are
+ * ten to twenty units tall and straddle the surface, so half of that is the
+ * whole outward half of a short one.
+ */
+const LIFT_STEP = 0.00004
+
 export interface District {
   pkg: string
   label: string
-  /** Centre of the district's disc, on the shell. */
+  /** Centre of the district's disc, on its own surface — the shell plus `lift`. */
   centre: Vec3
   /** Unit normal, pointing away from the middle of the sphere. */
   normal: Vec3
   /** In-plane basis, so symbols can be laid out in a flat grid. */
   u: Vec3
   v: Vec3
+  /**
+   * How far this district's surface sits above the shell, to keep it from being
+   * coplanar with its neighbours. Its ground and its buildings both use it, and
+   * anything drawing one of them has to add it or the two come apart.
+   */
+  lift: number
   radius: number
   /** Angular radius of the district's cap on the shell, in radians. */
   cap: number
@@ -96,7 +118,9 @@ export function layout(nodes: GraphNode[], rank: (n: GraphNode) => number = () =
 
   discs.forEach((d, i) => {
     const normal = dirs[i]
-    const centre = scale(normal, shell)
+    // Every district owns a radius of its own, ground and buildings alike.
+    const lift = shell * i * LIFT_STEP
+    const centre = scale(normal, shell + lift)
     const { u, v } = basis(normal)
 
     districts.push({
@@ -106,6 +130,7 @@ export function layout(nodes: GraphNode[], rank: (n: GraphNode) => number = () =
       normal,
       u,
       v,
+      lift,
       radius: d.radius,
       cap: shell > 0 ? Math.asin(Math.min(1, d.radius / shell)) : Math.PI / 2,
       count: d.members.length,
@@ -123,7 +148,7 @@ export function layout(nodes: GraphNode[], rank: (n: GraphNode) => number = () =
         y: centre.y + u.y * du + v.y * dv,
         z: centre.z + u.z * du + v.z * dv,
       }
-      pos.set(n.id, shell > 0 ? scale(normalise(tangent), shell) : tangent)
+      pos.set(n.id, shell > 0 ? scale(normalise(tangent), shell + lift) : tangent)
     })
   })
 

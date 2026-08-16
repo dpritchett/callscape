@@ -27,4 +27,15 @@ test('shell fill', () => {
       }
   console.log(`closest gap ${worst.toFixed(1)}`)
   expect(worst).toBeGreaterThan(0)
+
+  // What the ground being lifted without its buildings used to cost. A building
+  // straddles the surface, so a district lifted by L hid L of every building's
+  // outward half; anything shorter than 2L vanished into its own floor when
+  // seen from outside the shell.
+  const liftOf = new Map(p.districts.map((d) => [d.pkg, d.lift]))
+  const sunk = p.nodes.filter((n) => n.height <= 2 * (liftOf.get(n.pkg) ?? 0))
+  console.log(
+    `max lift ${Math.max(...p.districts.map((d) => d.lift)).toFixed(2)}, ` +
+      `would have been buried: ${sunk.length}/${p.nodes.length}`,
+  )
 })

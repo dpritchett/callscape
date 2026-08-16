@@ -166,7 +166,10 @@ describe('district assignment', () => {
 
   test('every district sits on the shell, facing outwards', () => {
     for (const d of p.districts) {
-      expect(Math.hypot(d.centre.x, d.centre.y, d.centre.z)).toBeCloseTo(p.shell, 6)
+      // Its own lift above the shell, which keeps it from being coplanar with
+      // its neighbours. Small: a hair's breadth, not a storey.
+      expect(d.lift).toBeLessThan(1)
+      expect(Math.hypot(d.centre.x, d.centre.y, d.centre.z)).toBeCloseTo(p.shell + d.lift, 6)
       expect(Math.hypot(d.normal.x, d.normal.y, d.normal.z)).toBeCloseTo(1, 9)
       // the in-plane basis is perpendicular to the normal and to itself
       expect(dot(d.u, d.normal)).toBeCloseTo(0, 9)
@@ -477,5 +480,41 @@ describe('packing does not run away', () => {
     for (const n of p.nodes) {
       expect(dist(p.seatOf.get(n.id)!, d.centre)).toBeLessThanOrEqual(d.radius)
     }
+  })
+})
+
+describe('a district and its contents share one surface', () => {
+  // The bug this pins: the ground used to be drawn at a radius computed from
+  // the district's index while its buildings sat on the shell. The two drifted
+  // apart by up to six units, and since a building straddles the surface and
+  // is often only ten tall, its whole outward half ended up under its own
+  // floor — invisible from outside the shell, fine from inside.
+  const view = parseView({
+    occupants: { packages: ['*'], minFanIn: 0, limit: 0 },
+    encoding: { size: 'fanIn', color: 'pkg', height: 'lines' },
+    camera: { focus: null, distance: 120 },
+  })
+
+  test('every symbol stands on its own district, not on the bare shell', () => {
+    const p = place(GRAPH, view)
+    const byPkg = new Map(p.districts.map((d) => [d.pkg, d]))
+    for (const n of p.nodes) {
+      const d = byPkg.get(n.pkg)
+      expect(d, `no district for ${n.pkg}`).toBeDefined()
+      expect(Math.hypot(n.x, n.y, n.z)).toBeCloseTo(p.shell + d!.lift, 6)
+    }
+  })
+
+  test('a district centre sits on the same surface as its symbols', () => {
+    const p = place(GRAPH, view)
+    for (const d of p.districts) {
+      expect(Math.hypot(d.centre.x, d.centre.y, d.centre.z)).toBeCloseTo(p.shell + d.lift, 6)
+    }
+  })
+
+  test('the lifts differ, or the surfaces would be coplanar again', () => {
+    const p = place(GRAPH, view)
+    const lifts = p.districts.map((d) => d.lift)
+    expect(new Set(lifts).size).toBe(lifts.length)
   })
 })
