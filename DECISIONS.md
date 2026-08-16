@@ -361,3 +361,11 @@ cap is edge-on, which is most of the crust from most places. A billboard is scre
 and immune to both. Parked rather than rejected on taste: a ground name would have to be
 a second label that hands over to the billboard, not a replacement for it, and the
 floating boxes being awkward is still an open complaint.
+
+**That arithmetic has since moved.** Labels are the shortest unique suffix now, so the
+mean name is 10.6 characters rather than 20.1. A one-symbol district has 75 units of
+circumference and needs about half of what it did, which puts arced rim text back inside
+the realm of the possible for anything but the smallest districts. The other half of the
+objection stands unchanged: ground text foreshortens to a line when the cap is edge-on,
+and it cannot hold a pixel height. Worth another look, from the new numbers, before
+anyone re-derives the old ones.
