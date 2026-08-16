@@ -62,11 +62,30 @@ export function layout(nodes: GraphNode[], rank: (n: GraphNode) => number = () =
 
   const discs = pkgs.map((pkg) => {
     const members = byPkg.get(pkg)!
-    // A disc's area is what has to hold the members, so its radius grows with
-    // the square root of the count. The old square grid was sized by its
-    // diagonal, which left the rim of every district empty.
-    const radius = Math.max(MIN_RADIUS, CELL * (0.62 * Math.sqrt(members.length) + 1))
-    return { pkg, members, radius }
+    const blocks = blocksOf(members, rank)
+    // The district has to hold its blocks, which are themselves discs. Start
+    // from the area they need and grow until the packing actually succeeds —
+    // an estimate alone is not enough, because greedy packing puts the first
+    // block in the middle, which is exactly wrong for three equal ones.
+    const area = blocks.reduce((s, b) => s + b.radius * b.radius, 0)
+    let radius = Math.max(MIN_RADIUS, Math.sqrt(area / 0.62) + CELL * 0.5)
+    let seats = seatBlocks(blocks, radius)
+    for (let tries = 0; !seats && tries < 60; tries++) {
+      radius *= 1.08
+      seats = seatBlocks(blocks, radius)
+    }
+    const placed = seats ?? seatBlocks(blocks, radius, true)!
+    // Packing had to search inside a generous bound; the district only has to
+    // contain what actually landed. Shrinking to that keeps the rim from being
+    // the empty margin the square grid used to leave.
+    const reach = placed.reduce((m, s) => Math.max(m, Math.hypot(s.du, s.dv)), 0)
+    return {
+      pkg,
+      members,
+      blocks,
+      radius: Math.max(MIN_RADIUS, reach + CELL * 0.9),
+      seats: placed,
+    }
   })
 
   const radii = discs.map((d) => d.radius)
@@ -94,25 +113,9 @@ export function layout(nodes: GraphNode[], rank: (n: GraphNode) => number = () =
       count: d.members.length,
     })
 
-    // Biggest first, so a district has a centre: whatever the view ranks highest
-    // sits in the middle and the small stuff rings the edge. Name breaks ties,
-    // which is what keeps this deterministic.
-    const members = [...d.members].sort((a, b) => {
-      const ra = rank(a)
-      const rb = rank(b)
-      if (ra !== rb) return rb - ra
-      return a.name < b.name ? -1 : a.name > b.name ? 1 : 0
-    })
-
-    // Sunflower packing: even density all the way to the rim, no corners, and
-    // no arbitrary row length. Position i sits at sqrt(i/n) of the radius,
-    // turned by the golden angle each step.
-    const inner = Math.max(0, d.radius - CELL)
-    members.forEach((n, idx) => {
-      const rr = inner * Math.sqrt((idx + 0.5) / members.length)
-      const theta = idx * GOLDEN_ANGLE
-      const du = rr * Math.cos(theta)
-      const dv = rr * Math.sin(theta)
+    // Blocks are files, packed as discs inside the district and placed
+    // biggest-first so the district still has a middle worth flying to.
+    d.seats.forEach(({ n, du, dv }) => {
       // Lay the grid out on the tangent plane, then push it onto the sphere, so
       // symbols sit on the curve of the crust rather than on a flat card
       // floating above it. With a single district there is no sphere to push
@@ -128,6 +131,131 @@ export function layout(nodes: GraphNode[], rank: (n: GraphNode) => number = () =
 
   const extent = districts.reduce((m, d) => Math.max(m, shell + d.radius), MIN_RADIUS)
   return { districts, pos, shell, extent }
+}
+
+interface Block {
+  file: string
+  members: GraphNode[]
+  radius: number
+}
+
+/**
+ * A district's members grouped by the file they live in. Files are what make a
+ * package's interior irregular in a way that means something: a package with
+ * one 400-line file and six small ones should not look like a package with
+ * seven even ones.
+ */
+function blocksOf(members: GraphNode[], rank: (n: GraphNode) => number): Block[] {
+  const byFile = new Map<string, GraphNode[]>()
+  for (const n of members) {
+    const list = byFile.get(n.file)
+    if (list) list.push(n)
+    else byFile.set(n.file, [n])
+  }
+
+  const blocks = [...byFile.entries()].map(([file, list]) => ({
+    file,
+    members: list.sort((a, b) => {
+      const ra = rank(a)
+      const rb = rank(b)
+      if (ra !== rb) return rb - ra
+      return a.name < b.name ? -1 : a.name > b.name ? 1 : 0
+    }),
+    radius: CELL * (0.62 * Math.sqrt(list.length) + 0.85),
+  }))
+
+  // Biggest block first: it claims the middle, and greedy packing works better
+  // when the awkward shapes go down first.
+  blocks.sort((a, b) => {
+    if (a.members.length !== b.members.length) return b.members.length - a.members.length
+    return a.file < b.file ? -1 : 1
+  })
+  return blocks
+}
+
+/**
+ * Places each block inside the district, then each symbol inside its block.
+ *
+ * Blocks go down greedily along a spiral, taking the first spot that clears
+ * everything already placed. Within a block, symbols sit in a jittered
+ * sunflower — the jitter is hashed from the symbol's own id, so it is stable
+ * across runs while breaking up the spiral arms that made a district look like
+ * a mandala.
+ */
+function seatBlocks(
+  blocks: Block[],
+  radius: number,
+  force = false,
+): { n: GraphNode; du: number; dv: number }[] | null {
+  const placed: { x: number; y: number; r: number }[] = []
+  const out: { n: GraphNode; du: number; dv: number }[] = []
+
+  for (const block of blocks) {
+    const spot = findSpot(block.radius, radius, placed)
+    if (!spot && !force) return null // caller grows the district and retries
+    const at = spot ?? rimFallback(block.radius, radius, placed.length)
+    placed.push({ x: at.x, y: at.y, r: block.radius })
+
+    const inner = Math.max(0, block.radius - CELL * 0.8)
+    block.members.forEach((n, i) => {
+      const jr = hash01(`${n.id}#r`) - 0.5
+      const jt = hash01(`${n.id}#t`) - 0.5
+      const rr = inner * Math.sqrt((i + 0.5) / block.members.length) * (1 + jr * 0.35)
+      const theta = i * GOLDEN_ANGLE + jt * 0.9
+      out.push({
+        n,
+        du: at.x + rr * Math.cos(theta),
+        dv: at.y + rr * Math.sin(theta),
+      })
+    })
+  }
+  return out
+}
+
+/**
+ * First point on an outward spiral where a disc of `r` clears everything
+ * already placed, or null if there is nowhere inside `bound`.
+ *
+ * Only the first block gets the middle, and only because there is nothing to
+ * clear yet — for three equal blocks the centre is the one place none of them
+ * should be, which is why the caller grows the district rather than trusting an
+ * area estimate.
+ */
+function findSpot(
+  r: number,
+  bound: number,
+  placed: { x: number; y: number; r: number }[],
+): { x: number; y: number } | null {
+  if (!placed.length) return { x: 0, y: 0 }
+  const step = Math.max(0.5, r * 0.25)
+  for (let k = 1; k < 6000; k++) {
+    const t = k * GOLDEN_ANGLE
+    const rad = step * Math.sqrt(k)
+    if (rad + r > bound) return null
+    const x = rad * Math.cos(t)
+    const y = rad * Math.sin(t)
+    if (placed.every((p) => Math.hypot(p.x - x, p.y - y) >= p.r + r + CELL * 0.25)) {
+      return { x, y }
+    }
+  }
+  return null
+}
+
+/** Last resort when growing did not help: ring the rim rather than overlap. */
+function rimFallback(r: number, bound: number, index: number): { x: number; y: number } {
+  const t = index * GOLDEN_ANGLE
+  const rad = Math.max(0, bound - r)
+  return { x: rad * Math.cos(t), y: rad * Math.sin(t) }
+}
+
+/** Stable hash of a string into [0,1). Deterministic jitter, not randomness. */
+function hash01(s: string): number {
+  let h = 2166136261
+  for (let i = 0; i < s.length; i++) {
+    h ^= s.charCodeAt(i)
+    h = Math.imul(h, 16777619)
+  }
+  return ((h >>> 0) % 100000) / 100000
 }
 
 function onSphere(phi: number, psi: number): Vec3 {

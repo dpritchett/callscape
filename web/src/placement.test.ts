@@ -308,13 +308,18 @@ const dot = (a: V, b: V) => a.x * b.x + a.y * b.y + a.z * b.z
 const dist = (a: V, b: V) => Math.hypot(a.x - b.x, a.y - b.y, a.z - b.z)
 
 describe('district interior', () => {
+  // Three files of very different sizes, which is what a real package looks
+  // like and what makes a district's interior irregular.
   const many: Graph = {
     module: M,
-    nodes: Array.from({ length: 60 }, (_, i) =>
-      node(`${M}/internal/gitlab`, `f${String(i).padStart(2, '0')}`, i, 10 + i),
-    ),
+    nodes: Array.from({ length: 60 }, (_, i) => {
+      const n = node(`${M}/internal/gitlab`, `f${String(i).padStart(2, '0')}`, i, 10 + i)
+      n.file = i < 40 ? 'gitlab/client.go' : i < 55 ? 'gitlab/cache.go' : 'gitlab/util.go'
+      return n
+    }),
     edges: [],
   }
+  const GRAPH_FILE = new Map(many.nodes.map((n) => [n.id, n.file]))
   const p = place(many, view({ occupants: { packages: ['*'], minFanIn: 0, limit: 0 } }))
   const d = p.districts[0]
   const radial = (id: string) => {
@@ -331,10 +336,14 @@ describe('district interior', () => {
     expect(inner).toBeGreaterThan(p.nodes.length / 5)
   })
 
-  test('the highest ranked symbol sits in the middle', () => {
-    const top = p.nodes.reduce((a, b) => (a.fanIn > b.fanIn ? a : b))
-    const others = p.nodes.filter((n) => n.id !== top.id)
-    expect(radial(top.id)).toBeLessThan(Math.min(...others.map((n) => radial(n.id))))
+  test('the biggest file claims the middle of the district', () => {
+    // Symbols cluster by file now, so the district's centre belongs to the
+    // largest block rather than to whichever single symbol ranks highest.
+    const inMiddle = p.nodes
+      .filter((n) => radial(n.id) < d.radius / 3)
+      .map((n) => GRAPH_FILE.get(n.id))
+    expect(new Set(inMiddle).size).toBe(1)
+    expect(inMiddle[0]).toBe('gitlab/client.go') // 40 of the 60
   })
 
   test('log scaling separates the crowded low end that linear flattens', () => {
@@ -377,6 +386,64 @@ describe('generated code', () => {
   test('an unknown setting is an error rather than a silent default', () => {
     expect(() => view({ occupants: { ...occ, generated: 'sometimes' } })).toThrow(
       /occupants.generated/,
+    )
+  })
+})
+
+describe('files cluster inside a district', () => {
+  const withFiles: Graph = {
+    module: M,
+    nodes: Array.from({ length: 45 }, (_, i) => {
+      const n = node(`${M}/pkg`, `sym${String(i).padStart(2, '0')}`, i % 7, 10 + i)
+      n.file = `pkg/${['a', 'b', 'c'][i % 3]}.go`
+      return n
+    }),
+    edges: [],
+  }
+  const p = place(withFiles, view({ occupants: { packages: ['*'], minFanIn: 0, limit: 0 } }))
+  const seat = (id: string) => p.seatOf.get(id)!
+  const spread = (nodes: typeof p.nodes) => {
+    let sum = 0
+    let pairs = 0
+    for (let i = 0; i < nodes.length; i++)
+      for (let j = i + 1; j < nodes.length; j++) {
+        sum += dist(seat(nodes[i].id), seat(nodes[j].id))
+        pairs++
+      }
+    return sum / pairs
+  }
+
+  test('same-file symbols sit closer together than the district average', () => {
+    // place() returns nodes ranked, not in input order, so group by the file
+    // recorded on the source graph rather than by index.
+    const fileOf = new Map(withFiles.nodes.map((n) => [n.id, n.file]))
+    const overall = spread(p.nodes)
+    for (const file of ['pkg/a.go', 'pkg/b.go', 'pkg/c.go']) {
+      const group = p.nodes.filter((n) => fileOf.get(n.id) === file)
+      expect(group.length).toBe(15)
+      expect(spread(group)).toBeLessThan(overall * 0.75)
+    }
+  })
+
+  test('the interior is not a single spiral: neighbour spacing varies', () => {
+    // A pure sunflower puts every symbol at almost exactly the same distance
+    // from its nearest neighbour. Blocks plus jitter should not.
+    const nearest = p.nodes.map((n) => {
+      let best = Infinity
+      for (const m of p.nodes) {
+        if (m.id === n.id) continue
+        best = Math.min(best, dist(seat(n.id), seat(m.id)))
+      }
+      return best
+    })
+    const mean = nearest.reduce((s, d) => s + d, 0) / nearest.length
+    const sd = Math.sqrt(nearest.reduce((s, d) => s + (d - mean) ** 2, 0) / nearest.length)
+    expect(sd / mean).toBeGreaterThan(0.15)
+  })
+
+  test('still byte-identical run to run', () => {
+    expect(JSON.stringify(place(withFiles, view({ occupants: { packages: ['*'], minFanIn: 0, limit: 0 } })))).toBe(
+      JSON.stringify(p),
     )
   })
 })
