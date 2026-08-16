@@ -7,6 +7,7 @@ import { neighborhood, toggle } from './selection'
 import { devlog, installDevLog } from './devlog'
 import { Shutter } from './shutter'
 import { watchCues } from './cue'
+import { makeStarfield } from './sky'
 import type { Graph, ViewSpec } from './types'
 
 installDevLog()
@@ -41,6 +42,11 @@ scene.add(world.group)
 // the middle of it is a lie about where the ground is.
 const fog = new THREE.Fog(0x0b0e14, 260, 1100)
 scene.fog = fog
+
+// A sky to fly against, so "which way am I facing" has an answer when nothing
+// else is on screen. Sized once, well beyond anything a graph occupies.
+const stars = makeStarfield(3200)
+scene.add(stars)
 
 // Swap this line for an OrbitController if flying turns out to feel bad.
 const flyControls = new FlyController(camera, renderer.domElement)

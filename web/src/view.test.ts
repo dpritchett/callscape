@@ -10,6 +10,7 @@ const OK = {
 test('accepts the documented shape, filling in the optional blocks', () => {
   expect(parseView(OK)).toEqual({
     ...OK,
+    occupants: { ...OK.occupants, generated: 'include' },
     encoding: { ...OK.encoding, scale: 'log' },
     select: [],
     edges: { show: 'auto', opacity: 0.7 },

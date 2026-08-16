@@ -1,11 +1,13 @@
-import type { EdgeShow, NodeField, ScaleKind, ViewSpec } from './types'
+import type { EdgeShow, GeneratedFilter, NodeField, ScaleKind, ViewSpec } from './types'
 
 const EDGE_SHOWS: EdgeShow[] = ['auto', 'all', 'cross', 'selected', 'none']
 const SCALES: ScaleKind[] = ['linear', 'sqrt', 'log']
 
 const NODE_FIELDS: NodeField[] = [
-  'id', 'name', 'pkg', 'file', 'line', 'lines', 'exported', 'fanIn', 'fanOut',
+  'id', 'name', 'pkg', 'file', 'line', 'lines', 'exported', 'generated',
+  'fanIn', 'fanOut', 'fanInPkgs', 'fanOutPkgs',
 ]
+const GENERATED: GeneratedFilter[] = ['include', 'exclude', 'only']
 
 /**
  * Parses view.json as a closed struct: any key we do not know about is an
@@ -21,7 +23,12 @@ export function parseView(raw: unknown): ViewSpec {
     'edges',
   ])
 
-  const occ = obj(root.occupants, 'occupants', errs, ['packages', 'minFanIn', 'limit'])
+  const occ = obj(root.occupants, 'occupants', errs, [
+    'packages',
+    'minFanIn',
+    'limit',
+    'generated',
+  ])
   const enc = obj(root.encoding, 'encoding', errs, ['size', 'color', 'height', 'scale'])
   const cam = obj(root.camera, 'camera', errs, ['focus', 'distance'])
   const edg = obj(root.edges ?? {}, 'edges', errs, ['show', 'opacity'])
@@ -31,6 +38,7 @@ export function parseView(raw: unknown): ViewSpec {
       packages: strArray(occ.packages, 'occupants.packages', errs, ['*']),
       minFanIn: num(occ.minFanIn, 'occupants.minFanIn', errs, 0),
       limit: num(occ.limit, 'occupants.limit', errs, 100),
+      generated: oneOf(occ.generated, 'occupants.generated', errs, GENERATED, 'include'),
     },
     encoding: {
       size: field(enc.size, 'encoding.size', errs, 'fanIn'),
@@ -98,6 +106,21 @@ function str(v: unknown, path: string, errs: string[]): string | null {
     return null
   }
   return v
+}
+
+function oneOf<T extends string>(
+  v: unknown,
+  path: string,
+  errs: string[],
+  allowed: T[],
+  dflt: T,
+): T {
+  if (v === undefined) return dflt
+  if (typeof v !== 'string' || !allowed.includes(v as T)) {
+    errs.push(`${path}: expected one of ${allowed.join(', ')}`)
+    return dflt
+  }
+  return v as T
 }
 
 function scaleKind(v: unknown, path: string, errs: string[]): ScaleKind {

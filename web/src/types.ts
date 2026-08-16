@@ -6,9 +6,17 @@ export interface GraphNode {
   line: number
   lines: number
   exported: boolean
+  /** Declared in a file with a "Code generated ... DO NOT EDIT." header. */
+  generated: boolean
   fanIn: number
   fanOut: number
+  /** Distinct calling/called packages, rather than call sites. */
+  fanInPkgs: number
+  fanOutPkgs: number
 }
+
+/** What to do with generated symbols, which can be a third of a codebase. */
+export type GeneratedFilter = 'include' | 'exclude' | 'only'
 
 export interface GraphEdge {
   from: string
@@ -42,6 +50,7 @@ export interface ViewSpec {
     packages: string[]
     minFanIn: number
     limit: number
+    generated: GeneratedFilter
   }
   encoding: {
     size: NodeField

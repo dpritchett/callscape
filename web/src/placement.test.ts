@@ -6,7 +6,7 @@ import type { Graph, GraphNode, ViewSpec } from './types'
 
 const M = 'example.com/mod'
 
-function node(pkg: string, name: string, fanIn: number, lines: number): GraphNode {
+function node(pkg: string, name: string, fanIn: number, lines: number, generated = false): GraphNode {
   return {
     id: `${pkg}.${name}`,
     name,
@@ -15,8 +15,11 @@ function node(pkg: string, name: string, fanIn: number, lines: number): GraphNod
     line: 1,
     lines,
     exported: name[0] === name[0].toUpperCase(),
+    generated,
     fanIn,
     fanOut: 0,
+    fanInPkgs: fanIn > 0 ? 1 : 0,
+    fanOutPkgs: 0,
   }
 }
 
@@ -341,5 +344,39 @@ describe('district interior', () => {
       return Math.max(...small) - Math.min(...small)
     }
     expect(spread('log')).toBeGreaterThan(spread('linear') * 3)
+  })
+})
+
+describe('generated code', () => {
+  const mixed: Graph = {
+    module: M,
+    nodes: [
+      node(`${M}/api`, 'Handwritten', 3, 40),
+      node(`${M}/api`, 'AlsoHandwritten', 1, 20),
+      node(`${M}/api`, 'queryStore.Get', 2, 8, true),
+      node(`${M}/api`, 'queryStore.Put', 2, 8, true),
+    ],
+    edges: [],
+  }
+  const occ = { packages: ['*'], minFanIn: 0, limit: 0 }
+  const names = (generated: string) =>
+    place(mixed, view({ occupants: { ...occ, generated } })).nodes.map((n) => n.name).sort()
+
+  test('included by default', () => {
+    expect(place(mixed, view({ occupants: occ })).nodes).toHaveLength(4)
+  })
+
+  test('exclude leaves only what a person wrote', () => {
+    expect(names('exclude')).toEqual(['AlsoHandwritten', 'Handwritten'])
+  })
+
+  test('only shows the generated half on its own', () => {
+    expect(names('only')).toEqual(['queryStore.Get', 'queryStore.Put'])
+  })
+
+  test('an unknown setting is an error rather than a silent default', () => {
+    expect(() => view({ occupants: { ...occ, generated: 'sometimes' } })).toThrow(
+      /occupants.generated/,
+    )
   })
 })

@@ -31,6 +31,41 @@ whichever node fields `view.json` names.
 
 Requires Go 1.26+ (per `go.mod`). Node is pinned in `.mise.toml`.
 
+## view.json
+
+The whole control surface. Unknown fields are an error rather than ignored.
+
+```jsonc
+{
+  "occupants": {
+    "packages": ["*"],        // globs over package paths; * spans slashes
+    "minFanIn": 1,
+    "limit": 0,               // top N by encoding.size; 0 means all
+    "generated": "exclude"    // include | exclude | only
+  },
+  "encoding": {
+    "size": "fanInPkgs",      // any node field
+    "color": "pkg",
+    "height": "lines",
+    "scale": "log"            // linear | sqrt | log
+  },
+  "edges": {
+    "show": "auto",           // auto | all | cross | selected | none
+    "opacity": 0.7
+  },
+  "camera": { "focus": "pkg/path.Symbol", "distance": 120 },
+  "select": []                // symbols to light up on load
+}
+```
+
+Node fields: `id name pkg file line lines exported generated fanIn fanOut
+fanInPkgs fanOutPkgs`.
+
+**`fanIn` counts call sites; `fanInPkgs` counts distinct calling packages.** They
+disagree sharply on real code — coder's most-called function has 837 call sites
+from 2 packages, because a generated file calls it once per wrapper — and
+`fanInPkgs` is usually the one you want.
+
 ## Known limits
 
 **Calls through an interface resolve to the interface method, not the implementation.**

@@ -21,10 +21,17 @@ export function matchesAny(pkg: string, patterns: string[]): boolean {
 
 /** Applies `occupants` to the graph: package globs, then minFanIn, then top-N. */
 export function selectOccupants(nodes: GraphNode[], view: ViewSpec): GraphNode[] {
-  const { packages, minFanIn, limit } = view.occupants
+  const { packages, minFanIn, limit, generated } = view.occupants
   const rank = view.encoding.size
 
-  const kept = nodes.filter((n) => matchesAny(n.pkg, packages) && n.fanIn >= minFanIn)
+  const kept = nodes.filter(
+    (n) =>
+      matchesAny(n.pkg, packages) &&
+      n.fanIn >= minFanIn &&
+      // A third of coder is generated, and it distorts every ranking it appears
+      // in, so whether to look at it is a decision the view gets to make.
+      (generated === 'include' || (generated === 'only') === Boolean(n.generated)),
+  )
 
   kept.sort((a, b) => {
     const av = a[rank], bv = b[rank]

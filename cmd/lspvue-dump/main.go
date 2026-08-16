@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"go/ast"
 	"go/types"
+	"math"
 	"os"
 	"path/filepath"
 	"sort"
@@ -26,8 +27,18 @@ type Node struct {
 	Line     int    `json:"line"`
 	Lines    int    `json:"lines"`
 	Exported bool   `json:"exported"`
-	FanIn    int    `json:"fanIn"`
-	FanOut   int    `json:"fanOut"`
+	// Generated marks a symbol declared in a file carrying the standard
+	// "Code generated ... DO NOT EDIT." header. coder has 841 such symbols in
+	// one file, and they take the top two places in its fan-in ranking.
+	Generated bool `json:"generated"`
+	FanIn     int  `json:"fanIn"`
+	FanOut    int  `json:"fanOut"`
+	// FanInPkgs counts distinct calling packages rather than call sites. It is
+	// the more honest measure of how depended-upon something is: a generated
+	// wrapper calling one helper 835 times is one package's worth of coupling,
+	// not 835.
+	FanInPkgs  int `json:"fanInPkgs"`
+	FanOutPkgs int `json:"fanOutPkgs"`
 }
 
 type Edge struct {
@@ -119,6 +130,7 @@ func dump(dir string) (*Graph, error) {
 			continue
 		}
 		for _, f := range pkg.Syntax {
+			generated := isGenerated(f)
 			for _, decl := range f.Decls {
 				fd, ok := decl.(*ast.FuncDecl)
 				if !ok || fd.Name == nil {
@@ -139,13 +151,14 @@ func dump(dir string) (*Graph, error) {
 					rel = filepath.ToSlash(r)
 				}
 				nodes[id] = &Node{
-					ID:       id,
-					Name:     shortName(id, pkg.PkgPath),
-					Pkg:      pkg.PkgPath,
-					File:     rel,
-					Line:     pos.Line,
-					Lines:    end.Line - pos.Line + 1,
-					Exported: obj.Exported(),
+					ID:        id,
+					Name:      shortName(id, pkg.PkgPath),
+					Pkg:       pkg.PkgPath,
+					File:      rel,
+					Line:      pos.Line,
+					Lines:     end.Line - pos.Line + 1,
+					Exported:  obj.Exported(),
+					Generated: generated,
 				}
 			}
 		}
@@ -190,9 +203,17 @@ func dump(dir string) (*Graph, error) {
 	}
 
 	edges = dedupe(edges)
+	callers := map[string]map[string]bool{}
+	callees := map[string]map[string]bool{}
 	for _, e := range edges {
 		nodes[e.From].FanOut++
 		nodes[e.To].FanIn++
+		addPkg(callers, e.To, nodes[e.From].Pkg)
+		addPkg(callees, e.From, nodes[e.To].Pkg)
+	}
+	for id, n := range nodes {
+		n.FanInPkgs = len(callers[id])
+		n.FanOutPkgs = len(callees[id])
 	}
 
 	out := make([]Node, 0, len(nodes))
@@ -221,6 +242,31 @@ func moduleOf(pkgs []*packages.Package, fallbackDir string) (string, string) {
 		return pkgs[0].PkgPath, fallbackDir
 	}
 	return "", fallbackDir
+}
+
+func addPkg(m map[string]map[string]bool, id, pkg string) {
+	if m[id] == nil {
+		m[id] = map[string]bool{}
+	}
+	m[id][pkg] = true
+}
+
+// isGenerated reports the convention from https://go.dev/s/generatedcode: a
+// line matching "^// Code generated .* DO NOT EDIT\.$" before the package
+// clause.
+func isGenerated(f *ast.File) bool {
+	for _, group := range f.Comments {
+		if group.Pos() > f.Package {
+			break
+		}
+		for _, c := range group.List {
+			text := strings.TrimSpace(c.Text)
+			if strings.HasPrefix(text, "// Code generated ") && strings.HasSuffix(text, " DO NOT EDIT.") {
+				return true
+			}
+		}
+	}
+	return false
 }
 
 func inModule(pkgPath, modPath string) bool {
@@ -324,30 +370,48 @@ func shortName(id, pkgPath string) string {
 
 func printStats(g *Graph) {
 	pkgs := map[string]bool{}
+	generated := 0
 	for _, n := range g.Nodes {
 		pkgs[n.Pkg] = true
+		if n.Generated {
+			generated++
+		}
 	}
-	fmt.Printf("module:   %s\n", g.Module)
-	fmt.Printf("nodes:    %d\n", len(g.Nodes))
-	fmt.Printf("edges:    %d\n", len(g.Edges))
-	fmt.Printf("packages: %d\n", len(pkgs))
-	fmt.Println()
+	fmt.Printf("module:    %s\n", g.Module)
+	fmt.Printf("nodes:     %d\n", len(g.Nodes))
+	fmt.Printf("edges:     %d\n", len(g.Edges))
+	fmt.Printf("packages:  %d\n", len(pkgs))
+	fmt.Printf("generated: %d (%.0f%%)\n", generated, 100*float64(generated)/math.Max(1, float64(len(g.Nodes))))
 
+	// Two rankings, because they disagree and the disagreement is the point:
+	// call sites reward whatever codegen emits most, calling packages reward
+	// what the rest of the module actually depends on.
+	printTop(g, "top 20 by fan-in (call sites)", func(n Node) int { return n.FanIn })
+	printTop(g, "top 20 by fan-in (calling packages)", func(n Node) int { return n.FanInPkgs })
+}
+
+func printTop(g *Graph, title string, by func(Node) int) {
 	top := make([]Node, len(g.Nodes))
 	copy(top, g.Nodes)
 	sort.SliceStable(top, func(i, j int) bool {
-		if top[i].FanIn != top[j].FanIn {
-			return top[i].FanIn > top[j].FanIn
+		if by(top[i]) != by(top[j]) {
+			return by(top[i]) > by(top[j])
 		}
 		return top[i].ID < top[j].ID
 	})
 	if len(top) > 20 {
 		top = top[:20]
 	}
-	fmt.Println("top 20 by fan-in:")
-	fmt.Printf("%6s %6s  %-44s %s\n", "fanIn", "fanOut", "symbol", "location")
+
+	fmt.Printf("\n%s:\n", title)
+	fmt.Printf("%6s %5s %6s  %-40s %s\n", "sites", "pkgs", "out", "symbol", "location")
 	for _, n := range top {
-		fmt.Printf("%6d %6d  %-44s %s:%d\n", n.FanIn, n.FanOut, trunc(n.Pkg[strings.LastIndex(n.Pkg, "/")+1:]+"."+n.Name, 44), n.File, n.Line)
+		gen := ""
+		if n.Generated {
+			gen = "  [generated]"
+		}
+		name := trunc(n.Pkg[strings.LastIndex(n.Pkg, "/")+1:]+"."+n.Name, 40)
+		fmt.Printf("%6d %5d %6d  %-40s %s:%d%s\n", n.FanIn, n.FanInPkgs, n.FanOut, name, n.File, n.Line, gen)
 	}
 }
 
