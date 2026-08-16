@@ -66,6 +66,7 @@ export class World {
   private selecting = false
   /** Which symbols currently carry a label, and the camera that chose them. */
   private labelled: Symbol3D[] = []
+  private districtChosen: THREE.Sprite[] = []
   private labelsDirty = true
   private lastEye = new THREE.Vector3(Infinity, 0, 0)
   private scratchA = new THREE.Vector3()
@@ -469,23 +470,67 @@ export class World {
       this.labelsDirty = false
     }
 
-    // Sizing the handful that survived is cheap, and has to happen every frame
-    // so they hold their pixel height as you move.
-    for (const label of this.districtLabels) {
-      if (!label.visible) continue
+    // Sizing the chosen few is cheap, and has to happen every frame so they
+    // hold their pixel height as you move. Visibility is reasserted here rather
+    // than inherited: declutter hides some of them below, and that decision has
+    // to be reconsidered each frame rather than latching a label off forever.
+    for (const label of this.districtChosen) {
+      label.visible = true
       const d = label.position.distanceTo(eye)
       setLabelHeight(label, labelWorldHeight(DISTRICT_PX, d, camera.fov, viewportHeight, 0.05, 1e6))
     }
     const away = this.scratchB
     for (const s of this.labelled) {
       const label = this.symbolLabels.get(s.node.id)
-      if (!label?.visible) continue
+      if (!label) continue
+      label.visible = true
       const d = s.pos.distanceTo(eye)
       const h = labelWorldHeight(SYMBOL_PX, d, camera.fov, viewportHeight, 0.05, 1e6)
       setLabelHeight(label, h)
       // Sit just clear of the box, on the side the camera is on.
       away.copy(s.pos).sub(eye).normalize().multiplyScalar(-(s.node.size / 2 + h * 0.8))
       label.position.copy(s.pos).add(away)
+    }
+
+    this.declutter(camera, viewportHeight)
+  }
+
+  /**
+   * Hide any label whose text would land on top of one already placed. Picking
+   * the nearest N is not enough on its own: 835 callers of one function sit in
+   * the same square inch of screen from a distance, and 24 names drawn there
+   * are a smear rather than 24 names. Nearest wins, districts before symbols.
+   */
+  private declutter(camera: THREE.PerspectiveCamera, viewportHeight: number) {
+    const viewportWidth = viewportHeight * camera.aspect
+    const taken: { x: number; y: number; w: number; h: number }[] = []
+    const p = this.scratchA
+
+    const place = (label: THREE.Sprite, pad: number) => {
+      p.copy(label.position).project(camera)
+      if (p.z > 1) {
+        label.visible = false // behind the camera
+        return
+      }
+      // Sprite scale is a world height; on screen it is that over the frustum
+      // height at this depth, which is what the projection has already applied.
+      const h = (label.scale.y / (label.position.distanceTo(camera.position) * 2 * Math.tan((camera.fov * Math.PI) / 360))) * viewportHeight
+      const w = h * ((label.userData.aspect as number) || 1)
+      const x = (p.x * viewportWidth) / 2
+      const y = (p.y * viewportHeight) / 2
+      for (const t of taken) {
+        if (Math.abs(x - t.x) < (w + t.w) / 2 + pad && Math.abs(y - t.y) < (h + t.h) / 2 + pad) {
+          label.visible = false
+          return
+        }
+      }
+      taken.push({ x, y, w, h })
+    }
+
+    for (const label of this.districtChosen) if (label.visible) place(label, 6)
+    for (const s of this.labelled) {
+      const label = this.symbolLabels.get(s.node.id)
+      if (label?.visible) place(label, 2)
     }
   }
 
@@ -532,8 +577,11 @@ export class World {
     const districts = this.districtParts
       .map((part) => ({ part, d: part.label.position.distanceToSquared(eye) }))
       .sort((a, b) => a.d - b.d)
+    this.districtChosen = []
     districts.forEach(({ part }, i) => {
-      part.label.visible = i < DISTRICT_LABELS && part.floor.visible
+      const wanted = i < DISTRICT_LABELS && part.floor.visible
+      part.label.visible = wanted
+      if (wanted) this.districtChosen.push(part.label)
     })
   }
 
@@ -560,6 +608,7 @@ export class World {
     this.pinned = new Set()
     this.selecting = false
     this.labelled = []
+    this.districtChosen = []
     this.labelsDirty = true
     this.group.clear()
   }
