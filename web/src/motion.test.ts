@@ -1,10 +1,12 @@
 import { describe, expect, test } from 'vitest'
+import * as THREE from 'three'
 import {
   BURN_SECONDS,
   DEFAULT_TUNING,
   deadzone,
   deadzone1,
   ease,
+  flipFacing,
   speedScale,
   stepBurn,
   stepVelocity,
@@ -160,5 +162,46 @@ describe('stepBurn', () => {
   test('a touch of throttle resets the clock', () => {
     const almost = rest(BURN_SECONDS - 0.05)
     expect(stepBurn(almost.still, true, 1 / 60).still).toBe(0)
+  })
+})
+
+// Checked against three.js rather than against itself. The formula is only
+// right relative to a euler order and a camera's idea of forward, and getting
+// the pitch sign wrong still passes any test that uses the same formula twice.
+describe('flipFacing', () => {
+  const facing = (yaw: number, pitch: number) => {
+    const camera = new THREE.PerspectiveCamera()
+    camera.quaternion.setFromEuler(new THREE.Euler(pitch, yaw, 0, 'YXZ'))
+    return camera.getWorldDirection(new THREE.Vector3())
+  }
+
+  test('reverses the view vector, whatever it was', () => {
+    for (const [yaw, pitch] of [
+      [0, 0],
+      [0.7, 0.3],
+      [-2.1, -0.9],
+      [3.0, 1.2],
+      [Math.PI, -1.5],
+    ]) {
+      const flipped = flipFacing(yaw, pitch)
+      const there = facing(yaw, pitch)
+      const back = facing(flipped.yaw, flipped.pitch)
+      // Exactly opposite: the two unit vectors sum to nothing.
+      expect(there.clone().add(back).length()).toBeCloseTo(0, 9)
+    }
+  })
+
+  test('twice is where you started', () => {
+    const once = flipFacing(0.7, 0.3)
+    const twice = flipFacing(once.yaw, once.pitch)
+    const a = facing(0.7, 0.3)
+    const b = facing(twice.yaw, twice.pitch)
+    expect(a.distanceTo(b)).toBeCloseTo(0, 9)
+  })
+
+  test('looking down in front becomes looking up behind', () => {
+    expect(facing(0, -0.5).y).toBeLessThan(0)
+    const flipped = flipFacing(0, -0.5)
+    expect(facing(flipped.yaw, flipped.pitch).y).toBeGreaterThan(0)
   })
 })

@@ -30,6 +30,9 @@ export interface Cue {
    * dies mid-experiment cannot leave the controls locked.
    */
   hold?: boolean
+  /** Look the other way. Arrives at once, since a cue may be driving a tab
+   * that has no animation loop to turn the camera with. */
+  flip?: boolean
   /**
    * Open the symbol search on this query; the empty string closes it. The hits
    * land in the log, so what ranking actually returns on a real graph is

@@ -56,7 +56,8 @@ banner is DOM, so it is in no screenshot; the person at the screen sees it, `mak
 does not.
 
 `"clear": true` presses the clear key, including its undo — a second one puts back what
-the first dropped.
+the first dropped. `"flip": true` is the tail camera, arriving at once rather than
+turning, since a cue may be driving a tab with no animation loop to turn it with.
 
 `"pick": true` in a cue pulls the trigger: it runs the click handler on whatever the
 reticle is on once the rest of the cue has been applied, and the result lands in the log

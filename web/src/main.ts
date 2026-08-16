@@ -550,6 +550,7 @@ watchCues((cue) => {
   // Last, so it fires at whatever the camera was just pointed at.
   if (cue.pick) pickAtReticle()
   if (cue.clear) clearSelection()
+  if (cue.flip) controls.flip(true)
   if (typeof cue.search === 'string') {
     // An empty query closes it. A cue that could only open the search would
     // leave whoever is at the keyboard holding a modal they cannot dismiss

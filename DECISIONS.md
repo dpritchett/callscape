@@ -134,6 +134,19 @@ the movement model, so "half a second" is tested without a clock: never early, n
 than one frame late, at 24, 60 and 144fps. Rejected: hold-to-burn, which is a key held
 down for the entire time you are going anywhere.
 
+**The tail camera turns rather than cuts, and it is a fifth of a second.** A hard swap
+reads as two separate places; watching the world go past reads as one place with
+something behind you. Yaw turns half a circle and pitch changes sign — flipping yaw alone
+leaves you staring at the floor behind you, and that convention is checked against
+three.js in a test rather than against itself, since getting the pitch sign wrong passes
+any test that uses the same formula twice. Look input is ignored while it runs, which at
+0.2s nobody notices. Rejected: an instant swap, which is what was asked to be avoided.
+
+**Labels are rechosen when the camera turns, not only when it moves.** Filtering the
+choice by what is on screen cost the rotation-invariance that plain nearest-N had. The
+tail camera found it: flipping on the spot left every label behind the camera and the
+view unlabelled. Two degrees of turn is enough to reconsider.
+
 **A continuous sound beats a callout for a continuous state.** "burn" and "coasting" were
 spoken once at the moment the speed changed; the flight bed says which gear you are in
 for as long as it is true, so the lines were dropped rather than kept as a second, worse

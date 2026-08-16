@@ -101,6 +101,17 @@ export function stepBurn(
   return { still: next, expired: next >= seconds }
 }
 
+/**
+ * The opposite facing: same position, view vector exactly reversed.
+ *
+ * Yaw turns half a circle and pitch changes sign, because looking down at
+ * something in front of you is looking up once you are facing the other way.
+ * Flipping yaw alone leaves you staring at the floor behind you.
+ */
+export function flipFacing(yaw: number, pitch: number): { yaw: number; pitch: number } {
+  return { yaw: yaw + Math.PI, pitch: -pitch }
+}
+
 /** Smoothstep-eased 0..1 progress, for the focus tween. */
 export function ease(t: number): number {
   const c = Math.min(1, Math.max(0, t))

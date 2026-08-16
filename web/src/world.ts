@@ -15,6 +15,8 @@ const DISTRICT_PX = 26 // on-screen label heights
 const SYMBOL_PX = 17
 const DISTRICT_LABELS = 14 // nearest N, so there is always something readable
 const SYMBOL_LABELS = 40
+/** About two degrees: how far the camera can turn before labels are rechosen. */
+const TURN_COSINE = Math.cos((2 * Math.PI) / 180)
 
 // Edge colours. The unselected pair is dim-inside-a-package, bright-across it;
 // once something is selected, direction matters more than distance.
@@ -109,6 +111,7 @@ export class World {
   private districtChosen: THREE.Sprite[] = []
   private labelsDirty = true
   private lastEye = new THREE.Vector3(Infinity, 0, 0)
+  private lastDir = new THREE.Vector3(0, 0, 0)
   private scratchA = new THREE.Vector3()
   private scratchB = new THREE.Vector3()
   private scratchC = new THREE.Vector3()
@@ -555,12 +558,21 @@ export class World {
     }
 
     // Choosing *which* labels to show is a pass over every symbol, so it only
-    // happens when the camera has actually moved. At coder's 18,522 symbols,
+    // happens when the camera has actually changed. At coder's 18,522 symbols,
     // scanning and sorting per frame cost 270ms a frame — the scene itself was
     // drawing in 50 calls, and labels were eating the whole budget.
-    if (this.labelsDirty || eye.distanceToSquared(this.lastEye) > 4) {
+    //
+    // Turning counts as changing. Since the choice is filtered by what is on
+    // screen, it is no longer rotation-invariant the way plain nearest-N was:
+    // spin on the spot without this and the labels stay where they were, which
+    // is now behind you.
+    const dir = this.scratchC
+    camera.getWorldDirection(dir)
+    const turned = dir.dot(this.lastDir) < TURN_COSINE
+    if (this.labelsDirty || turned || eye.distanceToSquared(this.lastEye) > 4) {
       this.chooseLabels(camera)
       this.lastEye.copy(eye)
+      this.lastDir.copy(dir)
       this.labelsDirty = false
     }
 

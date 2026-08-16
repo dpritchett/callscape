@@ -192,6 +192,7 @@ export interface Cue {
   clear?: boolean
   search?: string
   hold?: boolean
+  flip?: boolean
 }
 
 /**

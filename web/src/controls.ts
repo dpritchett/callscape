@@ -4,6 +4,7 @@ import {
   deadzone,
   deadzone1,
   ease,
+  flipFacing,
   speedScale,
   stepBurn,
   stepVelocity,
@@ -41,10 +42,17 @@ export interface Controller {
    * remote is driving. Broader than `setTyping`, which only wants the keyboard.
    */
   setLocked(on: boolean): void
+  /**
+   * Look the other way — the tail camera — arriving there rather than cutting.
+   * `instant` for when nothing is driving update() to turn it.
+   */
+  flip(instant?: boolean): void
 }
 
 const WHEEL_IMPULSE = 0.22 // velocity per wheel unit, along the view direction
 const FOCUS_SECONDS = 0.55
+/** Long enough to see the world go past, short enough to feel like a flick. */
+const SPIN_SECONDS = 0.2
 
 export class FlyController implements Controller {
   private keys = new Set<string>()
@@ -73,6 +81,7 @@ export class FlyController implements Controller {
   private padClearHeld = false
   private padRevealHeld = false
   private padBoostHeld = false
+  private padFlipHeld = false
   /** Shift or a bumper lights the burn; standing still puts it out. */
   private fast = false
   /** Seconds spent at rest, which is what expires the burn. */
@@ -84,6 +93,8 @@ export class FlyController implements Controller {
 
   // Focus tween state. Flying to a symbol beats being teleported to it.
   private tween: { from: THREE.Vector3; to: THREE.Vector3; look: THREE.Vector3; t: number } | null = null
+  /** Tail camera. Whipping round reads as one place; a cut reads as two. */
+  private spin: { yaw: number; pitch: number; dYaw: number; dPitch: number; t: number } | null = null
 
   private dir = new THREE.Vector3()
   private right = new THREE.Vector3()
@@ -105,7 +116,48 @@ export class FlyController implements Controller {
     window.addEventListener('blur', this.onBlur)
   }
 
+  /**
+   * Tail camera: look the other way, arriving there rather than cutting.
+   *
+   * A hard swap reads as two separate places; a fifth of a second of rotation
+   * reads as one place with something behind you. It is short enough that
+   * ignoring look input while it runs is not a lockout anyone notices.
+   */
+  flip(instant = false) {
+    if (this.spin) return // already on its way round
+    const to = flipFacing(this.euler.y, this.euler.x)
+    this.spin = {
+      yaw: this.euler.y,
+      pitch: this.euler.x,
+      dYaw: to.yaw - this.euler.y,
+      dPitch: to.pitch - this.euler.x,
+      t: 0,
+    }
+    this.tween = null // a focus flight and a look behind you disagree
+    devlog('flip', { yaw: +this.euler.y.toFixed(2), pitch: +this.euler.x.toFixed(2), instant })
+    // Nothing advances a spin in a backgrounded tab, where there is no
+    // animation loop — the same reason `frame` can arrive instantly.
+    if (instant) this.stepSpin(SPIN_SECONDS)
+  }
+
+  private stepSpin(dt: number) {
+    const s = this.spin!
+    s.t = Math.min(1, s.t + dt / SPIN_SECONDS)
+    const k = ease(s.t)
+    this.euler.y = s.yaw + s.dYaw * k
+    this.euler.x = s.pitch + s.dPitch * k
+    this.camera.quaternion.setFromEuler(this.euler)
+    if (s.t >= 1) {
+      // Keep yaw in one turn's worth, so flipping all night does not walk it
+      // off into numbers that lose precision.
+      this.euler.y = ((this.euler.y + Math.PI) % (Math.PI * 2)) - Math.PI
+      this.camera.quaternion.setFromEuler(this.euler)
+      this.spin = null
+    }
+  }
+
   update(dt: number) {
+    if (this.spin) this.stepSpin(dt)
     if (this.tween) {
       // A focus flight is the camera moving, so it does not count as standing
       // still — burn should not expire underneath a flight you asked for, and
@@ -172,6 +224,7 @@ export class FlyController implements Controller {
         ).multiplyScalar(distance)
       : new THREE.Vector3(0.55, 0.42, 0.72).normalize().multiplyScalar(distance)
     this.vel.set(0, 0, 0)
+    this.spin = null // the flight decides where you are looking
     this.tween = {
       from: this.camera.position.clone(),
       to: target.clone().add(offset),
@@ -214,7 +267,7 @@ export class FlyController implements Controller {
     const move = deadzone(pad.axes[0] ?? 0, pad.axes[1] ?? 0)
     const look = deadzone(pad.axes[2] ?? 0, pad.axes[3] ?? 0)
 
-    if (look.x || look.y) {
+    if (!this.spin && (look.x || look.y)) {
       this.euler.y -= look.x * this.padLook * dt
       this.euler.x -= look.y * this.padLook * dt
       this.euler.x = Math.max(-Math.PI / 2 + 0.01, Math.min(Math.PI / 2 - 0.01, this.euler.x))
@@ -237,6 +290,11 @@ export class FlyController implements Controller {
     const reveal = pad.buttons[3]?.pressed ?? false // Y / triangle
     if (reveal && !this.padRevealHeld) this.onToggleReveal?.()
     this.padRevealHeld = reveal
+
+    // Either stick, pressed in: standard mapping puts L3 and R3 at 10 and 11.
+    const stick = (pad.buttons[10]?.pressed ?? false) || (pad.buttons[11]?.pressed ?? false)
+    if (stick && !this.padFlipHeld) this.flip()
+    this.padFlipHeld = stick
 
     const bumper = (pad.buttons[4]?.pressed ?? false) || (pad.buttons[5]?.pressed ?? false)
     if (bumper && !this.padBoostHeld) this.setFast(!this.fast, 'bumper')
@@ -314,7 +372,7 @@ export class FlyController implements Controller {
   }
 
   private onMouseMove = (e: MouseEvent) => {
-    if (this.remote || !this.locked) return
+    if (this.remote || this.spin || !this.locked) return
     this.euler.y -= e.movementX * this.sensitivity
     this.euler.x -= e.movementY * this.sensitivity
     this.euler.x = Math.max(-Math.PI / 2 + 0.01, Math.min(Math.PI / 2 - 0.01, this.euler.x))
@@ -372,6 +430,7 @@ export class FlyController implements Controller {
     // going anywhere. It expires at rest, so the toggle never has to be undone.
     if (e.code === 'ShiftLeft' || e.code === 'ShiftRight') this.setFast(!this.fast, 'shift')
     if (e.code === 'Space') this.onPick?.()
+    if (e.code === 'KeyC') this.flip()
     if (e.code === 'KeyX') this.onClearSelection?.()
     if (e.code === 'KeyR') this.onToggleReveal?.()
   }
