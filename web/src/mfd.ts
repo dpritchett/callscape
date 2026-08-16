@@ -2,6 +2,7 @@ import { devlog } from './devlog'
 import { lineWindow } from './srcpath'
 import type { PlacedNode } from './placement'
 import type { Neighborhood } from './selection'
+import { panelText, type SearchView } from './search'
 
 export type Mode = 'info' | 'source'
 export const MODES: Mode[] = ['info', 'source']
@@ -12,6 +13,7 @@ interface Payload {
   fileOf: (id: string) => { file: string; line: number; lines: number } | undefined
   drawn: (id: string) => { ins: number; outs: number }
   hood: Neighborhood
+  search?: SearchView | null
 }
 
 /**
@@ -34,6 +36,13 @@ export class MFD {
 
   render(p: Payload) {
     this.last = p
+    // A query takes the panel over, selection or not: it is the only thing on
+    // screen saying what the keys are currently doing.
+    if (p.search) {
+      this.el.style.display = 'block'
+      this.el.textContent = panelText(p.search)
+      return
+    }
     if (!p.selected.length) {
       this.el.style.display = 'none'
       return

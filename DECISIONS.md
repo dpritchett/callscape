@@ -77,6 +77,26 @@ and a missed chunk match is logged rather than left to be noticed. Rejected: one
 `InstancedMesh` per colour, which is fine for the 12-entry palette and degenerates into
 thousands of draw calls the moment `encoding.color` names a numeric field.
 
+**Search is modal, and takes the keyboard while it is open.** WASD flies whether or not
+the pointer is captured, so every letter of a query was also a flight control and `x`
+dropped the selection being looked for. The controller has a `setTyping` switch, opening
+the search releases the pointer, and capturing it again closes the search — otherwise
+Escape, the key that would close it, is spent by the browser on letting the pointer go.
+Rejected: an HTML `<input>`, which needs the panel to take pointer events and puts the
+page's one text field where a stray click lands in it.
+
+**Ranking is four tiers, and ties break on the id.** Exact name, name prefix, name
+anywhere, then anywhere in the full id — which is what finds a symbol by its package or
+by `Client.Get`. Within a tier the symbol more packages call wins, then the id, so the
+order is total and identical in any input order. Rejected: fuzzy subsequence matching,
+which ranks by a score nobody can predict and needs its own tuning session.
+
+**The panel's text is a pure function.** The shutter photographs the canvas, so no
+screenshot this project can take has ever contained the HUD or the panel. Formatting it
+in `search.ts` rather than in `mfd.ts` gives that text its only reader other than a
+person looking at the glass. Rejected: leaving it in the renderer and checking it by
+asking someone what their screen says.
+
 **The remote trigger calls the click handler, not a synthetic click.** `"pick": true` in
 a cue invokes the same function the mouse, the space bar and the gamepad already invoke,
 so there is one path and the remote cannot drift from it. Rejected: dispatching a

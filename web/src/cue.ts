@@ -15,6 +15,12 @@ export interface Cue {
    * the one path nobody without a mouse can reach.
    */
   pick?: boolean
+  /**
+   * Open the symbol search on this query; the empty string closes it. The hits
+   * land in the log, so what ranking actually returns on a real graph is
+   * readable from a terminal rather than only from the panel.
+   */
+  search?: string
 }
 
 /**

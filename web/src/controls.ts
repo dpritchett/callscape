@@ -28,6 +28,13 @@ export interface Controller {
     from?: { yaw: number; pitch: number },
   ): void
   dispose(): void
+  /**
+   * Hand the keyboard over, or take it back. WASD flies whether or not the
+   * pointer is captured, so anything that reads typing — the symbol search —
+   * has to be able to stop it; otherwise every letter of a query is also a
+   * flight control, and `x` drops the selection you were looking for.
+   */
+  setTyping(on: boolean): void
 }
 
 const WHEEL_IMPULSE = 0.22 // velocity per wheel unit, along the view direction
@@ -38,6 +45,7 @@ export class FlyController implements Controller {
   private buttons = new Set<number>()
   private euler = new THREE.Euler(0, 0, 0, 'YXZ')
   private locked = false
+  private typing = false
   private sensitivity = 0.0022
 
   private vel = new THREE.Vector3()
@@ -292,7 +300,15 @@ export class FlyController implements Controller {
     if (this.tween) this.tween = null
   }
 
+  setTyping(on: boolean) {
+    this.typing = on
+    // Whatever was held when the query opened is not held any more as far as
+    // flying is concerned, and no keyup is coming while the keyboard is away.
+    if (on) this.keys.clear()
+  }
+
   private onKeyDown = (e: KeyboardEvent) => {
+    if (this.typing) return
     const fresh = !this.keys.has(e.code)
     this.keys.add(e.code)
     if (e.code !== 'KeyF' && e.code !== 'Space') this.tween = null
@@ -311,6 +327,7 @@ export class FlyController implements Controller {
   }
 
   private onKeyUp = (e: KeyboardEvent) => {
+    if (this.typing) return
     this.keys.delete(e.code)
   }
 

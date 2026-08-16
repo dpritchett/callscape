@@ -43,6 +43,11 @@ make look    # cue then shot
 `make cue` reads `web/cue.json` rather than taking an inline argument, so the command
 line never varies. Edit that file to change what you are looking at.
 
+`"search": "Client.Get"` opens the symbol search on that query and logs what it ranked;
+`"search": ""` closes it. Note that the panel is DOM and the shutter photographs the
+canvas, so no screenshot has ever contained the HUD or the panel — the log and
+`search.test.ts` are the only readers of that text.
+
 `"pick": true` in a cue pulls the trigger: it runs the click handler on whatever the
 reticle is on once the rest of the cue has been applied, and the result lands in the log
 as a `pick` event with the id it hit and whether the ray hit exactly. That is the only
@@ -68,6 +73,7 @@ vite log for the reload, before trusting a capture.
 | `layout.ts` | shell packing, district parcels, building seats |
 | `select.ts` | occupant filtering: globs, minFanIn, limit, generated |
 | `selection.ts` | neighbourhood: callers, callees, edge roles |
+| `search.ts` | go to symbol: ranking, and the panel text it prints |
 | `motion.ts` | the flight model |
 | `labels.ts` | how big a label has to be to read at N pixels |
 | `srcpath.ts` | path containment for the source reader |
@@ -134,10 +140,13 @@ Every one of these cost real time. They are not hypothetical.
   frame is the districts: 355 caps and 355 rims, each its own object.
 - **Labels can be occluded by geometry.** Decluttering only checks label against label.
 - **Panels.** Agreed shape is MFDs — two or three small displays that swap modes — rather
-  than a dashboard. `info` and `source` exist. The missing modes are a symbol search
-  ("go to symbol" is the one verb that makes 8,000 symbols navigable), clickable
-  callers/callees for traversal, and a minimap, which is what would make the HUD an
-  actual navigation aid rather than a debug readout.
+  than a dashboard. `info` and `source` exist, and `/` opens a symbol search that takes
+  the keyboard until Escape. Still missing: clickable callers/callees for traversal, and
+  a minimap, which is what would make the HUD an actual navigation aid rather than a
+  debug readout.
+- **Search only sees what is placed.** A symbol the occupant filter dropped cannot be
+  found, because there is nowhere to fly to. The panel says how many symbols the query
+  ran against so the answer is not silently partial.
 - **A second panel is just a second view spec** watching the same selection. That is the
   cheap way to add one.
 - **Generated code** is detected and filterable. `fanInPkgs` (distinct calling packages)

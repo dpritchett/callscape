@@ -2,8 +2,9 @@ import * as THREE from 'three'
 import { FlyController, type Controller } from './controls'
 import { parseView } from './view'
 import { World } from './world'
-import { place, type Placement } from './placement'
-import { neighborhood, toggle } from './selection'
+import { place, type PlacedNode, type Placement } from './placement'
+import { neighborhood, toggle, type Neighborhood } from './selection'
+import { rank, SEARCH_LIMIT } from './search'
 import { devlog, installDevLog } from './devlog'
 import { Shutter } from './shutter'
 import { watchCues } from './cue'
@@ -79,12 +80,97 @@ const mfd = new MFD(selBox)
 /** file/line/lines live on the raw graph, not on the placed node. */
 const sources = new Map<string, { file: string; line: number; lines: number }>()
 
+/**
+ * An open query. Flying finds a symbol only if you already know where it is;
+ * this is the other way in. It is modal — while it is up the keyboard spells
+ * rather than flies — which is why the controller is told to stand down.
+ */
+const search = { active: false, query: '', hits: [] as PlacedNode[], cursor: 0 }
+
+function openSearch() {
+  if (search.active) return
+  search.active = true
+  search.query = ''
+  search.hits = []
+  search.cursor = 0
+  controls.setTyping(true)
+  // Typing is not flying. Releasing the pointer also gives Escape back: while
+  // it is captured the browser spends that key on letting go.
+  document.exitPointerLock()
+  devlog('search.open', { placed: placement?.nodes.length ?? 0 })
+  paint()
+}
+
+function closeSearch() {
+  if (!search.active) return
+  search.active = false
+  controls.setTyping(false)
+  devlog('search.close', {})
+  paint()
+}
+
+function setQuery(q: string) {
+  search.query = q
+  search.hits = rank(placement?.nodes ?? [], q)
+  search.cursor = 0
+  devlog('search', {
+    query: q,
+    matches: search.hits.length,
+    top: search.hits.slice(0, 5).map((h) => h.id),
+  })
+  paint()
+}
+
+/** Take the highlighted hit: select it and fly there, as a pick would. */
+function goToHit() {
+  const hit = search.hits.slice(0, SEARCH_LIMIT)[search.cursor]
+  if (!hit) return
+  closeSearch()
+  selected = new Set([hit.id])
+  applySelection()
+  const at = world.positionOf(hit.id)
+  if (at) controls.frame(at, view?.camera.distance ?? 120)
+  devlog('search.go', { id: hit.id })
+}
+
+function searchKey(e: KeyboardEvent) {
+  const shown = search.hits.slice(0, SEARCH_LIMIT)
+  if (e.key === 'Escape') return closeSearch()
+  if (e.key === 'Enter') return goToHit()
+  if (e.key === 'Backspace') return setQuery(search.query.slice(0, -1))
+  if (e.key === 'Tab') return e.preventDefault() // nowhere for focus to go
+  if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+    e.preventDefault()
+    if (!shown.length) return
+    const step = e.key === 'ArrowDown' ? 1 : -1
+    search.cursor = Math.max(0, Math.min(shown.length - 1, search.cursor + step))
+    return paint()
+  }
+  // One key, one character, and not a shortcut somebody meant for the browser.
+  if (e.key.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey) {
+    e.preventDefault()
+    setQuery(search.query + e.key)
+  }
+}
+
 addEventListener('keydown', (e) => {
+  if (search.active) return searchKey(e)
+  if (e.key === '/') {
+    e.preventDefault() // firefox opens quick-find on this key
+    return openSearch()
+  }
   if (e.code === 'KeyF') frameFocus()
   if (e.code === 'Tab') {
     e.preventDefault() // tab moves focus otherwise, and there is nowhere to go
     mfd.cycle()
   }
+})
+
+// Capturing the pointer means you are flying again, so a query left open would
+// be holding a keyboard nobody is typing on — and Escape, which would close it,
+// is the same key that releases the pointer.
+document.addEventListener('pointerlockchange', () => {
+  if (document.pointerLockElement) closeSearch()
 })
 
 function pickAtReticle() {
@@ -127,11 +213,18 @@ function clearSelection() {
   applySelection()
 }
 
+let hood: Neighborhood = neighborhood([], [])
+
 function applySelection() {
   if (!placement) return
-  const n = neighborhood(placement.edges, selected)
-  world.applySelection(n)
+  hood = neighborhood(placement.edges, selected)
+  world.applySelection(hood)
+  paint()
+}
 
+/** The panel, from whatever the current state is. Selection and query both. */
+function paint() {
+  if (!placement) return
   mfd.render({
     selected: [...selected],
     nodeById: (id) => world.nodeById(id),
@@ -142,7 +235,16 @@ function applySelection() {
       ins: placement!.edges.filter((e) => e.to === id).length,
       outs: placement!.edges.filter((e) => e.from === id).length,
     }),
-    hood: n,
+    hood,
+    search: search.active
+      ? {
+          query: search.query,
+          cursor: search.cursor,
+          shown: search.hits.slice(0, SEARCH_LIMIT),
+          matches: search.hits.length,
+          searched: placement.nodes.length,
+        }
+      : null,
   })
 }
 
@@ -180,6 +282,8 @@ function rebuild() {
   if (view.select.length) for (const id of view.select) live.add(id)
   selected = new Set([...live].filter((id) => world.nodeById(id)))
   applySelection()
+  // A view change is a different set of symbols, so an open query is stale.
+  if (search.active) setQuery(search.query)
 
   status = [
     graph.module,
@@ -312,6 +416,15 @@ watchCues((cue) => {
   }
   // Last, so it fires at whatever the camera was just pointed at.
   if (cue.pick) pickAtReticle()
+  if (typeof cue.search === 'string') {
+    // An empty query closes it. A cue that could only open the search would
+    // leave whoever is at the keyboard holding a modal they cannot dismiss
+    // from the terminal that opened it.
+    if (cue.search) {
+      openSearch()
+      setQuery(cue.search)
+    } else closeSearch()
+  }
 })
 
 const clock = new THREE.Clock()
