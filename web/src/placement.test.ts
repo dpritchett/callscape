@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { LEGIBLE_EDGES, place, resolveEdgeShow } from './placement'
+import { LEGIBLE_EDGES, packageLabels, place, resolveEdgeShow } from './placement'
 import { globToRegExp } from './select'
 import { parseView } from './view'
 import type { Graph, GraphNode, ViewSpec } from './types'
@@ -132,7 +132,10 @@ describe('district assignment', () => {
       [`${M}/cmd/glk`, 2],
       [`${M}/internal/gitlab`, 3],
     ])
-    expect(p.districts.map((d) => d.label)).toEqual(['cmd/glk', 'internal/gitlab'])
+    // Not the relative path any more: the label is the shortest suffix nothing
+    // else in the graph claims. `internal/format` and `vendorish` are filtered
+    // out of the districts but still get a say in what is ambiguous.
+    expect(p.districts.map((d) => d.label)).toEqual(['glk', 'gitlab'])
   })
 
   test('every symbol sits inside its own district disc', () => {
@@ -516,5 +519,67 @@ describe('a district and its contents share one surface', () => {
     const p = place(GRAPH, view)
     const lifts = p.districts.map((d) => d.lift)
     expect(new Set(lifts).size).toBe(lifts.length)
+  })
+})
+
+describe('package labels', () => {
+  const labels = (pkgs: string[], module = M) => packageLabels(pkgs, module)
+
+  test('a package nothing else collides with is called by its own name', () => {
+    const l = labels([`${M}/coderd/database/pubsub`, `${M}/agent/reaper`])
+    expect(l.get(`${M}/coderd/database/pubsub`)).toBe('pubsub')
+    expect(l.get(`${M}/agent/reaper`)).toBe('reaper')
+  })
+
+  test('a shared last segment keeps whatever it takes to tell them apart', () => {
+    const l = labels([`${M}/agent/proto`, `${M}/tailnet/proto`, `${M}/coderd/aibridged/proto`])
+    expect(l.get(`${M}/agent/proto`)).toBe('agent/proto')
+    expect(l.get(`${M}/tailnet/proto`)).toBe('tailnet/proto')
+    expect(l.get(`${M}/coderd/aibridged/proto`)).toBe('aibridged/proto')
+  })
+
+  test('it only spends the segments it has to', () => {
+    // `x/chatd/chatprompt` is four deep and still unique on its last segment
+    const l = labels([`${M}/coderd/x/chatd/chatprompt`, `${M}/coderd/x/chatd/chatdebug`])
+    expect(l.get(`${M}/coderd/x/chatd/chatprompt`)).toBe('chatprompt')
+    expect(l.get(`${M}/coderd/x/chatd/chatdebug`)).toBe('chatdebug')
+  })
+
+  test('a path that is the tail of another cannot be shortened onto it', () => {
+    const l = labels([`${M}/proto`, `${M}/agent/proto`])
+    expect(l.get(`${M}/proto`)).toBe('proto')
+    expect(l.get(`${M}/agent/proto`)).toBe('agent/proto')
+  })
+
+  test('no two packages ever print the same thing', () => {
+    const pkgs = [
+      `${M}/proto`,
+      `${M}/agent/proto`,
+      `${M}/tailnet/proto`,
+      `${M}/a/b/c`,
+      `${M}/x/a/b/c`,
+      `${M}/coderd/audit`,
+      `${M}/enterprise/audit`,
+      `${M}/lonely`,
+    ]
+    const l = labels(pkgs)
+    expect(new Set(l.values()).size).toBe(pkgs.length)
+  })
+
+  test('the answer does not depend on the order the packages arrive in', () => {
+    const pkgs = [`${M}/agent/proto`, `${M}/tailnet/proto`, `${M}/coderd/x/chatd/chatdebug`]
+    const forwards = labels(pkgs)
+    const backwards = labels([...pkgs].reverse())
+    for (const p of pkgs) expect(backwards.get(p)).toBe(forwards.get(p))
+  })
+
+  test('a package outside the module keeps the tail relPkg gave it', () => {
+    const l = labels(['gopkg.in/yaml.v3', `${M}/lonely`])
+    expect(l.get('gopkg.in/yaml.v3')).toBe('yaml.v3')
+  })
+
+  test('the module root is not blanked out', () => {
+    const l = labels([M, `${M}/cli`])
+    expect(l.get(M)).toBe('.')
   })
 })
