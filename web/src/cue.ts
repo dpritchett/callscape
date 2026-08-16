@@ -4,6 +4,10 @@ export interface Cue {
   select?: string[]
   reveal?: boolean
   distance?: number
+  /** Where to stand, in degrees around the focus. Lets a rotation-dependent
+   * bug be reproduced from a terminal instead of described. */
+  yaw?: number
+  pitch?: number
 }
 
 /**

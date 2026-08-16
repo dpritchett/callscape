@@ -158,24 +158,26 @@ export class World {
       normal.set(d.normal.x, d.normal.y, d.normal.z)
       quat.setFromUnitVectors(POLE, normal)
 
-      const capGeom = new THREE.SphereGeometry(p.shell || d.radius, 40, 20, 0, Math.PI * 2, 0, d.cap)
+      // Each cap gets its own hair's-breadth radius. They are patches of one
+      // sphere, so any two that abut are coplanar, and coplanar surfaces have
+      // no stable answer to which is in front — that is the bright slashing
+      // where districts meet.
+      const capR = (p.shell || d.radius) * (1 + index * 0.00004)
+      const capGeom = new THREE.SphereGeometry(capR, 40, 20, 0, Math.PI * 2, 0, d.cap)
+      // Opaque ground, tinted with the district's colour. Transparency was the
+      // whole problem: alpha blending depends on paint order, dozens of caps
+      // overlap on screen from anywhere inside the shell, and turning the
+      // camera reshuffles that order — so the surfaces wobbled. Depth-tested
+      // opaque geometry has exactly one right answer for what is in front, and
+      // it does not depend on where you are looking from.
       const mat = new THREE.MeshBasicMaterial({
-        color: d.color,
-        transparent: true,
-        opacity: 0.07,
-        // A 7% surface has no business hiding what is behind it: with depth
-        // writing on, these caps silently occluded every label past them.
-        depthWrite: false,
+        color: new THREE.Color(d.color).multiplyScalar(0.34),
         side: THREE.DoubleSide,
       })
       const floor = new THREE.Mesh(capGeom, mat)
       floor.quaternion.copy(quat)
       floor.matrixAutoUpdate = false
       floor.updateMatrix()
-      // Transparent objects are painted back to front by distance, and every
-      // cap sits on the same sphere — so turning the camera reshuffles which
-      // one is "nearest" and the surfaces visibly swap places. A fixed order
-      // per district makes the sort independent of where you are looking.
       floor.renderOrder = -1000 + index * 2
       this.group.add(floor)
       this.disposables.push(() => {

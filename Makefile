@@ -61,12 +61,16 @@ shot:
 	@sleep 3
 	@ls -l web/shots/latest.png
 
-# Put the open page into a specific state: make cue CUE='{"focus":"pkg.Sym","select":["pkg.Sym"]}'
+# Put the open page into the state described by web/cue.json — focus, select,
+# distance, yaw, pitch. Edit the file, then run this; the command line never
+# changes, which keeps it out of the permission prompts an inline JSON argument
+# would generate every time it differed.
 cue:
-	@curl -sS -X POST -H 'content-type: application/json' -d '$(CUE)' http://localhost:5178/__cue
+	@curl -sS -X POST -H 'content-type: application/json' --data-binary @web/cue.json \
+		http://localhost:5178/__cue > /dev/null
+	@echo "cued $$(tr -d '\n ' < web/cue.json)"
 
-# Cue a symbol and screenshot it: make look SYM=helm.sh/helm/v4/pkg/action.NewInstall
+# Cue that state and screenshot it.
 look:
-	@$(MAKE) --no-print-directory cue CUE='{"focus":"$(SYM)","select":["$(SYM)"],"distance":$(or $(DIST),70)}'
-	@sleep 1
+	@$(MAKE) --no-print-directory cue
 	@$(MAKE) --no-print-directory shot

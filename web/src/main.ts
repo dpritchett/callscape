@@ -296,7 +296,11 @@ watchCues((cue) => {
   }
   if (cue.focus) {
     const target = world.positionOf(cue.focus)
-    if (target) controls.frame(target, cue.distance ?? view?.camera.distance ?? 120, true)
+    const from =
+      cue.yaw === undefined && cue.pitch === undefined
+        ? undefined
+        : { yaw: ((cue.yaw ?? 0) * Math.PI) / 180, pitch: ((cue.pitch ?? 20) * Math.PI) / 180 }
+    if (target) controls.frame(target, cue.distance ?? view?.camera.distance ?? 120, true, from)
     else devlog('cue.miss', { focus: cue.focus })
   }
 })

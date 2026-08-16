@@ -21,7 +21,12 @@ export interface Controller {
    * unless `instant`, which matters when nothing is driving update() — a
    * backgrounded tab has no animation loop to advance the flight.
    */
-  frame(target: THREE.Vector3, distance: number, instant?: boolean): void
+  frame(
+    target: THREE.Vector3,
+    distance: number,
+    instant?: boolean,
+    from?: { yaw: number; pitch: number },
+  ): void
   dispose(): void
 }
 
@@ -119,10 +124,22 @@ export class FlyController implements Controller {
     this.camera.position.addScaledVector(this.vel, dt)
   }
 
-  frame(target: THREE.Vector3, distance: number, instant = false) {
+  frame(
+    target: THREE.Vector3,
+    distance: number,
+    instant = false,
+    from?: { yaw: number; pitch: number },
+  ) {
     // Approach from the side and slightly above: looking straight down at a
-    // flat district tells you nothing.
-    const offset = new THREE.Vector3(0.55, 0.42, 0.72).normalize().multiplyScalar(distance)
+    // flat district tells you nothing. A caller can ask for a specific bearing
+    // instead, which is how a rotation-dependent problem gets reproduced.
+    const offset = from
+      ? new THREE.Vector3(
+          Math.cos(from.pitch) * Math.sin(from.yaw),
+          Math.sin(from.pitch),
+          Math.cos(from.pitch) * Math.cos(from.yaw),
+        ).multiplyScalar(distance)
+      : new THREE.Vector3(0.55, 0.42, 0.72).normalize().multiplyScalar(distance)
     this.vel.set(0, 0, 0)
     this.tween = {
       from: this.camera.position.clone(),
