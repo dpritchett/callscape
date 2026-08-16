@@ -144,11 +144,12 @@ describe('district assignment', () => {
     }
   })
 
-  test('symbols lift towards the middle of the shell, not away from it', () => {
+  test('symbols stand on the outside of the crust', () => {
     for (const n of p.nodes) {
       const seat = p.seatOf.get(n.id)!
-      // the lifted position is closer to the origin than its seat
-      expect(Math.hypot(n.x, n.y, n.z)).toBeLessThanOrEqual(Math.hypot(seat.x, seat.y, seat.z))
+      // further from the origin than its seat: lifting inward would put the
+      // district's own opaque ground in front of its contents
+      expect(Math.hypot(n.x, n.y, n.z)).toBeGreaterThanOrEqual(Math.hypot(seat.x, seat.y, seat.z))
     }
   })
 

@@ -97,9 +97,10 @@ export function place(graph: Graph, view: ViewSpec, reveal: Iterable<string> = [
   const nodes: PlacedNode[] = selected.map((n) => {
     const seat = lay.pos.get(n.id)!
     const size = sizeOf(n) * BASE
-    // Symbols rise towards the middle of the shell rather than away from it, so
-    // the view from inside is of buildings pointing at you rather than roots.
-    // The seat is on the sphere, so its own direction is the local up.
+    // Symbols stand on the outside of the crust, like buildings on a planet.
+    // Lifting them inward put the district's opaque ground between the camera
+    // and its own contents, so a district read as a solid blob from anywhere
+    // outside the shell. The seat is on the sphere, so its direction is up.
     const lift = liftOf(n) + size / 2
     const mag = Math.hypot(seat.x, seat.y, seat.z) || 1
     const nx = seat.x / mag
@@ -109,9 +110,9 @@ export function place(graph: Graph, view: ViewSpec, reveal: Iterable<string> = [
       id: n.id,
       pkg: n.pkg,
       name: n.name,
-      x: seat.x - nx * lift,
-      y: seat.y - ny * lift,
-      z: seat.z - nz * lift,
+      x: seat.x + nx * lift,
+      y: seat.y + ny * lift,
+      z: seat.z + nz * lift,
       size,
       color: colorOf(n),
       fanIn: n.fanIn,

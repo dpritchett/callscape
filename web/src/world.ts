@@ -171,7 +171,12 @@ export class World {
       // opaque geometry has exactly one right answer for what is in front, and
       // it does not depend on where you are looking from.
       const mat = new THREE.MeshBasicMaterial({
-        color: new THREE.Color(d.color).multiplyScalar(0.34),
+        // Barely above the background. The ground exists to occlude what is
+        // behind it and to give the buildings something to stand on; the rim
+        // carries the district's identity and the symbols carry its colour.
+        // Anything brighter and a district reads as a solid disc of one hue
+        // with its contents lost inside it.
+        color: new THREE.Color(0x0b0e14).lerp(new THREE.Color(d.color), 0.06),
         side: THREE.DoubleSide,
       })
       const floor = new THREE.Mesh(capGeom, mat)

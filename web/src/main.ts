@@ -31,8 +31,10 @@ const camera = new THREE.PerspectiveCamera(65, innerWidth / innerHeight, 0.5, 40
 camera.position.set(0, 90, 220)
 camera.lookAt(0, 0, 0)
 
-scene.add(new THREE.AmbientLight(0xffffff, 0.65))
-const key = new THREE.DirectionalLight(0xffffff, 0.9)
+// Less fill, more key: flat lighting made every cube the same shade of its own
+// colour, so a district was a field of identical chips.
+scene.add(new THREE.AmbientLight(0xffffff, 0.42))
+const key = new THREE.DirectionalLight(0xffffff, 1.25)
 key.position.set(120, 220, 90)
 scene.add(key)
 

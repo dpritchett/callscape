@@ -258,7 +258,7 @@ function findSpot(
 
   const clears = (x: number, y: number) =>
     Math.hypot(x, y) + r <= bound &&
-    placed.every((p) => Math.hypot(p.x - x, p.y - y) >= p.r + r + CELL * 0.4)
+    placed.every((p) => Math.hypot(p.x - x, p.y - y) >= p.r + r + CELL * 0.15)
 
   // Towns accrete: a new parcel goes up against one that is already there, not
   // at the next position along a spiral. Any centre-out sequence — golden angle
@@ -267,7 +267,9 @@ function findSpot(
   for (let k = 0; k < 900; k++) {
     const neighbour = placed[Math.floor(hash01(`${seed}#pick${k}`) * placed.length)]
     const angle = hash01(`${seed}#ang${k}`) * Math.PI * 2
-    const gap = CELL * (0.45 + hash01(`${seed}#gap${k}`) * 0.9)
+    // Streets, not fields. Wide gaps spread a package over a disc many times
+    // the size of its contents, and the ground then dominates the district.
+    const gap = CELL * (0.1 + hash01(`${seed}#gap${k}`) * 0.35)
     const reach = neighbour.r + r + gap
     const x = neighbour.x + reach * Math.cos(angle)
     const y = neighbour.y + reach * Math.sin(angle)
