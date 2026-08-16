@@ -209,7 +209,7 @@ function seatBlocks(
   const out: { n: GraphNode; du: number; dv: number }[] = []
 
   for (const block of blocks) {
-    const spot = findSpot(block.radius, radius, placed)
+    const spot = findSpot(block.radius, radius, placed, block.file)
     if (!spot && !force) return null // caller grows the district and retries
     const at = spot ?? rimFallback(block.radius, radius, placed.length)
     placed.push({ x: at.x, y: at.y, r: block.radius })
@@ -254,21 +254,36 @@ function findSpot(
   r: number,
   bound: number,
   placed: { x: number; y: number; r: number }[],
+  seed: string,
 ): { x: number; y: number } | null {
   if (!placed.length) return { x: 0, y: 0 }
-  const step = Math.max(0.5, r * 0.25)
-  for (let k = 1; k < 6000; k++) {
-    // A golden-angle spiral again would lay the parcels out on the same arms
-    // the buildings used to sit on. Wobbling the angle per step scatters them
-    // without giving up determinism.
-    const t = k * 2.2 + hash01(`spot#${k}`) * 1.7
-    const rad = step * Math.sqrt(k)
-    if (rad + r > bound) return null
-    const x = rad * Math.cos(t)
-    const y = rad * Math.sin(t)
-    if (placed.every((p) => Math.hypot(p.x - x, p.y - y) >= p.r + r + CELL * 0.4)) {
-      return { x, y }
-    }
+
+  const clears = (x: number, y: number) =>
+    Math.hypot(x, y) + r <= bound &&
+    placed.every((p) => Math.hypot(p.x - x, p.y - y) >= p.r + r + CELL * 0.4)
+
+  // Towns accrete: a new parcel goes up against one that is already there, not
+  // at the next position along a spiral. Any centre-out sequence — golden angle
+  // or otherwise — leaves the district visibly radiating from its middle, which
+  // is the snowflake this keeps turning into.
+  for (let k = 0; k < 900; k++) {
+    const neighbour = placed[Math.floor(hash01(`${seed}#pick${k}`) * placed.length)]
+    const angle = hash01(`${seed}#ang${k}`) * Math.PI * 2
+    const gap = CELL * (0.45 + hash01(`${seed}#gap${k}`) * 0.9)
+    const reach = neighbour.r + r + gap
+    const x = neighbour.x + reach * Math.cos(angle)
+    const y = neighbour.y + reach * Math.sin(angle)
+    if (clears(x, y)) return { x, y }
+  }
+
+  // Nothing free against an existing parcel: fall back to open ground, sampled
+  // uniformly by area rather than swept outward.
+  for (let k = 0; k < 400; k++) {
+    const rad = (bound - r) * Math.sqrt(hash01(`${seed}#far-r${k}`))
+    const angle = hash01(`${seed}#far-t${k}`) * Math.PI * 2
+    const x = rad * Math.cos(angle)
+    const y = rad * Math.sin(angle)
+    if (clears(x, y)) return { x, y }
   }
   return null
 }
@@ -378,11 +393,21 @@ function packOnShell(radii: number[], shell: number): { phi: number; psi: number
     }
     if (candidate >= Math.PI) return null
 
+    // Share the slack out unevenly and let each district drift off its band's
+    // latitude, so the shell reads as scattered rather than as rows. The
+    // amounts are hashed from position, and the caller still verifies that
+    // nothing ends up overlapping.
+    const slack = Math.max(0, 2 * Math.PI - filled.used)
     let walked = 0
-    for (const b of filled.band) {
-      seats.push({ phi: candidate, psi: ((walked + b.half) / filled.used) * 2 * Math.PI })
+    filled.band.forEach((b, at) => {
+      const nudge = (hash01(`band#${i}#${at}`) - 0.5) * slack * 0.55
+      const drift = (hash01(`lat#${i}#${at}`) - 0.5) * Math.max(0, filled.max - b.alpha) * 1.2
+      seats.push({
+        phi: Math.min(Math.PI - 1e-6, Math.max(1e-6, candidate + drift)),
+        psi: ((walked + b.half) / filled.used) * 2 * Math.PI + nudge,
+      })
       walked += 2 * b.half
-    }
+    })
     i += filled.band.length
     phi = candidate
     previousBandMax = filled.max

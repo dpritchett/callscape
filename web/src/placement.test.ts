@@ -447,3 +447,35 @@ describe('files cluster inside a district', () => {
     )
   })
 })
+
+describe('packing does not run away', () => {
+  // A package with many small files is the case that broke: parcels searched
+  // for space with a step scaled to their own size, so a one-symbol file could
+  // never reach open ground and the district grew 100x trying.
+  const manyFiles: Graph = {
+    module: M,
+    nodes: Array.from({ length: 300 }, (_, i) => {
+      const n = node(`${M}/cli`, `sym${String(i).padStart(3, '0')}`, i % 5, 10 + (i % 40))
+      n.file = `cli/f${String(i % 90).padStart(2, '0')}.go` // 90 files, most tiny
+      return n
+    }),
+    edges: [],
+  }
+
+  test('a district stays proportional to what it holds', () => {
+    const p = place(manyFiles, view({ occupants: { packages: ['*'], minFanIn: 0, limit: 0 } }))
+    const d = p.districts[0]
+    // Area per symbol is a small constant; a district that cannot pack grows
+    // geometrically, so anything beyond a few times sqrt(n) means it failed.
+    expect(d.radius).toBeLessThan(12 * Math.sqrt(d.count))
+    expect(d.count).toBe(300)
+  })
+
+  test('every symbol still lands inside it', () => {
+    const p = place(manyFiles, view({ occupants: { packages: ['*'], minFanIn: 0, limit: 0 } }))
+    const d = p.districts[0]
+    for (const n of p.nodes) {
+      expect(dist(p.seatOf.get(n.id)!, d.centre)).toBeLessThanOrEqual(d.radius)
+    }
+  })
+})

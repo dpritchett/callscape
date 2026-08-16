@@ -46,7 +46,8 @@ scene.fog = fog
 
 // A sky to fly against, so "which way am I facing" has an answer when nothing
 // else is on screen. Sized once, well beyond anything a graph occupies.
-const stars = makeStarfield(3200)
+const STAR_RADIUS = 3200
+const stars = makeStarfield(STAR_RADIUS)
 scene.add(stars)
 
 // Swap this line for an OrbitController if flying turns out to feel bad.
@@ -157,6 +158,13 @@ function rebuild() {
   // shell reads as far away rather than as missing.
   fog.near = p.extent * 0.8
   fog.far = p.extent * 3
+
+  // The camera and the sky follow the scene's size too. A graph that comes out
+  // bigger than the far plane renders as an empty screen with one district in
+  // it, which is a confusing way to find out the layout has a bug.
+  camera.far = Math.max(4000, p.extent * 6)
+  camera.updateProjectionMatrix()
+  stars.scale.setScalar(Math.max(1, (p.extent * 4) / STAR_RADIUS))
   devlog('rebuild', { nodes: p.nodes.length, edges: p.edges.length, districts: p.districts.length })
 
   // A view change can filter out something that was selected; keep only what
