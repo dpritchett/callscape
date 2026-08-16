@@ -4,7 +4,6 @@ import {
   deadzone,
   deadzone1,
   ease,
-  flipFacing,
   speedScale,
   stepBurn,
   stepVelocity,
@@ -53,14 +52,14 @@ const WHEEL_IMPULSE = 0.22 // velocity per wheel unit, along the view direction
 const FOCUS_SECONDS = 0.55
 /** Long enough to see the world go past, short enough to feel like a flick. */
 const SPIN_SECONDS = 0.2
-/** The camera's own axes: its wings, and the line it is looking along. */
+/** The camera's own axes: its wings, its spine, and the line it looks along. */
 const PITCH_AXIS = new THREE.Vector3(1, 0, 0)
+const YAW_AXIS = new THREE.Vector3(0, 1, 0)
 const ROLL_AXIS = new THREE.Vector3(0, 0, 1)
 
 export class FlyController implements Controller {
   private keys = new Set<string>()
   private buttons = new Set<number>()
-  private euler = new THREE.Euler(0, 0, 0, 'YXZ')
   private locked = false
   private typing = false
   /** Something remote has the wheel; every local input is ignored. */
@@ -81,6 +80,8 @@ export class FlyController implements Controller {
   private padLook = 2.6 // radians/sec at full stick deflection
   /** Roll is faster than pitch, since a turn starts by banking. */
   private padRoll = 3.2
+  /** Rudder is slower than both: it trims a heading rather than flying one. */
+  private padYaw = 1.3
   private padFocusHeld = false
   private padPickHeld = false
   private padClearHeld = false
@@ -99,15 +100,7 @@ export class FlyController implements Controller {
   // Focus tween state. Flying to a symbol beats being teleported to it.
   private tween: { from: THREE.Vector3; to: THREE.Vector3; look: THREE.Vector3; t: number } | null = null
   /** Tail camera. Whipping round reads as one place; a cut reads as two. */
-  private spin: {
-    yaw: number
-    pitch: number
-    roll: number
-    dYaw: number
-    dPitch: number
-    dRoll: number
-    t: number
-  } | null = null
+  private spin: { from: THREE.Quaternion; to: THREE.Quaternion; t: number } | null = null
 
   private spinQuat = new THREE.Quaternion()
   private dir = new THREE.Vector3()
@@ -118,7 +111,6 @@ export class FlyController implements Controller {
     private camera: THREE.PerspectiveCamera,
     private dom: HTMLElement,
   ) {
-    this.euler.setFromQuaternion(camera.quaternion)
     dom.addEventListener('mousedown', this.onMouseDown)
     dom.addEventListener('contextmenu', this.onContextMenu)
     dom.addEventListener('wheel', this.onWheel, { passive: false })
@@ -139,20 +131,17 @@ export class FlyController implements Controller {
    */
   flip(instant = false) {
     if (this.spin) return // already on its way round
-    const to = flipFacing(this.euler.y, this.euler.x)
+    // Half a turn about the camera's own up: a head-turn, which is what looking
+    // behind you is. Doing it in angles meant deciding what a bank should
+    // become, and every answer disagreed with the others — this one has no
+    // opinion to get wrong, and needs no representation but the orientation.
     this.spin = {
-      yaw: this.euler.y,
-      pitch: this.euler.x,
-      roll: this.euler.z,
-      dYaw: to.yaw - this.euler.y,
-      dPitch: to.pitch - this.euler.x,
-      // Looking the other way reverses which way the horizon leans, so a bank
-      // mirrors rather than being carried round unchanged.
-      dRoll: -2 * this.euler.z,
+      from: this.camera.quaternion.clone(),
+      to: this.camera.quaternion.clone().multiply(this.spinQuat.setFromAxisAngle(YAW_AXIS, Math.PI)),
       t: 0,
     }
     this.tween = null // a focus flight and a look behind you disagree
-    devlog('flip', { yaw: +this.euler.y.toFixed(2), pitch: +this.euler.x.toFixed(2), instant })
+    devlog('flip', { instant })
     // Nothing advances a spin in a backgrounded tab, where there is no
     // animation loop — the same reason `frame` can arrive instantly.
     if (instant) this.stepSpin(SPIN_SECONDS)
@@ -161,18 +150,8 @@ export class FlyController implements Controller {
   private stepSpin(dt: number) {
     const s = this.spin!
     s.t = Math.min(1, s.t + dt / SPIN_SECONDS)
-    const k = ease(s.t)
-    this.euler.y = s.yaw + s.dYaw * k
-    this.euler.x = s.pitch + s.dPitch * k
-    this.euler.z = s.roll + s.dRoll * k
-    this.camera.quaternion.setFromEuler(this.euler)
-    if (s.t >= 1) {
-      // Keep yaw in one turn's worth, so flipping all night does not walk it
-      // off into numbers that lose precision.
-      this.euler.y = ((this.euler.y + Math.PI) % (Math.PI * 2)) - Math.PI
-      this.camera.quaternion.setFromEuler(this.euler)
-      this.spin = null
-    }
+    this.camera.quaternion.slerpQuaternions(s.from, s.to, ease(s.t))
+    if (s.t >= 1) this.spin = null
   }
 
   update(dt: number) {
@@ -202,7 +181,7 @@ export class FlyController implements Controller {
       (k.has('KeyS') || this.buttons.has(2) ? 1 : 0) +
       (pad?.forward ?? 0)
     const strafe = (k.has('KeyD') ? 1 : 0) - (k.has('KeyA') ? 1 : 0) + (pad?.strafe ?? 0)
-    const rise = (k.has('KeyE') ? 1 : 0) - (k.has('KeyQ') ? 1 : 0) + (pad?.rise ?? 0)
+    const rise = (k.has('KeyE') ? 1 : 0) - (k.has('KeyQ') ? 1 : 0)
 
     this.input.set(0, 0, 0)
     if (forward) this.input.addScaledVector(this.dir, forward)
@@ -331,12 +310,19 @@ export class FlyController implements Controller {
     if (bumper && !this.padBoostHeld) this.setFast(!this.fast, 'bumper')
     this.padBoostHeld = bumper
 
-    const down = deadzone1(pad.buttons[6]?.value ?? 0)
-    const up = deadzone1(pad.buttons[7]?.value ?? 0)
+    // Triggers are the rudder. They used to push you along the world's vertical
+    // axis, which was the last thing on the pad still pegged to a direction the
+    // outside world agrees on rather than one you can see — and once the right
+    // stick took over roll, yaw had nowhere else to live. Without it you can
+    // only turn by banking, which is authentic and occasionally useless: this
+    // is how you swing the nose across without laying the horizon over.
+    const left = deadzone1(pad.buttons[6]?.value ?? 0)
+    const right = deadzone1(pad.buttons[7]?.value ?? 0)
+    if (!this.spin) this.turn(YAW_AXIS, (left - right) * this.padYaw * dt)
+
     return {
       forward: -move.y, // stick up is forward
       strafe: move.x,
-      rise: up - down,
       boost: false, // the pad toggles below rather than holding
     }
   }
@@ -346,7 +332,6 @@ export class FlyController implements Controller {
     tw.t += dt / FOCUS_SECONDS
     this.camera.position.lerpVectors(tw.from, tw.to, ease(tw.t))
     this.camera.lookAt(tw.look)
-    this.euler.setFromQuaternion(this.camera.quaternion)
     if (tw.t >= 1) this.tween = null
   }
 
@@ -402,12 +387,23 @@ export class FlyController implements Controller {
     }
   }
 
+  /**
+   * Mouse look, which is not stick flying: yaw about the world's vertical so
+   * the horizon stays where the horizon is, pitch about the camera's own wing
+   * axis, and no roll at all. That is what a mouse means everywhere else.
+   *
+   * The pitch limit is measured from where the nose actually is rather than
+   * from a stored angle, so it holds however the stick has been rolling the
+   * camera around underneath it.
+   */
   private onMouseMove = (e: MouseEvent) => {
     if (this.remote || this.spin || !this.locked) return
-    this.euler.y -= e.movementX * this.sensitivity
-    this.euler.x -= e.movementY * this.sensitivity
-    this.euler.x = Math.max(-Math.PI / 2 + 0.01, Math.min(Math.PI / 2 - 0.01, this.euler.x))
-    this.camera.quaternion.setFromEuler(this.euler)
+    this.turnWorld(YAW_AXIS, -e.movementX * this.sensitivity)
+
+    const elevation = Math.asin(Math.max(-1, Math.min(1, this.camera.getWorldDirection(this.dir).y)))
+    const limit = Math.PI / 2 - 0.01
+    const wanted = -e.movementY * this.sensitivity
+    this.turn(PITCH_AXIS, Math.max(-limit - elevation, Math.min(limit - elevation, wanted)))
     if (this.tween) this.tween = null
   }
 
@@ -429,14 +425,23 @@ export class FlyController implements Controller {
    * Right-multiplying the quaternion applies the turn in the camera's frame,
    * which is what makes the stick relative: no clamp is needed and none is
    * wanted, since a quaternion has no gimbal to lock and an aeroplane can loop.
-   * The euler is resynced afterwards because the mouse still steers with it,
-   * and the two have to agree about where the camera is pointing.
+   *
+   * The orientation is the only record of where the camera is pointing. It used
+   * to be mirrored by a euler that the mouse steered with, kept in step by
+   * resyncing one from the other — two representations agreeing by convention,
+   * which near the poles they stop doing: the decomposition there is degenerate
+   * and yaw and roll become the same edit, so the mouse jumps. Taking the
+   * clamp off the stick made that reachable. Now there is nothing to agree.
    */
   private turn(axis: THREE.Vector3, radians: number) {
     if (!radians) return
-    this.spinQuat.setFromAxisAngle(axis, radians)
-    this.camera.quaternion.multiply(this.spinQuat)
-    this.euler.setFromQuaternion(this.camera.quaternion)
+    this.camera.quaternion.multiply(this.spinQuat.setFromAxisAngle(axis, radians))
+  }
+
+  /** The same, but about an axis the world holds still — the mouse's yaw. */
+  private turnWorld(axis: THREE.Vector3, radians: number) {
+    if (!radians) return
+    this.camera.quaternion.premultiply(this.spinQuat.setFromAxisAngle(axis, radians))
   }
 
   /** The one place the burn changes, so every route through it says so. */

@@ -244,17 +244,33 @@ document.addEventListener('pointerlockchange', () => {
  * state it is the opposite of is the page sitting there with the cursor free,
  * which is not a moment that wants a soundtrack.
  */
+/**
+ * Whether anybody is flying this thing: you with the pointer captured, a remote
+ * holding the wheel, or a query open — typing is still driving the sim, even
+ * though it hands the pointer back to do it.
+ */
+function inControl() {
+  return Boolean(document.pointerLockElement) || held || search.active
+}
+
+/** Last reported by the controller, so control changes can re-decide the bed. */
+let engine = { moving: false, fast: false }
+
 function flying() {
-  // Typing a query is still driving the sim, even though it hands the pointer
-  // back to do it — which is the one case a delay was covering for. Naming it
-  // outright means letting go of the controls can stop the music immediately,
-  // which is what letting go should do.
-  voice.setPlaying(Boolean(document.pointerLockElement) || held || search.active)
+  const active = inControl()
+  voice.setPlaying(active)
+  // Airflow needs somebody at the controls as well as motion. A gamepad is
+  // polled rather than evented, so a stick resting a hair outside its deadzone
+  // reads as flying forever — which is engine noise in an empty room.
+  voice.bed(active && engine.moving, engine.fast)
 }
 
 // No callout for the speed change: the bed is two tiers of airflow and it is
 // already saying which one you are in, continuously, for as long as it is true.
-flyControls.onMotion = (moving, fast) => voice.bed(moving, fast)
+flyControls.onMotion = (moving, fast) => {
+  engine = { moving, fast }
+  flying()
+}
 
 function pickAtReticle() {
   // A cue can fly the camera and pull the trigger in the same breath, before

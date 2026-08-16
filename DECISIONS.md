@@ -185,9 +185,28 @@ nose moves towards viewport-up by 0.99 every time; banked ninety degrees a pull 
 climb and a third of a radian of turn, which is what banking and pulling back is for.
 
 No pitch clamp on the stick — a quaternion has no gimbal to lock and an aeroplane can loop
-— while the mouse keeps its clamp, because a mouse cannot. Strafing uses the camera's own
-right rather than the horizon's, identical while the wings are level and correct once they
-are not. `F` levels the wings, since framing rebuilds the orientation from a `lookAt`.
+— while the mouse keeps one, measured from where the nose actually is rather than from a
+stored angle. Strafing uses the camera's own right rather than the horizon's, identical
+while the wings are level and correct once they are not. `F` levels the wings, since
+framing rebuilds the orientation from a `lookAt`.
+
+**The orientation is the only record of where the camera points.** It used to be mirrored
+by a euler that the mouse steered with, the two kept in step by resyncing one from the
+other — which is agreement by convention, and near the poles they stop agreeing: the YXZ
+decomposition is degenerate there, yaw and roll become the same edit, and the mouse jumps.
+Taking the clamp off the stick made that reachable. So the euler is gone: mouse yaw
+pre-multiplies about world up, everything else post-multiplies about a body axis, and the
+tail camera is half a turn about the camera's own up. That last one also settled a
+question the angles could not: what a bank should become when you look behind you. As a
+head-turn it has no opinion to get wrong — and it disagreed with the euler version by up
+to 1.4 in the up vector, which is how much the old one was inventing.
+
+**Triggers are the rudder.** They used to push along the world's vertical axis, the last
+thing on the pad still pegged to a direction only the outside world can see. Once the
+right stick took roll, yaw had nowhere left to live, and without it the only way to turn
+is to bank — authentic, and occasionally useless. Rejected: leaving them as a climb and
+descend pair in the camera's own frame, which is a thing the stick already does better by
+pointing the nose.
 
 **The tail camera turns rather than cuts, and it is a fifth of a second.** A hard swap
 reads as two separate places; watching the world go past reads as one place with
