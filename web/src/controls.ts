@@ -76,6 +76,8 @@ export class FlyController implements Controller {
   /** Pull the selection's hidden neighbours into the scene, and back out. */
   onToggleReveal: (() => void) | null = null
   private padLook = 2.6 // radians/sec at full stick deflection
+  /** Roll is faster than pitch, since a turn starts by banking. */
+  private padRoll = 3.2
   private padFocusHeld = false
   private padPickHeld = false
   private padClearHeld = false
@@ -94,7 +96,15 @@ export class FlyController implements Controller {
   // Focus tween state. Flying to a symbol beats being teleported to it.
   private tween: { from: THREE.Vector3; to: THREE.Vector3; look: THREE.Vector3; t: number } | null = null
   /** Tail camera. Whipping round reads as one place; a cut reads as two. */
-  private spin: { yaw: number; pitch: number; dYaw: number; dPitch: number; t: number } | null = null
+  private spin: {
+    yaw: number
+    pitch: number
+    roll: number
+    dYaw: number
+    dPitch: number
+    dRoll: number
+    t: number
+  } | null = null
 
   private dir = new THREE.Vector3()
   private right = new THREE.Vector3()
@@ -129,8 +139,12 @@ export class FlyController implements Controller {
     this.spin = {
       yaw: this.euler.y,
       pitch: this.euler.x,
+      roll: this.euler.z,
       dYaw: to.yaw - this.euler.y,
       dPitch: to.pitch - this.euler.x,
+      // Looking the other way reverses which way the horizon leans, so a bank
+      // mirrors rather than being carried round unchanged.
+      dRoll: -2 * this.euler.z,
       t: 0,
     }
     this.tween = null // a focus flight and a look behind you disagree
@@ -146,6 +160,7 @@ export class FlyController implements Controller {
     const k = ease(s.t)
     this.euler.y = s.yaw + s.dYaw * k
     this.euler.x = s.pitch + s.dPitch * k
+    this.euler.z = s.roll + s.dRoll * k
     this.camera.quaternion.setFromEuler(this.euler)
     if (s.t >= 1) {
       // Keep yaw in one turn's worth, so flipping all night does not walk it
@@ -169,7 +184,10 @@ export class FlyController implements Controller {
     }
 
     this.camera.getWorldDirection(this.dir)
-    this.right.crossVectors(this.dir, this.camera.up).normalize()
+    // The camera's own right, not the horizon's. Identical while the wings are
+    // level, and the difference is the point once they are not: strafing while
+    // banked should go where the wing is pointing.
+    this.right.set(1, 0, 0).applyQuaternion(this.camera.quaternion)
 
     const pad = this.readGamepad(dt)
     const k = this.keys
@@ -268,9 +286,14 @@ export class FlyController implements Controller {
     const look = deadzone(pad.axes[2] ?? 0, pad.axes[3] ?? 0)
 
     if (!this.spin && (look.x || look.y)) {
-      this.euler.y -= look.x * this.padLook * dt
-      this.euler.x -= look.y * this.padLook * dt
+      // A stick, not a mouse. Pull it towards you and the nose comes up; push
+      // it away and you dive. Left and right roll rather than yaw, so turning
+      // is banking and pulling back, the way an aeroplane does it. The mouse
+      // keeps its own convention, which is a mouse's.
+      this.euler.x += look.y * this.padLook * dt
       this.euler.x = Math.max(-Math.PI / 2 + 0.01, Math.min(Math.PI / 2 - 0.01, this.euler.x))
+      // Negative z banks right, checked against three rather than guessed at.
+      this.euler.z -= look.x * this.padRoll * dt
       this.camera.quaternion.setFromEuler(this.euler)
       this.tween = null
     }

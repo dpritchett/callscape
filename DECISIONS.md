@@ -170,6 +170,17 @@ than a road. Bending them over the crust would empty the interior and turn the w
 thing into a surface map, which is a different picture, not a fix. Rejected: drawing
 edges on top of everything, which shows you wires from the far side of the globe.
 
+**The right stick is a control column, the mouse is still a mouse.** Pull back to climb,
+push to dive, left and right roll rather than yaw — so a turn is banking and pulling back,
+the way an aeroplane does it, instead of sliding the horizon sideways. The inversion is
+only on the stick: a mouse that climbed when you pushed it away would be wrong, and the
+two devices are allowed to disagree because people already expect them to. Which sign of
+`euler.z` banks right was checked against three rather than reasoned about. Strafing now
+uses the camera's own right rather than the horizon's, which is identical while the wings
+are level and correct once they are not. Pitch stays clamped just short of vertical:
+looping would need a different rotation order, and this camera has a horizon. `F` levels
+the wings, since framing rebuilds the orientation from a `lookAt`.
+
 **The tail camera turns rather than cuts, and it is a fifth of a second.** A hard swap
 reads as two separate places; watching the world go past reads as one place with
 something behind you. Yaw turns half a circle and pitch changes sign — flipping yaw alone
