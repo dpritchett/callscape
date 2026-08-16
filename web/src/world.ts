@@ -106,6 +106,8 @@ export class World {
   private lastEye = new THREE.Vector3(Infinity, 0, 0)
   private scratchA = new THREE.Vector3()
   private scratchB = new THREE.Vector3()
+  private frustum = new THREE.Frustum()
+  private projScreen = new THREE.Matrix4()
 
   build(p: Placement, opacity = 0.7) {
     this.clear()
@@ -551,7 +553,7 @@ export class World {
     // scanning and sorting per frame cost 270ms a frame — the scene itself was
     // drawing in 50 calls, and labels were eating the whole budget.
     if (this.labelsDirty || eye.distanceToSquared(this.lastEye) > 4) {
-      this.chooseLabels(eye)
+      this.chooseLabels(camera)
       this.lastEye.copy(eye)
       this.labelsDirty = false
     }
@@ -625,7 +627,8 @@ export class World {
    * the second rule gives either a wall of overlapping text or nothing at all.
    * Keeps a small best-of list in one pass rather than sorting every symbol.
    */
-  private chooseLabels(eye: THREE.Vector3) {
+  private chooseLabels(camera: THREE.PerspectiveCamera) {
+    const eye = camera.position
     const best: { s: Symbol3D; d: number }[] = []
     let worst = Infinity
     const range = LABEL_RANGE * LABEL_RANGE
@@ -660,14 +663,25 @@ export class World {
       if (!shown.has(id)) label.visible = false
     }
 
+    // Nearest N, but only among the ones on screen. Every district is about
+    // the same distance away from inside the shell, so plain nearest-N spends
+    // most of its slots on districts behind the camera and the few names you
+    // could actually read never get one. From outside it never showed, because
+    // out there the nearest districts are the ones you are looking at.
+    camera.updateMatrixWorld()
+    this.frustum.setFromProjectionMatrix(
+      this.projScreen.multiplyMatrices(camera.projectionMatrix, camera.matrixWorldInverse),
+    )
     const districts = this.districtParts
+      .filter((part) => this.frustum.containsPoint(part.label.position))
       .map((part) => ({ part, d: part.label.position.distanceToSquared(eye) }))
       .sort((a, b) => a.d - b.d)
+
     this.districtChosen = []
-    districts.forEach(({ part }, i) => {
-      const wanted = i < DISTRICT_LABELS
-      part.label.visible = wanted
-      if (wanted) this.districtChosen.push(part.label)
+    for (const part of this.districtParts) part.label.visible = false
+    districts.slice(0, DISTRICT_LABELS).forEach(({ part }) => {
+      part.label.visible = true
+      this.districtChosen.push(part.label)
     })
   }
 

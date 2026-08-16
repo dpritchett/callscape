@@ -77,6 +77,16 @@ and a missed chunk match is logged rather than left to be noticed. Rejected: one
 `InstancedMesh` per colour, which is fine for the 12-entry palette and degenerates into
 thousands of draw calls the moment `encoding.color` names a numeric field.
 
+**District labels are the nearest N *on screen*, not the nearest N.** Plain nearest-N is
+right only when the nearest districts are the ones you are looking at, which is true
+outside the shell and false inside it: from in there every district is about the same
+distance away, so the fourteen slots went to districts scattered over the whole sphere
+and most of them were behind the camera. Only five to ten of fourteen ever survived to be
+drawn. Filtering by the camera frustum first spends the slots on names that can be read.
+Symbol labels deliberately keep the old rule — with a selection up they show at any
+distance, because by the time you have stopped moving the thing you selected is usually
+behind you.
+
 **Focus means the selection, when there is one.** `F` framed `camera.focus` from the view
 spec whatever was on screen, so from anywhere in the graph it flew you to a symbol you
 had picked in a config file hours ago — or to the origin, a point in the middle of the
