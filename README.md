@@ -102,6 +102,8 @@ lefthook calls `make` targets, so there is one source of truth per check. There 
 
 ## The other documents
 
+`WORKING.md` is the operating manual: the edit loop, the instruments (`make logs`,
+`make shot`, `make cue`), the working agreements, and the gotchas already paid for.
 `ARCHITECTURE.md` has the ground rules, the seam between the two halves, and the known
 limits. `DECISIONS.md` lists every call made under the ten-minute rule with what was
 rejected. `HANDOFF.md` is the brief this was built from, unedited. Any of the three tells

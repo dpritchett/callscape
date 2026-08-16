@@ -5,9 +5,12 @@ Personal project, MIT licensed, `dpritchett/lspvue` on GitHub.
 
 ## Required reading
 
-Read `ARCHITECTURE.md` before implementing a feature or making a design call. It holds
-the ground rules, the system seam, and the known limits. `DECISIONS.md` is the running log
-of ten-minute-rule calls with what was rejected — add to it rather than re-litigating a
+Start with `WORKING.md`: how to run it, the instruments for seeing what the page is
+doing, the working agreements, and a list of gotchas that have already cost time once.
+
+Then `ARCHITECTURE.md` before implementing a feature or making a design call — ground
+rules, the system seam, known limits. `DECISIONS.md` is the running log of
+ten-minute-rule calls with what was rejected; add to it rather than re-litigating a
 choice already made there.
 
 ## Checks
