@@ -77,6 +77,16 @@ and a missed chunk match is logged rather than left to be noticed. Rejected: one
 `InstancedMesh` per colour, which is fine for the 12-entry palette and degenerates into
 thousands of draw calls the moment `encoding.color` names a numeric field.
 
+**A selection hides symbols, never ground.** Districts used to hide along with their
+contents, because a cap was then a translucent disc and dozens of them stacked between
+the camera and the selection were most of the milk in the picture. Caps have been opaque
+since; the near crust hides the far side by itself, and what the old rule was actually
+removing was the map. Selecting a symbol arrived at by search left it floating alone in
+the void with nothing to say where it was. The selection's own packages keep all their
+buildings too — a symbol alone on an empty disc is not standing anywhere. Rejected:
+showing every building at full brightness, which puts the one you picked among eight
+thousand others and is the haze the hiding rule exists to avoid.
+
 **Search is modal, and takes the keyboard while it is open.** WASD flies whether or not
 the pointer is captured, so every letter of a query was also a flight control and `x`
 dropped the selection being looked for. The controller has a `setTyping` switch, opening

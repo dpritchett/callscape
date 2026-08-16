@@ -126,6 +126,10 @@ Every one of these cost real time. They are not hypothetical.
   12 draw calls — traversal, not drawing. Merging static lines and freezing matrices got
   it to 80ms; making the buildings one `InstancedMesh` finished the job.
 - **A backgrounded tab stops rendering entirely**, including frame-rate logging.
+- **A rule outlives the thing it was written for.** Districts hid on selection because
+  translucent caps stacked into milk. They were made opaque three commits later and the
+  hiding stayed, so selecting a symbol deleted the map around it. Worth asking, when
+  something looks wrong, which of its rules were written about a different version.
 - **Poll with HEAD and an ETag.** Re-fetching a 10MB graph every 400ms to discover it is
   unchanged is 25MB/s of nothing.
 

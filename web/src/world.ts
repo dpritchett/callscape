@@ -372,29 +372,37 @@ export class World {
     this.labelsDirty = true
 
     // Dimming does not scale. At 1600 symbols, 13% opacity each is a haze you
-    // cannot see through, so a selection hides everything it is not about.
-    const pkgs = new Set<string>()
+    // cannot see through, so a selection hides the symbols it is not about.
+    //
+    // Its own district is not one of those. A symbol alone on an empty disc is
+    // not standing anywhere, and arriving by search rather than by flying is
+    // exactly when you have no idea where that is — so the packages the
+    // selection lives in keep all of their buildings.
+    const home = new Set<string>()
+    if (!n.empty) {
+      for (const id of n.selected) {
+        const s = this.byId.get(id)
+        if (s) home.add(s.node.pkg)
+      }
+    }
+
     this.clearHot()
     for (const s of this.symbols) {
       const node = s.node
-      const shown = n.empty || n.related.has(node.id)
+      const shown = n.empty || n.related.has(node.id) || home.has(node.pkg)
       const hot = !n.empty && n.selected.has(node.id)
       this.onScreen[s.index] = shown
       // A hot symbol is drawn by its own mesh, so its instance stands down.
       if (this.buildings) this.setInstanceShown(s.index, shown && !hot)
       if (hot) this.addHot(node)
-      if (shown && !n.empty) pkgs.add(node.pkg)
     }
     if (this.buildings) this.buildings.instanceMatrix.needsUpdate = true
 
-    // Same for the districts: 69 translucent discs stacked between you and the
-    // thing you selected is most of the milk in the picture.
-    for (const d of this.districtParts) {
-      const keep = n.empty || pkgs.has(d.pkg)
-      d.floor.visible = keep
-      d.rim.visible = keep
-      d.label.visible = keep
-    }
+    // The ground stays, all of it. Districts used to hide with their contents,
+    // from back when a cap was a translucent disc and dozens of them stacked
+    // between you and the thing you picked. They have been opaque for a while:
+    // the near crust hides the far side by itself, and what is left is the map
+    // you are standing on.
 
     this.buildNeighbourhoodEdges(n)
 
@@ -657,7 +665,7 @@ export class World {
       .sort((a, b) => a.d - b.d)
     this.districtChosen = []
     districts.forEach(({ part }, i) => {
-      const wanted = i < DISTRICT_LABELS && part.floor.visible
+      const wanted = i < DISTRICT_LABELS
       part.label.visible = wanted
       if (wanted) this.districtChosen.push(part.label)
     })
