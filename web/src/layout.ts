@@ -136,6 +136,11 @@ export function layout(nodes: GraphNode[], rank: (n: GraphNode) => number = () =
 interface Block {
   file: string
   members: GraphNode[]
+  /** Parcel dimensions. Not a circle: circles inside circles is a fractal. */
+  w: number
+  h: number
+  /** A few degrees off true, so nothing in the district lines up globally. */
+  angle: number
   radius: number
 }
 
@@ -153,16 +158,29 @@ function blocksOf(members: GraphNode[], rank: (n: GraphNode) => number): Block[]
     else byFile.set(n.file, [n])
   }
 
-  const blocks = [...byFile.entries()].map(([file, list]) => ({
-    file,
-    members: list.sort((a, b) => {
+  const blocks = [...byFile.entries()].map(([file, list]) => {
+    const members = list.sort((a, b) => {
       const ra = rank(a)
       const rb = rank(b)
       if (ra !== rb) return rb - ra
       return a.name < b.name ? -1 : a.name > b.name ? 1 : 0
-    }),
-    radius: CELL * (0.62 * Math.sqrt(list.length) + 0.85),
-  }))
+    })
+    // Parcel shape comes from the file's own name, so a package's plan is
+    // irregular but the same irregular every time. City blocks are not circles
+    // and are not all the same proportion.
+    const aspect = 0.55 + hash01(`${file}#aspect`) * 1.5
+    const area = members.length * CELL * CELL * 1.25
+    const w = Math.sqrt(area * aspect)
+    const h = area / w
+    return {
+      file,
+      members,
+      w,
+      h,
+      angle: (hash01(`${file}#angle`) - 0.5) * 0.45, // ±13°
+      radius: Math.hypot(w, h) / 2,
+    }
+  })
 
   // Biggest block first: it claims the middle, and greedy packing works better
   // when the awkward shapes go down first.
@@ -196,16 +214,27 @@ function seatBlocks(
     const at = spot ?? rimFallback(block.radius, radius, placed.length)
     placed.push({ x: at.x, y: at.y, r: block.radius })
 
-    const inner = Math.max(0, block.radius - CELL * 0.8)
+    // Buildings sit on streets inside the parcel: rows of varying length,
+    // staggered, each nudged off true. A spiral here is what made a district
+    // look like a smaller copy of the sphere.
+    const cols = Math.max(1, Math.round(block.w / CELL))
+    const rows = Math.max(1, Math.ceil(block.members.length / cols))
+    const cos = Math.cos(block.angle)
+    const sin = Math.sin(block.angle)
+
     block.members.forEach((n, i) => {
-      const jr = hash01(`${n.id}#r`) - 0.5
-      const jt = hash01(`${n.id}#t`) - 0.5
-      const rr = inner * Math.sqrt((i + 0.5) / block.members.length) * (1 + jr * 0.35)
-      const theta = i * GOLDEN_ANGLE + jt * 0.9
+      const row = Math.floor(i / cols)
+      const inRow = i % cols
+      // The last row is short, and every row is offset by its own amount, so
+      // the parcel's edges come out ragged instead of square.
+      const stagger = (hash01(`${block.file}#${row}`) - 0.5) * CELL * 0.9
+      const x = (inRow - (cols - 1) / 2) * CELL + stagger + (hash01(`${n.id}#x`) - 0.5) * CELL * 0.55
+      const y = (row - (rows - 1) / 2) * CELL * 1.1 + (hash01(`${n.id}#y`) - 0.5) * CELL * 0.5
+
       out.push({
         n,
-        du: at.x + rr * Math.cos(theta),
-        dv: at.y + rr * Math.sin(theta),
+        du: at.x + x * cos - y * sin,
+        dv: at.y + x * sin + y * cos,
       })
     })
   }
@@ -229,12 +258,15 @@ function findSpot(
   if (!placed.length) return { x: 0, y: 0 }
   const step = Math.max(0.5, r * 0.25)
   for (let k = 1; k < 6000; k++) {
-    const t = k * GOLDEN_ANGLE
+    // A golden-angle spiral again would lay the parcels out on the same arms
+    // the buildings used to sit on. Wobbling the angle per step scatters them
+    // without giving up determinism.
+    const t = k * 2.2 + hash01(`spot#${k}`) * 1.7
     const rad = step * Math.sqrt(k)
     if (rad + r > bound) return null
     const x = rad * Math.cos(t)
     const y = rad * Math.sin(t)
-    if (placed.every((p) => Math.hypot(p.x - x, p.y - y) >= p.r + r + CELL * 0.25)) {
+    if (placed.every((p) => Math.hypot(p.x - x, p.y - y) >= p.r + r + CELL * 0.4)) {
       return { x, y }
     }
   }
