@@ -33,6 +33,8 @@ export interface Cue {
   /** Look the other way. Arrives at once, since a cue may be driving a tab
    * that has no animation loop to turn the camera with. */
   flip?: boolean
+  /** Put the panel in a mode, since Tab is a key and a cue has no fingers. */
+  panel?: string
   /**
    * Open the symbol search on this query; the empty string closes it. The hits
    * land in the log, so what ranking actually returns on a real graph is

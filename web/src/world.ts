@@ -123,6 +123,8 @@ export class World {
     centre: THREE.Vector3
     /** Which way this district's ground faces, for lighting it by hand. */
     normal: THREE.Vector3
+    /** How wide it is, for working out whether you are looking at it. */
+    radius: number
     floor: THREE.Mesh
     /** Its unlit colour, to tint away from and back to. */
     ground: THREE.Color
@@ -306,6 +308,7 @@ export class World {
         pkg: d.pkg,
         centre: new THREE.Vector3(d.centre.x, d.centre.y, d.centre.z),
         normal: normal.clone(),
+        radius: d.radius,
         floor,
         ground: mat.color.clone(),
         rim,
@@ -667,6 +670,42 @@ export class World {
 
   nodeById(id: string): PlacedNode | undefined {
     return this.byId.get(id)?.node
+  }
+
+  /**
+   * The district the reticle is nearest, by angle rather than by a ray.
+   *
+   * A ray would have to hit something, and a district you are looking straight
+   * at across a gap is still the district you mean. This is the one whose
+   * middle is closest to the line you are sighting along, which also stops the
+   * answer flickering between neighbours as you drift over the seam between
+   * them. Nothing behind the camera counts.
+   */
+  districtAtReticle(camera: THREE.PerspectiveCamera): string | null {
+    const eye = camera.position
+    const forward = this.scratchA
+    camera.getWorldDirection(forward)
+    const toDistrict = this.scratchB
+
+    let best: string | null = null
+    let closest = Math.PI / 3 // nothing more than sixty degrees off the nose
+    for (const part of this.districtParts) {
+      if (!part.floor.visible) continue
+      toDistrict.copy(part.centre).sub(eye)
+      const range = toDistrict.length() || 1
+      const off = Math.acos(Math.max(-1, Math.min(1, toDistrict.divideScalar(range).dot(forward))))
+      // How far off the nose its *edge* is, not its middle. Comparing centres
+      // hands a district a hundred and eighty units wide the answer whenever
+      // its middle happens to line up, over the small one filling the screen —
+      // and a reticle inside a district scores below zero, which settles it.
+      const spread = Math.asin(Math.min(1, part.radius / range))
+      const score = off - spread
+      if (score < closest) {
+        closest = score
+        best = part.pkg
+      }
+    }
+    return best
   }
 
   /**

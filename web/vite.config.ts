@@ -193,6 +193,7 @@ export interface Cue {
   search?: string
   hold?: boolean
   flip?: boolean
+  panel?: string
 }
 
 /**

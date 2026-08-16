@@ -3,10 +3,11 @@ import { lineWindow } from './srcpath'
 import type { PlacedNode } from './placement'
 import type { Neighborhood } from './selection'
 import { panelText, type SearchView } from './search'
+import { districtPanel, type DistrictView } from './district'
 import type { Run } from './spans'
 
-export type Mode = 'info' | 'source'
-export const MODES: Mode[] = ['info', 'source']
+export type Mode = 'info' | 'source' | 'district'
+export const MODES: Mode[] = ['info', 'source', 'district']
 
 interface Payload {
   selected: string[]
@@ -15,6 +16,8 @@ interface Payload {
   drawn: (id: string) => { ins: number; outs: number }
   hood: Neighborhood
   search?: SearchView | null
+  /** The district the reticle is on, for the mode that lists its contents. */
+  district?: DistrictView | null
 }
 
 /**
@@ -23,7 +26,11 @@ interface Payload {
  * itself, which is the half of "fly there and read it" that was missing.
  */
 export class MFD {
-  private mode: Mode = 'info'
+  /** Which display is up, so the app can tell whether it needs feeding. */
+  get mode(): Mode {
+    return this.current
+  }
+  private current: Mode = 'info'
   private last: Payload | null = null
   private token = 0
 
@@ -31,10 +38,10 @@ export class MFD {
 
   /** Returns the mode it landed on, which is what the caller announces. */
   cycle(): Mode {
-    this.mode = MODES[(MODES.indexOf(this.mode) + 1) % MODES.length]
-    devlog('mfd', { mode: this.mode })
+    this.current = MODES[(MODES.indexOf(this.current) + 1) % MODES.length]
+    devlog('mfd', { mode: this.current })
     if (this.last) this.render(this.last)
-    return this.mode
+    return this.current
   }
 
   render(p: Payload) {
@@ -46,12 +53,19 @@ export class MFD {
       this.el.textContent = panelText(p.search)
       return
     }
+    // The district panel is about where you are, not what you have picked, so
+    // it is the one mode that has something to say with nothing selected.
+    if (this.current === 'district') {
+      this.el.style.display = 'block'
+      this.el.textContent = districtPanel(p.district ?? null)
+      return
+    }
     if (!p.selected.length) {
       this.el.style.display = 'none'
       return
     }
     this.el.style.display = 'block'
-    if (this.mode === 'info') this.el.textContent = this.info(p)
+    if (this.current === 'info') this.el.textContent = this.info(p)
     else void this.source(p)
   }
 

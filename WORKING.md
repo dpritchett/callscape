@@ -88,6 +88,7 @@ vite log for the reload, before trusting a capture.
 | `motion.ts` | the flight model |
 | `labels.ts` | how big a label has to be to read at N pixels |
 | `srcpath.ts` | path containment for the source reader |
+| `district.ts` | what is in the district you are pointing at, ranked and listed |
 | `wires.ts` | edges that follow the crust rather than cutting under it |
 | `spans.ts` | Go token spans into coloured runs, cut on bytes not characters |
 
@@ -186,10 +187,14 @@ Every one of these cost real time. They are not hypothetical.
   frame is the districts: 355 caps and 355 rims, each its own object.
 - **Labels can be occluded by geometry.** Decluttering only checks label against label.
 - **Panels.** Agreed shape is MFDs — two or three small displays that swap modes — rather
-  than a dashboard. `info` and `source` exist, and `/` opens a symbol search that takes
-  the keyboard until Escape. Still missing: clickable callers/callees for traversal, and
-  a minimap, which is what would make the HUD an actual navigation aid rather than a
-  debug readout.
+  than a dashboard. `info`, `source` and `district` exist, and `/` opens a symbol search
+  that takes the keyboard until Escape. Still missing: clickable callers/callees for
+  traversal, and a minimap, which is what would make the HUD an actual navigation aid
+  rather than a debug readout.
+- **`district` is the only mode that works with nothing selected**, because it is about
+  where you are rather than what you picked. Which district you are on is chosen by angle
+  to its *edge* rather than its centre, so a wide district does not win just by having its
+  middle near the view axis. The answer goes to the log as `aim`.
 - **Search only sees what is placed.** A symbol the occupant filter dropped cannot be
   found, because there is nowhere to fly to. The panel says how many symbols the query
   ran against so the answer is not silently partial.

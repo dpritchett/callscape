@@ -9,7 +9,7 @@ import { devlog, installDevLog } from './devlog'
 import { Shutter } from './shutter'
 import { watchCues } from './cue'
 import { makeStarfield } from './sky'
-import { MFD } from './mfd'
+import { MFD, MODES } from './mfd'
 import { Voice } from './sound'
 import type { Graph, ViewSpec } from './types'
 
@@ -400,6 +400,38 @@ function applySelection() {
   paint()
 }
 
+/**
+ * The district the reticle is on, gathered for the panel that lists it.
+ *
+ * Recomputed only when the answer changes, which flying past a district it
+ * does about once a second — walking every symbol to collect a package's worth
+ * on every frame would be a pass over eight thousand of them for a panel that
+ * did not move.
+ */
+let aimedAt: string | null = null
+
+function aimedDistrict() {
+  if (!placement || !aimedAt) return null
+  const d = placement.districts.find((x) => x.pkg === aimedAt)
+  if (!d) return null
+  return {
+    label: d.label,
+    pkg: d.pkg,
+    occupants: placement.nodes.filter((n) => n.pkg === aimedAt),
+  }
+}
+
+/** Follows the reticle, and repaints the panel when it lands somewhere new. */
+function watchAim() {
+  const now = world.districtAtReticle(camera)
+  if (now === aimedAt) return
+  aimedAt = now
+  // What the page thinks you are looking at, which is otherwise only knowable
+  // by reading a panel that no screenshot can see.
+  devlog('aim', { pkg: now })
+  if (mfd.mode === 'district') paint()
+}
+
 /** The panel, from whatever the current state is. Selection and query both. */
 function paint() {
   if (!placement) return
@@ -414,6 +446,7 @@ function paint() {
       outs: placement!.edges.filter((e) => e.from === id).length,
     }),
     hood,
+    district: aimedDistrict(),
     search: search.active
       ? {
           query: search.query,
@@ -603,6 +636,7 @@ const shutter = new Shutter(renderer.domElement, () => {
   const t0 = performance.now()
   world.updateLabels(camera, renderer.domElement.clientHeight)
   updateBeacon(beat())
+  watchAim() // a cue can move the camera where no animation loop is running
   const t1 = performance.now()
   renderer.render(scene, camera)
   devlog('renderMs', {
@@ -645,6 +679,12 @@ watchCues((cue) => {
   if (cue.pick) pickAtReticle()
   if (cue.clear) clearSelection()
   if (cue.flip) controls.flip(true)
+  if (cue.panel) {
+    // Cycle to it rather than setting it, so there is one route through the
+    // mode change and the callout still happens.
+    for (let i = 0; i < MODES.length && mfd.mode !== cue.panel; i++) mfd.cycle()
+    paint()
+  }
   if (typeof cue.search === 'string') {
     // An empty query closes it. A cue that could only open the search would
     // leave whoever is at the keyboard holding a modal they cannot dismiss
@@ -669,6 +709,7 @@ renderer.setAnimationLoop(() => {
   controls.update(dt)
   world.updateLabels(camera, renderer.domElement.clientHeight)
   updateBeacon(beat())
+  watchAim()
   renderer.render(scene, camera)
 
   frames++
