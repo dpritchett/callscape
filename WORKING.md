@@ -86,7 +86,7 @@ vite log for the reload, before trusting a capture.
 | `selection.ts` | neighbourhood: callers, callees, edge roles |
 | `search.ts` | go to symbol: ranking, and the panel text it prints |
 | `motion.ts` | the flight model |
-| `labels.ts` | how big a label has to be to read at N pixels |
+| `labels.ts` | how big a label has to be to read at N pixels, which names win, how they arrive |
 | `srcpath.ts` | path containment for the source reader |
 | `district.ts` | what is in the district you are pointing at, ranked and listed |
 | `wires.ts` | edges that follow the crust rather than cutting under it |

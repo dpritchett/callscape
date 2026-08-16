@@ -1,6 +1,16 @@
 import * as THREE from 'three'
 import { MAX_LIFT, type PlacedEdge, type PlacedNode, type Placement } from './placement'
-import { disposeSprite, labelWorldHeight, makeLabel, setLabelHeight } from './labels'
+import {
+  axisAnchor,
+  disposeSprite,
+  fadeOpacity,
+  fadePresence,
+  frustumEdgeCosine,
+  labelRank,
+  labelWorldHeight,
+  makeLabel,
+  setLabelHeight,
+} from './labels'
 import { edgeKey, type Neighborhood } from './selection'
 import { arcPoints } from './wires'
 import { devlog } from './devlog'
@@ -10,12 +20,59 @@ import type { ResolvedEdgeShow } from './types'
 // whatever the distance, so this is not about legibility — it is about how far
 // out a name still means something. At 55 it meant you had to be inside a
 // district to read any of it, and from the distance where a district is a
-// shape rather than a floor, its contents were anonymous.
-const LABEL_RANGE = 320
+// shape rather than a floor, its contents were anonymous. At 320 the same thing
+// happened one altitude higher: the district under the reticle was too far to
+// have any names while the one under the nose had all of them.
+const LABEL_RANGE = 900
 const DISTRICT_PX = 26 // on-screen label heights
 const SYMBOL_PX = 17
-const DISTRICT_LABELS = 14 // nearest N, so there is always something readable
-const SYMBOL_LABELS = 40
+// How many names compete for the screen. These are the *candidates*, not the
+// count you see: declutter drops whatever collides, so on a crowded view the
+// limit is the screen itself. That is the point of sizing them this high — a
+// small pool spends every slot on the same corner of the frame and leaves the
+// rest of the view anonymous however it is ranked.
+const DISTRICT_LABELS = 90 // best N, so there is always something readable
+const SYMBOL_LABELS = 160
+/**
+ * Symbol labels are built on demand and kept, since flying back and forth over
+ * the same district would otherwise rebuild the same canvases every couple of
+ * degrees. Each one is a texture, though, so the cache is capped: past this,
+ * anything not currently shown is dropped.
+ */
+const LABEL_CACHE = 600
+/** How long a label takes to arrive or leave, as a rate per second. */
+const LABEL_FADE = 5
+/**
+ * District names claim their space before any symbol name, but only this many
+ * of them. Past that the two kinds compete on rank, so flying down among the
+ * buildings hands the screen to the buildings without the map going anonymous.
+ */
+const RESERVED_DISTRICTS = 6
+/** Clear space each kind of name keeps around itself, in pixels. */
+const DISTRICT_PAD = 6
+const SYMBOL_PAD = 2
+
+/** Ask a label to be there or not; `fade` is what gets it there. */
+function setWant(label: THREE.Sprite, want: number) {
+  label.userData.want = want
+}
+
+/**
+ * Advance one label towards what it was asked for. A label that has arrived, or
+ * that left a while ago, costs two property reads and nothing else.
+ */
+function fade(label: THREE.Sprite, dt: number) {
+  const want = (label.userData.want as number) ?? 0
+  const was = (label.userData.presence as number) ?? 0
+  if (was === want) {
+    label.visible = want > 0
+    return
+  }
+  const now = fadePresence(was, want, dt, LABEL_FADE)
+  label.userData.presence = now
+  ;(label.material as THREE.SpriteMaterial).opacity = fadeOpacity(now)
+  label.visible = now > 0
+}
 /** About two degrees: how far the camera can turn before labels are rechosen. */
 const TURN_COSINE = Math.cos((2 * Math.PI) / 180)
 /** How far an in-district edge rides above the ground it crosses. */
@@ -138,9 +195,13 @@ export class World {
   /** Ids whose labels show regardless of distance, because they're selected. */
   private pinned = new Set<string>()
   private selecting = false
-  /** Which symbols currently carry a label, and the camera that chose them. */
-  private labelled: Symbol3D[] = []
-  private districtChosen: THREE.Sprite[] = []
+  /**
+   * Which symbols and districts currently carry a label, best first, with the
+   * rank that got them there — declutter packs the two lists together in that
+   * order, so it needs the scores to interleave them.
+   */
+  private labelled: { s: Symbol3D; rank: number }[] = []
+  private districtChosen: { label: THREE.Sprite; rank: number }[] = []
   private labelsDirty = true
   private lastEye = new THREE.Vector3(Infinity, 0, 0)
   private lastDir = new THREE.Vector3(0, 0, 0)
@@ -713,19 +774,42 @@ export class World {
    * distance instead of ballooning as you fly into a district. Symbol labels
    * additionally only appear near the camera, to keep 70 boxes from turning
    * into 70 overlapping names.
+   *
+   * `dt` drives the fade in and out. The shutter passes a whole second, which
+   * settles every label at once: a screenshot is a still, and one caught
+   * mid-dissolve says nothing about what the page decided to show.
    */
-  updateLabels(camera: THREE.PerspectiveCamera, viewportHeight: number) {
+  updateLabels(camera: THREE.PerspectiveCamera, viewportHeight: number, dt: number) {
     const eye = camera.position
+    const dir = this.scratchC
+    camera.getWorldDirection(dir)
+
+    // The frustum is built here rather than in chooseLabels because hanging a
+    // district's name needs it too, and it is one matrix multiply a frame.
+    camera.updateMatrixWorld()
+    this.frustum.setFromProjectionMatrix(
+      this.projScreen.multiplyMatrices(camera.projectionMatrix, camera.matrixWorldInverse),
+    )
 
     // Float each name on whichever side of its district the camera is on. Park
     // it at a fixed offset and the district's own cap occludes it from one side
     // — which is what happens to a label sitting inside the shell when you are
     // outside it.
     const toCamera = this.scratchA
+    const anchor = this.scratchB
     for (const part of this.districtParts) {
-      toCamera.copy(eye).sub(part.centre)
-      const len = toCamera.length() || 1
-      part.label.position.copy(part.centre).addScaledVector(toCamera, (MAX_LIFT + 6) / len)
+      anchor.copy(part.centre)
+      for (let pass = 0; pass < 2; pass++) {
+        toCamera.copy(eye).sub(anchor)
+        const len = toCamera.length() || 1
+        part.label.position.copy(anchor).addScaledVector(toCamera, (MAX_LIFT + 6) / len)
+        // A district can fill half the screen with its centre off the edge of
+        // it, and then the biggest thing in view is the only thing without a
+        // name. Walk the name in over its own ground until it is on screen, and
+        // hang it from there instead.
+        if (pass > 0 || this.frustum.containsPoint(part.label.position)) break
+        axisAnchor(part.centre, eye, dir, part.radius * 0.8, anchor)
+      }
     }
 
     // Choosing *which* labels to show is a pass over every symbol, so it only
@@ -737,31 +821,25 @@ export class World {
     // screen, it is no longer rotation-invariant the way plain nearest-N was:
     // spin on the spot without this and the labels stay where they were, which
     // is now behind you.
-    const dir = this.scratchC
-    camera.getWorldDirection(dir)
     const turned = dir.dot(this.lastDir) < TURN_COSINE
     if (this.labelsDirty || turned || eye.distanceToSquared(this.lastEye) > 4) {
-      this.chooseLabels(camera)
+      this.chooseLabels(camera, dir)
       this.lastEye.copy(eye)
       this.lastDir.copy(dir)
       this.labelsDirty = false
     }
 
     // Sizing the chosen few is cheap, and has to happen every frame so they
-    // hold their pixel height as you move. Visibility is reasserted here rather
-    // than inherited: declutter hides some of them below, and that decision has
-    // to be reconsidered each frame rather than latching a label off forever.
-    for (const label of this.districtChosen) {
-      label.visible = true
+    // hold their pixel height as you move.
+    for (const { label } of this.districtChosen) {
       const d = label.position.distanceTo(eye)
       setLabelHeight(label, labelWorldHeight(DISTRICT_PX, d, camera.fov, viewportHeight, 0.05, 1e6))
     }
     const toEye = this.scratchB
     const up = this.scratchC
-    for (const s of this.labelled) {
+    for (const { s } of this.labelled) {
       const label = this.symbolLabels.get(s.node.id)
       if (!label) continue
-      label.visible = true
       const d = s.pos.distanceTo(eye)
       const h = labelWorldHeight(SYMBOL_PX, d, camera.fov, viewportHeight, 0.05, 1e6)
       setLabelHeight(label, h)
@@ -780,13 +858,20 @@ export class World {
     }
 
     this.declutter(camera, viewportHeight)
+    this.fadeLabels(dt)
   }
 
   /**
-   * Hide any label whose text would land on top of one already placed. Picking
-   * the nearest N is not enough on its own: 835 callers of one function sit in
-   * the same square inch of screen from a distance, and 24 names drawn there
-   * are a smear rather than 24 names. Nearest wins, districts before symbols.
+   * Decide which of the chosen names actually get drawn: a name whose text
+   * would land on one already placed gives way. Picking the best N is not
+   * enough on its own — 835 callers of one function sit in the same square inch
+   * of screen from a distance, and 24 names drawn there are a smear rather than
+   * 24 names.
+   *
+   * The two kinds are packed in one pass, in rank order, after the first few
+   * districts. Districts first all the way down was fine while there were
+   * fourteen of them; with ninety, a nose-down pass over a district lost every
+   * function name on screen to the package names of the ones behind it.
    */
   private declutter(camera: THREE.PerspectiveCamera, viewportHeight: number) {
     const viewportWidth = viewportHeight * camera.aspect
@@ -796,7 +881,7 @@ export class World {
     const place = (label: THREE.Sprite, pad: number) => {
       p.copy(label.position).project(camera)
       if (p.z > 1) {
-        label.visible = false // behind the camera
+        setWant(label, 0) // behind the camera
         return
       }
       // Sprite scale is a world height; on screen it is that over the frustum
@@ -807,33 +892,62 @@ export class World {
       const y = (p.y * viewportHeight) / 2
       for (const t of taken) {
         if (Math.abs(x - t.x) < (w + t.w) / 2 + pad && Math.abs(y - t.y) < (h + t.h) / 2 + pad) {
-          label.visible = false
+          setWant(label, 0)
           return
         }
       }
       taken.push({ x, y, w, h })
+      setWant(label, 1)
     }
 
-    for (const label of this.districtChosen) if (label.visible) place(label, 6)
-    for (const s of this.labelled) {
-      const label = this.symbolLabels.get(s.node.id)
-      if (label?.visible) place(label, 2)
+    const districts = this.districtChosen
+    const symbols = this.labelled
+    let di = 0
+    let si = 0
+    while (di < districts.length || si < symbols.length) {
+      const district =
+        si >= symbols.length ||
+        (di < districts.length && (di < RESERVED_DISTRICTS || districts[di].rank <= symbols[si].rank))
+      if (district) {
+        place(districts[di].label, DISTRICT_PAD)
+        di++
+      } else {
+        const label = this.symbolLabels.get(symbols[si].s.node.id)
+        if (label) place(label, SYMBOL_PAD)
+        si++
+      }
     }
   }
 
   /**
-   * Nearest-N rather than everything-within-D: from across a 355-district shell
+   * Walk every label towards where declutter left it. A label that is on its
+   * way out is not asked to hold a position or a size — over a fifth of a
+   * second nobody can tell, and it keeps the per-frame work on the few names
+   * that are actually being read.
+   */
+  private fadeLabels(dt: number) {
+    for (const label of this.districtLabels) fade(label, dt)
+    for (const label of this.symbolLabels.values()) fade(label, dt)
+  }
+
+  /**
+   * Best-N rather than everything-within-D: from across a 355-district shell
    * the second rule gives either a wall of overlapping text or nothing at all.
    * Keeps a small best-of list in one pass rather than sorting every symbol.
+   *
+   * "Best" is `labelRank` — distance, penalised by how far off the reticle a
+   * name sits. Ranking on distance alone named the floor under the nose and
+   * left whatever you were aiming at anonymous. The order matters twice, since
+   * declutter places in it: the names nearest the reticle claim their space
+   * first and the ones out at the edge give way.
    */
-  private chooseLabels(camera: THREE.PerspectiveCamera) {
+  private chooseLabels(camera: THREE.PerspectiveCamera, dir: THREE.Vector3) {
     const eye = camera.position
-    camera.updateMatrixWorld()
-    this.frustum.setFromProjectionMatrix(
-      this.projScreen.multiplyMatrices(camera.projectionMatrix, camera.matrixWorldInverse),
-    )
+    const cosEdge = frustumEdgeCosine(camera.fov, camera.aspect)
+    // Free here: updateLabels is done with scratchA/B and only holds scratchC.
+    const toLabel = this.scratchB
 
-    const best: { s: Symbol3D; d: number }[] = []
+    const best: { s: Symbol3D; rank: number }[] = []
     let worst = Infinity
     const range = LABEL_RANGE * LABEL_RANGE
 
@@ -843,47 +957,63 @@ export class World {
       // is usually behind you by the time you stop moving. Without one, a name
       // is only worth a slot if it is on screen.
       if (this.selecting && !this.pinned.has(s.node.id)) continue
-      const d = s.pos.distanceToSquared(eye)
-      if (!this.selecting && (d > range || !this.frustum.containsPoint(s.pos))) continue
-      if (best.length === SYMBOL_LABELS && d >= worst) continue
+      const d2 = s.pos.distanceToSquared(eye)
+      if (!this.selecting && (d2 > range || !this.frustum.containsPoint(s.pos))) continue
+      const len = Math.sqrt(d2)
+      toLabel.copy(s.pos).sub(eye)
+      const rank = labelRank(len, len > 0 ? toLabel.dot(dir) / len : 1, cosEdge)
+      if (best.length === SYMBOL_LABELS && rank >= worst) continue
       let at = best.length
-      while (at > 0 && best[at - 1].d > d) at--
-      best.splice(at, 0, { s, d })
+      while (at > 0 && best[at - 1].rank > rank) at--
+      best.splice(at, 0, { s, rank })
       if (best.length > SYMBOL_LABELS) best.pop()
-      worst = best[best.length - 1].d
+      worst = best[best.length - 1].rank
     }
 
-    this.labelled = best.map((b) => b.s)
-    const shown = new Set(this.labelled.map((s) => s.node.id))
-    for (const s of this.labelled) {
-      let label = this.symbolLabels.get(s.node.id)
-      if (!label) {
-        label = makeLabel(s.node.name, { size: 1, color: '#dbe4f3', onTop: this.selecting })
-        this.group.add(label)
-        this.symbolLabels.set(s.node.id, label)
-      }
-      label.visible = true
+    this.labelled = best
+    const shown = new Set(best.map((b) => b.s.node.id))
+    for (const { s } of best) {
+      if (this.symbolLabels.has(s.node.id)) continue
+      const label = makeLabel(s.node.name, { size: 1, color: '#dbe4f3', onTop: this.selecting })
+      // Arrives from nothing rather than at full strength, like every other
+      // label; declutter has not had its say about this one yet.
+      label.visible = false
+      label.material.opacity = 0
+      this.group.add(label)
+      this.symbolLabels.set(s.node.id, label)
     }
+    // Anything no longer chosen is asked to leave; only one that has finished
+    // leaving is disposed, and only once the cache is worth trimming.
+    const evict = this.symbolLabels.size > LABEL_CACHE
     for (const [id, label] of this.symbolLabels) {
-      if (!shown.has(id)) label.visible = false
+      if (shown.has(id)) continue
+      setWant(label, 0)
+      if (evict && !label.visible) {
+        this.group.remove(label)
+        disposeSprite(label)
+        this.symbolLabels.delete(id)
+      }
     }
 
-    // Nearest N, but only among the ones on screen. Every district is about
-    // the same distance away from inside the shell, so plain nearest-N spends
-    // most of its slots on districts behind the camera and the few names you
-    // could actually read never get one. From outside it never showed, because
-    // out there the nearest districts are the ones you are looking at.
+    // Best N, but only among the ones on screen. Every district is about the
+    // same distance away from inside the shell, so plain nearest-N spends most
+    // of its slots on districts behind the camera and the few names you could
+    // actually read never get one. From outside it never showed, because out
+    // there the nearest districts are the ones you are looking at.
     const districts = this.districtParts
       .filter((part) => this.frustum.containsPoint(part.label.position))
-      .map((part) => ({ part, d: part.label.position.distanceToSquared(eye) }))
-      .sort((a, b) => a.d - b.d)
+      .map((part) => {
+        const len = part.label.position.distanceTo(eye)
+        toLabel.copy(part.label.position).sub(eye)
+        const cos = len > 0 ? toLabel.dot(dir) / len : 1
+        return { part, rank: labelRank(len, cos, cosEdge) }
+      })
+      .sort((a, b) => a.rank - b.rank)
 
-    this.districtChosen = []
-    for (const part of this.districtParts) part.label.visible = false
-    districts.slice(0, DISTRICT_LABELS).forEach(({ part }) => {
-      part.label.visible = true
-      this.districtChosen.push(part.label)
-    })
+    for (const part of this.districtParts) setWant(part.label, 0)
+    this.districtChosen = districts
+      .slice(0, DISTRICT_LABELS)
+      .map(({ part, rank }) => ({ label: part.label, rank }))
   }
 
   positionOf(id: string): THREE.Vector3 | undefined {

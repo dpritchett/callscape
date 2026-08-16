@@ -312,3 +312,39 @@ user gesture, and would test the event plumbing rather than the picking.
 **A hidden instance keeps its position and loses its basis.** `InstancedMesh` has no
 per-instance visibility; zeroing the three basis columns collapses the box to a point,
 which draws nothing and cannot be hit by a ray. Rejected: a zero matrix, whose `w` is 0.
+
+**Labels are ranked by the reticle, not by the nose.** Nearest-N spends its slots on
+whatever the camera is passing over, which is the bottom of the frame, so the thing being
+aimed at was the one thing without a name. `labelRank` is distance penalised by angle off
+the view axis, full penalty at the corner of the frustum, and the same score orders both
+kinds. Rejected: labelling by screen position after projecting every symbol, which is the
+same ordering for more work and needs the viewport to mean anything.
+
+**The candidate pool is large and the screen does the limiting.** Fourteen districts and
+forty symbols were a hard cap on a screen that had room for four times that. Ninety and
+a hundred and sixty go into declutter instead, which drops whatever collides — so the
+count you see is what fits rather than a number chosen years earlier. Rejected: tuning
+the caps per altitude, which is the same guess with more places to be wrong.
+
+**Districts get six slots before symbols compete on merit.** Districts placing first all
+the way down was fine at fourteen of them; at ninety, a pass down among the buildings
+spent the whole screen on the package names of districts behind them. Six keeps the map
+from going anonymous, and past that a name a few units away beats one a few hundred away
+whatever kind it is. Rejected: separate screen budgets per kind, which needs a rule for
+where the boundary goes and gets it wrong at every altitude in between.
+
+**A name walks in over its own ground rather than sitting on its centre.** A district
+wider than the screen has its centre off the edge of the frame, so the biggest thing in
+view was the only thing unnamed. `axisAnchor` slides the name towards the view axis by up
+to eight tenths of the district's radius. Rejected: clamping the sprite to the edge of
+the screen, which parks a name over ground that is not its own and lies about what you
+are looking at.
+
+**Labels fade rather than switch.** Which names win is decided in jumps — every two
+degrees of turn, and again every frame in the packing — so applied straight to visibility
+it reads as half the screen blinking while you fly. A fifth of a second of smoothstep
+covers it, and a label on its way out stops claiming space so the one replacing it can
+cross over. The shutter passes a whole second as its `dt`, which settles every fade at
+once: a screenshot caught mid-dissolve says nothing about what the page decided to show.
+Rejected: latching a label on for N frames once chosen, which makes the popping periodic
+instead of removing it.

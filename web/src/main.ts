@@ -634,7 +634,7 @@ const shutter = new Shutter(renderer.domElement, () => {
   // Timed, because a backgrounded tab reports no frame rate at all — this is
   // the only cost measurement available when nobody is watching the page.
   const t0 = performance.now()
-  world.updateLabels(camera, renderer.domElement.clientHeight)
+  world.updateLabels(camera, renderer.domElement.clientHeight, 1)
   updateBeacon(beat())
   watchAim() // a cue can move the camera where no animation loop is running
   const t1 = performance.now()
@@ -707,7 +707,7 @@ const beat = () => performance.now() / 1000
 renderer.setAnimationLoop(() => {
   const dt = Math.min(clock.getDelta(), 0.1)
   controls.update(dt)
-  world.updateLabels(camera, renderer.domElement.clientHeight)
+  world.updateLabels(camera, renderer.domElement.clientHeight, dt)
   updateBeacon(beat())
   watchAim()
   renderer.render(scene, camera)
