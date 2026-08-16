@@ -62,6 +62,12 @@ type Track = (typeof TRACKS)[number]
 const TRACK_SECONDS = 60
 /** Long enough that the handover is a change of weather, not an edit. */
 const TRACK_FADE = 3
+/**
+ * Stopping is not a handover. Letting go of the controls should leave you in
+ * silence about as fast as you noticed you had let go, so this is short enough
+ * to read as the sim powering down rather than as the music trailing off.
+ */
+const TRACK_STOP = 0.8
 
 /** Long enough not to click, short enough not to be a crossfade. */
 const CUT_SECONDS = 0.015
@@ -180,7 +186,7 @@ export class Voice {
     this.playing = want
 
     if (!want) {
-      for (const name of TRACKS) this.rampTo(this.music![name].gain, 0, TRACK_FADE)
+      for (const name of TRACKS) this.rampTo(this.music![name].gain, 0, TRACK_STOP)
       if (this.handover) clearInterval(this.handover)
       this.handover = null
       devlog('music', { playing: false })

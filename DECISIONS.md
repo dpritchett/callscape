@@ -137,8 +137,11 @@ down for the entire time you are going anywhere.
 **Music plays while somebody is flying, and not otherwise.** The two loops run for the
 life of the page like the flight beds, and only their gain moves — a minute of one mood,
 then a minute of the other, crossfaded over three seconds, forever. On means the pointer
-is captured or a remote is holding the wheel; the state it is the opposite of is the page
-sitting there with the cursor free, which is somebody reading a panel or gone for coffee.
+is captured, or a remote is holding the wheel, or a query is open: typing is still driving
+the sim even though it hands the pointer back to do it. The state it is the opposite of is
+the page sitting there with the cursor free, which is somebody reading a panel or gone for
+coffee. Letting go stops it inside a second — naming the search outright is what let the
+stop be immediate, rather than delayed by a grace period covering for that one case.
 Rejected: keying it to burn or to having a selection, which are both things you do
 briefly and often, and would turn the soundtrack into a stutter.
 
