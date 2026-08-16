@@ -134,6 +134,18 @@ the movement model, so "half a second" is tested without a clock: never early, n
 than one frame late, at 24, 60 and 144fps. Rejected: hold-to-burn, which is a key held
 down for the entire time you are going anywhere.
 
+**An edge inside a district arcs over it; an edge between districts still cuts through.**
+A straight line between two points on a sphere is a chord, and a chord sinks below the
+surface it spans — 33 units across the widest district on coder, well under opaque
+ground, which is why a district's own edges could be seen only from inside the shell.
+Lifting the ends does not fix it, because the sag grows with the square of the length:
+whatever constant clears the long ones leaves the short ones floating. So an in-district
+edge is an arc at a fixed height above that district's own ground. Cross-district edges
+are left alone: they pass through the middle of the sphere, and that is a tunnel rather
+than a road. Bending them over the crust would empty the interior and turn the whole
+thing into a surface map, which is a different picture, not a fix. Rejected: drawing
+edges on top of everything, which shows you wires from the far side of the globe.
+
 **The tail camera turns rather than cuts, and it is a fifth of a second.** A hard swap
 reads as two separate places; watching the world go past reads as one place with
 something behind you. Yaw turns half a circle and pitch changes sign — flipping yaw alone

@@ -88,6 +88,7 @@ vite log for the reload, before trusting a capture.
 | `motion.ts` | the flight model |
 | `labels.ts` | how big a label has to be to read at N pixels |
 | `srcpath.ts` | path containment for the source reader |
+| `wires.ts` | edges that follow the crust rather than cutting under it |
 | `spans.ts` | Go token spans into coloured runs, cut on bytes not characters |
 
 **Rendering and wiring** — no arithmetic that could live on the other side:

@@ -2,6 +2,7 @@ import * as THREE from 'three'
 import { MAX_LIFT, type PlacedEdge, type PlacedNode, type Placement } from './placement'
 import { disposeSprite, labelWorldHeight, makeLabel, setLabelHeight } from './labels'
 import { edgeKey, type Neighborhood } from './selection'
+import { arcPoints } from './wires'
 import { devlog } from './devlog'
 import type { ResolvedEdgeShow } from './types'
 
@@ -17,6 +18,10 @@ const DISTRICT_LABELS = 14 // nearest N, so there is always something readable
 const SYMBOL_LABELS = 40
 /** About two degrees: how far the camera can turn before labels are rechosen. */
 const TURN_COSINE = Math.cos((2 * Math.PI) / 180)
+/** How far an in-district edge rides above the ground it crosses. */
+const WIRE_LIFT = 3
+/** Enough that the sag between two segments stays under half a unit. */
+const WIRE_SEGMENTS = 8
 
 // Edge colours. The unselected pair is dim-inside-a-package, bright-across it;
 // once something is selected, direction matters more than distance.
@@ -91,6 +96,8 @@ export class World {
   private hotMeshes: THREE.Mesh[] = []
   private byId = new Map<string, Symbol3D>()
   private edges: PlacedEdge[] = []
+  /** Per edge, where its segments start in the buffer and how many there are. */
+  private edgeSpans: [number, number][] = []
   private edgeColorAttr: THREE.Float32BufferAttribute | null = null
   private lines: THREE.LineSegments | null = null
   private activeLines: THREE.LineSegments | null = null
@@ -282,19 +289,48 @@ export class World {
     })
   }
 
+  /**
+   * The line an edge is drawn along.
+   *
+   * Inside a district it arcs over that district's ground: a straight chord
+   * between two points on a sphere sinks below the surface it spans, by 33
+   * units across the widest district here, which put it under opaque ground
+   * and made a district's own edges visible only from inside the shell.
+   *
+   * Across districts it stays a chord, and still passes through the middle of
+   * the sphere. Those are tunnels rather than roads, and bending them over the
+   * crust would be a different picture, not a fix.
+   */
+  private edgeLine(e: PlacedEdge): THREE.Vector3[] | null {
+    const a = this.positions.get(e.from)
+    const b = this.positions.get(e.to)
+    if (!a || !b) return null
+    if (e.cross) return [a, b]
+    return arcPoints(a, b, WIRE_LIFT, WIRE_SEGMENTS).map((v) => new THREE.Vector3(v.x, v.y, v.z))
+  }
+
+  /** Pushes a polyline as the pairs of endpoints LineSegments wants. */
+  private pushLine(verts: number[], colors: number[], line: THREE.Vector3[], c: THREE.Color) {
+    for (let i = 1; i < line.length; i++) {
+      const p = line[i - 1]
+      const q = line[i]
+      verts.push(p.x, p.y, p.z, q.x, q.y, q.z)
+      colors.push(c.r, c.g, c.b, c.r, c.g, c.b)
+    }
+  }
+
   /** One LineSegments for everything; colours are rewritten on selection. */
   private buildEdges(p: Placement) {
     const verts: number[] = []
     const colors: number[] = []
 
     for (const e of p.edges) {
-      const a = this.positions.get(e.from)
-      const b = this.positions.get(e.to)
-      if (!a || !b) continue
+      const line = this.edgeLine(e)
+      if (!line) continue
       this.edges.push(e)
-      const c = e.cross ? EDGE_CROSS : EDGE_INTRA
-      verts.push(a.x, a.y, a.z, b.x, b.y, b.z)
-      colors.push(c.r, c.g, c.b, c.r, c.g, c.b)
+      // Where each edge's segments start, so recolouring can find them again.
+      this.edgeSpans.push([verts.length / 6, line.length - 1])
+      this.pushLine(verts, colors, line, e.cross ? EDGE_CROSS : EDGE_INTRA)
     }
     if (!verts.length) return
 
@@ -432,8 +468,13 @@ export class World {
     if (!attr || !n.empty) return
     this.edges.forEach((e, i) => {
       const c = this.edgeShow === 'cross' && !e.cross ? EDGE_MUTED : e.cross ? EDGE_CROSS : EDGE_INTRA
-      attr.setXYZ(i * 2, c.r, c.g, c.b)
-      attr.setXYZ(i * 2 + 1, c.r, c.g, c.b)
+      // An arc is many segments, so an edge no longer owns exactly two
+      // vertices — it owns however many its line was drawn with.
+      const [first, count] = this.edgeSpans[i]
+      for (let s = first; s < first + count; s++) {
+        attr.setXYZ(s * 2, c.r, c.g, c.b)
+        attr.setXYZ(s * 2 + 1, c.r, c.g, c.b)
+      }
     })
     attr.needsUpdate = true
   }
@@ -455,12 +496,9 @@ export class World {
     for (const e of this.edges) {
       const role = n.role.get(edgeKey(e.from, e.to))
       if (!role || role === 'none') continue
-      const a = this.positions.get(e.from)
-      const b = this.positions.get(e.to)
-      if (!a || !b) continue
-      const c = role === 'in' ? EDGE_IN : role === 'out' ? EDGE_OUT : EDGE_INTERNAL
-      verts.push(a.x, a.y, a.z, b.x, b.y, b.z)
-      colors.push(c.r, c.g, c.b, c.r, c.g, c.b)
+      const line = this.edgeLine(e)
+      if (!line) continue
+      this.pushLine(verts, colors, line, role === 'in' ? EDGE_IN : role === 'out' ? EDGE_OUT : EDGE_INTERNAL)
     }
     if (!verts.length) return
 
@@ -735,6 +773,7 @@ export class World {
     this.onScreen = []
     this.byId.clear()
     this.edges = []
+    this.edgeSpans = []
     this.edgeColorAttr = null
     this.lines = null
     this.activeLines = null

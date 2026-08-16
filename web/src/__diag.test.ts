@@ -38,4 +38,14 @@ test('shell fill', () => {
     `max lift ${Math.max(...p.districts.map((d) => d.lift)).toFixed(2)}, ` +
       `would have been buried: ${sunk.length}/${p.nodes.length}`,
   )
+
+  // An edge is a straight chord between two points on the shell, so it sinks
+  // below the surface it spans — by roughly L squared over 8R for a chord of
+  // length L. That is how far a wire has to be lifted to stay above its own
+  // district's floor, which is what makes it visible from outside the shell.
+  const widest = Math.max(...p.districts.map((d) => d.radius))
+  console.log(
+    `widest district ${widest.toFixed(0)}, worst in-district sag ` +
+      `${(((2 * widest) ** 2) / (8 * p.shell)).toFixed(1)}`,
+  )
 })
