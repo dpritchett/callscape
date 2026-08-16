@@ -11,6 +11,10 @@ import type { Vec3 } from './layout'
  * whatever constant clears the long ones leaves the short ones in the sky.
  *
  * An arc at a fixed height clears the ground by the same amount everywhere.
+ *
+ * A negative lift puts the arc under the ground instead, which is how an edge
+ * straddles its district the way the buildings do: opaque ground has one side
+ * each way, so a single arc is only ever visible from one of them.
  */
 
 /**

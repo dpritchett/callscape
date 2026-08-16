@@ -290,23 +290,32 @@ export class World {
   }
 
   /**
-   * The line an edge is drawn along.
+   * The lines an edge is drawn along.
    *
-   * Inside a district it arcs over that district's ground: a straight chord
-   * between two points on a sphere sinks below the surface it spans, by 33
-   * units across the widest district here, which put it under opaque ground
-   * and made a district's own edges visible only from inside the shell.
+   * Inside a district it arcs over that district's ground, because a straight
+   * chord between two points on a sphere sinks below the surface it spans — 33
+   * units across the widest district here, under opaque ground.
+   *
+   * And it arcs under it as well. The ground has one opaque side each way, so
+   * any single arc is visible from one side of the shell and not the other:
+   * putting it above swaps which half of the problem you have. Buildings
+   * already solved this by straddling the crust and protruding both ways, and a
+   * wire is no different. Two arcs, mirrored, one for each side.
    *
    * Across districts it stays a chord, and still passes through the middle of
    * the sphere. Those are tunnels rather than roads, and bending them over the
    * crust would be a different picture, not a fix.
    */
-  private edgeLine(e: PlacedEdge): THREE.Vector3[] | null {
+  private edgeLines(e: PlacedEdge): THREE.Vector3[][] {
     const a = this.positions.get(e.from)
     const b = this.positions.get(e.to)
-    if (!a || !b) return null
-    if (e.cross) return [a, b]
-    return arcPoints(a, b, WIRE_LIFT, WIRE_SEGMENTS).map((v) => new THREE.Vector3(v.x, v.y, v.z))
+    if (!a || !b) return []
+    if (e.cross) return [[a, b]]
+    const vec = (v: { x: number; y: number; z: number }) => new THREE.Vector3(v.x, v.y, v.z)
+    return [
+      arcPoints(a, b, WIRE_LIFT, WIRE_SEGMENTS).map(vec),
+      arcPoints(a, b, -WIRE_LIFT, WIRE_SEGMENTS).map(vec),
+    ]
   }
 
   /** Pushes a polyline as the pairs of endpoints LineSegments wants. */
@@ -325,12 +334,19 @@ export class World {
     const colors: number[] = []
 
     for (const e of p.edges) {
-      const line = this.edgeLine(e)
-      if (!line) continue
+      const lines = this.edgeLines(e)
+      if (!lines.length) continue
       this.edges.push(e)
-      // Where each edge's segments start, so recolouring can find them again.
-      this.edgeSpans.push([verts.length / 6, line.length - 1])
-      this.pushLine(verts, colors, line, e.cross ? EDGE_CROSS : EDGE_INTRA)
+      // Where each edge's segments start and how many it has, so recolouring
+      // can find them again — an edge is two arcs, and an arc is many segments.
+      const first = verts.length / 6
+      const colour = e.cross ? EDGE_CROSS : EDGE_INTRA
+      let count = 0
+      for (const line of lines) {
+        this.pushLine(verts, colors, line, colour)
+        count += line.length - 1
+      }
+      this.edgeSpans.push([first, count])
     }
     if (!verts.length) return
 
@@ -496,9 +512,8 @@ export class World {
     for (const e of this.edges) {
       const role = n.role.get(edgeKey(e.from, e.to))
       if (!role || role === 'none') continue
-      const line = this.edgeLine(e)
-      if (!line) continue
-      this.pushLine(verts, colors, line, role === 'in' ? EDGE_IN : role === 'out' ? EDGE_OUT : EDGE_INTERNAL)
+      const colour = role === 'in' ? EDGE_IN : role === 'out' ? EDGE_OUT : EDGE_INTERNAL
+      for (const line of this.edgeLines(e)) this.pushLine(verts, colors, line, colour)
     }
     if (!verts.length) return
 

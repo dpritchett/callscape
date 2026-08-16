@@ -140,7 +140,10 @@ surface it spans — 33 units across the widest district on coder, well under op
 ground, which is why a district's own edges could be seen only from inside the shell.
 Lifting the ends does not fix it, because the sag grows with the square of the length:
 whatever constant clears the long ones leaves the short ones floating. So an in-district
-edge is an arc at a fixed height above that district's own ground. Cross-district edges
+edge is an arc at a fixed height above that district's own ground — and a second arc the
+same distance under it. Opaque ground has one side each way, so a single arc only moves
+which half of the shell cannot see it; the buildings already answered this by straddling
+the crust and protruding both ways, and a wire is no different. Cross-district edges
 are left alone: they pass through the middle of the sphere, and that is a tunnel rather
 than a road. Bending them over the crust would empty the interior and turn the whole
 thing into a surface map, which is a different picture, not a fix. Rejected: drawing

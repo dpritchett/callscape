@@ -69,6 +69,18 @@ describe('arcPoints', () => {
     }
   })
 
+  test('a negative lift runs under the surface, the same distance', () => {
+    const a = on(R, 0)
+    const b = on(R, 21)
+    const over = arcPoints(a, b, 3, 8)
+    const under = arcPoints(a, b, -3, 8)
+    for (const p of under) expect(len(p)).toBeCloseTo(R - 3, 6)
+    // Mirrored about the ground, so the pair straddles it evenly.
+    for (let i = 0; i < over.length; i++) {
+      expect(len(over[i]) - R).toBeCloseTo(R - len(under[i]), 6)
+    }
+  })
+
   test('an edge between two heights rises along its length', () => {
     const points = arcPoints(on(R, 0), on(R + 20, 21), 0, 4)
     expect(len(points[0])).toBeCloseTo(R, 6)
