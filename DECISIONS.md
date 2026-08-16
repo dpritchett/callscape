@@ -77,6 +77,13 @@ and a missed chunk match is logged rather than left to be noticed. Rejected: one
 `InstancedMesh` per colour, which is fine for the 12-entry palette and degenerates into
 thousands of draw calls the moment `encoding.color` names a numeric field.
 
+**Focus means the selection, when there is one.** `F` framed `camera.focus` from the view
+spec whatever was on screen, so from anywhere in the graph it flew you to a symbol you
+had picked in a config file hours ago — or to the origin, a point in the middle of the
+shell that is nowhere in particular. It now frames the most recent pick, which is the one
+the panel is describing, and falls back to the view's focus and then the origin. Rejected:
+a second key, which splits one verb in two.
+
 **The source panel is coloured by `go/scanner`, not by a highlighter.** A browser
 highlighter guesses at a grammar this project already ships a lexer for, and the lexer is
 the one the compiler uses. `--lex` is one file with no package loading, so the dev server

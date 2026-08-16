@@ -305,10 +305,26 @@ flyControls.onPick = pickAtReticle
 flyControls.onClearSelection = clearSelection
 flyControls.onToggleReveal = toggleReveal
 
+/**
+ * Fly to whatever the panel is showing. The selection is the thing you are
+ * looking at, so it is what "focus" means once there is one; `camera.focus`
+ * from the view is the fallback for when there is not, and the origin is the
+ * fallback for that — a point in the middle of a shell, which is nowhere in
+ * particular and was where this always went.
+ */
 function frameFocus() {
   if (!view) return
-  const target = (view.camera.focus && world.positionOf(view.camera.focus)) || new THREE.Vector3(0, 0, 0)
+  const id = lastSelected() ?? view.camera.focus
+  const target = (id && world.positionOf(id)) || new THREE.Vector3(0, 0, 0)
+  devlog('focus', { id, found: Boolean(id && world.positionOf(id)) })
   controls.frame(target, view.camera.distance)
+}
+
+/** The most recent pick, which is the one the panel is describing. */
+function lastSelected(): string | undefined {
+  let last: string | undefined
+  for (const id of selected) last = id
+  return last
 }
 
 function rebuild() {
