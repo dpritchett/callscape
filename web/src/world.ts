@@ -85,19 +85,18 @@ export class World {
     const geom = new THREE.BoxGeometry(1, 1, 1)
     this.disposables.push(() => geom.dispose())
 
-    // Stalks go into one geometry rather than one Line each. At coder's scale
-    // that is the difference between 18,522 scene objects and zero: three.js
-    // walks every object each frame for matrices and culling, and that traversal
-    // — not the 53 draw calls it ends up issuing — was the whole frame budget.
-    const stalkVerts: number[] = []
-    const stalkColors: number[] = []
-    const colour = new THREE.Color()
+    // Buildings stand along the local normal and straddle the ground, so no
+    // stalk is needed to tie one to its district — it passes through it.
+    const POLE = new THREE.Vector3(0, 1, 0)
+    const up = new THREE.Vector3()
 
     for (const n of p.nodes) {
       const mats = this.materialsFor(n.color)
 
       const mesh = new THREE.Mesh(geom, mats.base)
-      mesh.scale.setScalar(n.size)
+      up.set(n.nx, n.ny, n.nz)
+      mesh.quaternion.setFromUnitVectors(POLE, up)
+      mesh.scale.set(n.size, n.height, n.size)
       mesh.position.set(n.x, n.y, n.z)
       mesh.userData.id = n.id
       // Nothing moves a symbol after it is placed, so its matrix is computed
@@ -111,38 +110,6 @@ export class World {
       const pos = mesh.position.clone()
       this.positions.set(n.id, pos)
       this.symbols.push({ node: n, mesh, pos })
-
-      // Stalk back to the district's surface, so a lifted symbol still reads as
-      // belonging to it.
-      const seat = p.seatOf.get(n.id)
-      if (seat) {
-        const dx = seat.x - n.x
-        const dy = seat.y - n.y
-        const dz = seat.z - n.z
-        if (Math.hypot(dx, dy, dz) > n.size / 2 + 0.5) {
-          colour.set(n.color)
-          stalkVerts.push(seat.x, seat.y, seat.z, n.x, n.y, n.z)
-          for (let k = 0; k < 2; k++) stalkColors.push(colour.r, colour.g, colour.b)
-        }
-      }
-    }
-
-    if (stalkVerts.length) {
-      const sGeom = new THREE.BufferGeometry()
-      sGeom.setAttribute('position', new THREE.Float32BufferAttribute(stalkVerts, 3))
-      sGeom.setAttribute('color', new THREE.Float32BufferAttribute(stalkColors, 3))
-      const sMat = new THREE.LineBasicMaterial({
-        vertexColors: true,
-        transparent: true,
-        opacity: 0.22,
-      })
-      const stalks = new THREE.LineSegments(sGeom, sMat)
-      stalks.matrixAutoUpdate = false
-      this.group.add(stalks)
-      this.disposables.push(() => {
-        sGeom.dispose()
-        sMat.dispose()
-      })
     }
   }
 

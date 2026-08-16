@@ -144,12 +144,14 @@ describe('district assignment', () => {
     }
   })
 
-  test('symbols stand on the outside of the crust', () => {
+  test('buildings straddle the crust rather than sitting on one face', () => {
     for (const n of p.nodes) {
       const seat = p.seatOf.get(n.id)!
-      // further from the origin than its seat: lifting inward would put the
-      // district's own opaque ground in front of its contents
-      expect(Math.hypot(n.x, n.y, n.z)).toBeGreaterThanOrEqual(Math.hypot(seat.x, seat.y, seat.z))
+      // centred on the ground, so the same amount shows from either side and
+      // the district looks the same wherever you are
+      expect(dist(n, seat)).toBeCloseTo(0, 9)
+      expect(Math.hypot(n.nx, n.ny, n.nz)).toBeCloseTo(1, 9)
+      expect(n.height).toBeGreaterThanOrEqual(n.size)
     }
   })
 
@@ -191,13 +193,10 @@ describe('district assignment', () => {
     expect(new Set(gitlab.map((n) => n.color)).size).toBe(1)
     expect(new Set(p.nodes.map((n) => n.color)).size).toBe(2)
 
-    // Height is now a lift off the district's plane along its normal, so it is
-    // a distance from the seat rather than a y coordinate.
-    const lift = (name: string) => {
-      const n = p.nodes.find((x) => x.name === name)!
-      return dist(n, p.seatOf.get(n.id)!)
-    }
-    expect(lift('Client.Post')).toBeGreaterThan(lift('helper')) // 90 lines vs 5
+    // Height is the building's extent along the local normal, half of it on
+    // each side of the ground.
+    const tall = (name: string) => p.nodes.find((x) => x.name === name)!.height
+    expect(tall('Client.Post')).toBeGreaterThan(tall('helper')) // 90 lines vs 5
 
     const get = p.nodes.find((n) => n.name === 'Client.Get')! // most fanIn
     expect(get.size).toBeGreaterThan(p.nodes.find((n) => n.name === 'helper')!.size)

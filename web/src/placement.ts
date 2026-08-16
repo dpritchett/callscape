@@ -15,10 +15,17 @@ export interface PlacedNode {
   id: string
   pkg: string
   name: string
+  /** Centre of the building, which sits on the crust rather than above it. */
   x: number
   y: number
   z: number
+  /** Unit normal at that point: the direction the building stands along. */
+  nx: number
+  ny: number
+  nz: number
   size: number
+  /** Total extent along the normal, half of it on each side of the ground. */
+  height: number
   color: number
   /** Fan-in and fan-out across the whole graph, not just what survived the
    * occupant filter. Without these, a panel showing "in 0" for a symbol with
@@ -97,23 +104,25 @@ export function place(graph: Graph, view: ViewSpec, reveal: Iterable<string> = [
   const nodes: PlacedNode[] = selected.map((n) => {
     const seat = lay.pos.get(n.id)!
     const size = sizeOf(n) * BASE
-    // Symbols stand on the outside of the crust, like buildings on a planet.
-    // Lifting them inward put the district's opaque ground between the camera
-    // and its own contents, so a district read as a solid blob from anywhere
-    // outside the shell. The seat is on the sphere, so its direction is up.
-    const lift = liftOf(n) + size / 2
+    // A building straddles the crust, protruding equally on both sides, so a
+    // district looks the same whichever side of the shell you are on. Putting
+    // it entirely on one face means the ground hides the contents from the
+    // other, and there is no side that is right to choose.
+    const height = Math.max(size, liftOf(n) * 2)
     const mag = Math.hypot(seat.x, seat.y, seat.z) || 1
-    const nx = seat.x / mag
-    const ny = seat.y / mag
-    const nz = seat.z / mag
     return {
       id: n.id,
       pkg: n.pkg,
       name: n.name,
-      x: seat.x + nx * lift,
-      y: seat.y + ny * lift,
-      z: seat.z + nz * lift,
+      x: seat.x,
+      y: seat.y,
+      z: seat.z,
+      // Local up, for standing the building on end.
+      nx: seat.x / mag,
+      ny: seat.y / mag,
+      nz: seat.z / mag,
       size,
+      height,
       color: colorOf(n),
       fanIn: n.fanIn,
       fanOut: n.fanOut,

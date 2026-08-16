@@ -351,12 +351,80 @@ function spreadOnShell(radii: number[]): { shell: number; dirs: Vec3[] } {
   const area = radii.reduce((s, r) => s + Math.PI * (r + PAD / 2) ** 2, 0)
   let shell = Math.max(Math.max(...radii) + PAD, Math.sqrt(area / (4 * Math.PI)) * 1.15)
 
-  for (let attempt = 0; attempt < 40; attempt++) {
-    const dirs = fibonacciSphere(radii.length)
-    if (relax(dirs, radii, shell)) return { shell, dirs }
+  let dirs = settle(radii, shell)
+  for (let attempt = 0; attempt < 40 && !dirs; attempt++) {
     shell *= 1.08
+    dirs = settle(radii, shell)
   }
-  return { shell, dirs: fibonacciSphere(radii.length) }
+  if (!dirs) return { shell, dirs: fibonacciSphere(radii.length) }
+
+  // Then close the gap: growing stops at whatever radius happened to work, and
+  // the estimate has to start generous.
+  for (let squeeze = 0; squeeze < 20; squeeze++) {
+    const trial = shell * 0.94
+    const tighter = settle(radii, trial)
+    if (!tighter) break
+    shell = trial
+    dirs = tighter
+  }
+  return { shell, dirs }
+}
+
+/**
+ * Places districts on the shell by accretion: biggest first, each new one
+ * pressed up against one already there.
+ *
+ * A uniform lattice cannot pack mixed sizes — coder's districts run from 12 to
+ * 177 units, and even spacing has to accommodate the largest, so the crust came
+ * out 10% covered and mostly void. Packing against neighbours lets a small
+ * district tuck into the gap beside a big one.
+ */
+function settle(radii: number[], shell: number): Vec3[] | null {
+  const order = radii.map((_, i) => i).sort((a, b) => radii[b] - radii[a])
+  const out: Vec3[] = new Array(radii.length)
+  const placed: { dir: Vec3; r: number }[] = []
+
+  /** Angle subtended between two districts that are just touching. */
+  const apart = (a: number, b: number) =>
+    2 * Math.asin(Math.min(1, (a + b + PAD) / (2 * shell)))
+
+  const clears = (dir: Vec3, r: number) =>
+    placed.every(({ dir: other, r: rOther }) => {
+      const dot = dir.x * other.x + dir.y * other.y + dir.z * other.z
+      return Math.acos(Math.max(-1, Math.min(1, dot))) >= apart(r, rOther) - 1e-9
+    })
+
+  for (const idx of order) {
+    const r = radii[idx]
+    if (!placed.length) {
+      const dir = { x: 0, y: 1, z: 0 }
+      out[idx] = dir
+      placed.push({ dir, r })
+      continue
+    }
+
+    let seated: Vec3 | null = null
+    for (let k = 0; k < 600 && !seated; k++) {
+      const host = placed[Math.floor(hash01(`shell#${idx}#h${k}`) * placed.length)]
+      const { u, v } = basis(host.dir)
+      const theta = hash01(`shell#${idx}#t${k}`) * Math.PI * 2
+      // Just touching the host, plus a little, in a hashed direction around it.
+      const step = apart(r, host.r) * (1 + hash01(`shell#${idx}#s${k}`) * 0.06)
+      const cos = Math.cos(step)
+      const sin = Math.sin(step)
+      const cand = normalise({
+        x: host.dir.x * cos + (u.x * Math.cos(theta) + v.x * Math.sin(theta)) * sin,
+        y: host.dir.y * cos + (u.y * Math.cos(theta) + v.y * Math.sin(theta)) * sin,
+        z: host.dir.z * cos + (u.z * Math.cos(theta) + v.z * Math.sin(theta)) * sin,
+      })
+      if (clears(cand, r)) seated = cand
+    }
+    if (!seated) return null // caller grows the shell
+
+    out[idx] = seated
+    placed.push({ dir: seated, r })
+  }
+  return out
 }
 
 /** Evenly spaced directions, no clustering at the poles. */
@@ -369,47 +437,6 @@ function fibonacciSphere(n: number): Vec3[] {
     out.push({ x: r * Math.cos(t), y, z: r * Math.sin(t) })
   }
   return out
-}
-
-/**
- * Pushes overlapping districts apart along the sphere until none overlap.
- * Returns whether it succeeded — the caller grows the shell if it did not.
- */
-function relax(dirs: Vec3[], radii: number[], shell: number): boolean {
-  for (let pass = 0; pass < 60; pass++) {
-    let worst = 0
-    for (let a = 0; a < dirs.length; a++) {
-      for (let b = a + 1; b < dirs.length; b++) {
-        const need = radii[a] + radii[b] + PAD
-        const dx = (dirs[a].x - dirs[b].x) * shell
-        const dy = (dirs[a].y - dirs[b].y) * shell
-        const dz = (dirs[a].z - dirs[b].z) * shell
-        const gap = Math.hypot(dx, dy, dz)
-        if (gap >= need) continue
-        worst = Math.max(worst, need - gap)
-
-        // Move each away from the other by half the shortfall, then put them
-        // back on the sphere. Two points on top of each other get nudged by
-        // their index instead, since they have no direction to separate along.
-        const push = (need - gap) / (2 * shell)
-        const ux = gap > 1e-9 ? dx / gap : Math.cos(a)
-        const uy = gap > 1e-9 ? dy / gap : Math.sin(a)
-        const uz = gap > 1e-9 ? dz / gap : Math.cos(b)
-        dirs[a] = normalise({
-          x: dirs[a].x + ux * push,
-          y: dirs[a].y + uy * push,
-          z: dirs[a].z + uz * push,
-        })
-        dirs[b] = normalise({
-          x: dirs[b].x - ux * push,
-          y: dirs[b].y - uy * push,
-          z: dirs[b].z - uz * push,
-        })
-      }
-    }
-    if (worst === 0) return true
-  }
-  return false
 }
 
 /** `github.com/x/y/internal/gitlab` -> `internal/gitlab`. */
