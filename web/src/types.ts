@@ -32,6 +32,8 @@ export type NodeField = keyof GraphNode
  *  selected — nothing until you select something, then its neighbourhood
  *  none     — never
  */
+export type ScaleKind = 'linear' | 'sqrt' | 'log'
+
 export type EdgeShow = 'auto' | 'all' | 'cross' | 'selected' | 'none'
 export type ResolvedEdgeShow = Exclude<EdgeShow, 'auto'>
 
@@ -45,6 +47,12 @@ export interface ViewSpec {
     size: NodeField
     color: NodeField
     height: NodeField
+    /**
+     * How a numeric field maps onto its range. Fan-in spans 0 to 837 on coder,
+     * so linear puts almost every symbol in the bottom few percent and they all
+     * come out the same size; log spreads the crowded low end apart.
+     */
+    scale: ScaleKind
   }
   edges: {
     show: EdgeShow

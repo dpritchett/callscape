@@ -4,6 +4,7 @@ import type {
   GraphNode,
   NodeField,
   ResolvedEdgeShow,
+  ScaleKind,
   ViewSpec,
 } from './types'
 import { layout, type District, type Vec3 } from './layout'
@@ -81,10 +82,14 @@ export function place(graph: Graph, view: ViewSpec, reveal: Iterable<string> = [
   const kept = selectOccupants(graph.nodes, view)
   const extra = neighboursPastTheFilter(graph, kept, reveal)
   const selected = extra.length ? [...kept, ...extra] : kept
-  const lay = layout(selected)
 
-  const sizeOf = scaler(selected, view.encoding.size, SIZE_RANGE[0], SIZE_RANGE[1])
-  const liftOf = scaler(selected, view.encoding.height, 0, MAX_LIFT)
+  const sizeField = view.encoding.size
+  // Districts are packed biggest-first by whatever the view sizes symbols by,
+  // so each one has a middle worth flying to.
+  const lay = layout(selected, (n) => numeric(n[sizeField]))
+
+  const sizeOf = scaler(selected, sizeField, SIZE_RANGE[0], SIZE_RANGE[1], view.encoding.scale)
+  const liftOf = scaler(selected, view.encoding.height, 0, MAX_LIFT, view.encoding.scale)
   const colorOf = colorer(selected, view.encoding.color)
 
   const nodes: PlacedNode[] = selected.map((n) => {
@@ -172,16 +177,30 @@ function relPkg(pkg: string, module: string): string {
 }
 
 /** Maps a node field onto [lo, hi]; non-numeric fields collapse to the low end. */
-export function scaler(nodes: GraphNode[], field: NodeField, lo: number, hi: number): (n: GraphNode) => number {
-  let min = 0
-  let max = 0
+export function scaler(
+  nodes: GraphNode[],
+  field: NodeField,
+  lo: number,
+  hi: number,
+  kind: ScaleKind = 'linear',
+): (n: GraphNode) => number {
+  const curve = curveFor(kind)
+  let min = Infinity
+  let max = -Infinity
   for (const n of nodes) {
-    const v = numeric(n[field])
+    const v = curve(numeric(n[field]))
     if (v < min) min = v
     if (v > max) max = v
   }
+  if (!Number.isFinite(min)) return () => lo
   const span = max - min || 1
-  return (n) => lo + ((numeric(n[field]) - min) / span) * (hi - lo)
+  return (n) => lo + ((curve(numeric(n[field])) - min) / span) * (hi - lo)
+}
+
+function curveFor(kind: ScaleKind): (v: number) => number {
+  if (kind === 'sqrt') return (v) => Math.sqrt(Math.max(0, v))
+  if (kind === 'log') return (v) => Math.log1p(Math.max(0, v))
+  return (v) => v
 }
 
 function numeric(v: unknown): number {

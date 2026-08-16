@@ -1,6 +1,7 @@
-import type { EdgeShow, NodeField, ViewSpec } from './types'
+import type { EdgeShow, NodeField, ScaleKind, ViewSpec } from './types'
 
 const EDGE_SHOWS: EdgeShow[] = ['auto', 'all', 'cross', 'selected', 'none']
+const SCALES: ScaleKind[] = ['linear', 'sqrt', 'log']
 
 const NODE_FIELDS: NodeField[] = [
   'id', 'name', 'pkg', 'file', 'line', 'lines', 'exported', 'fanIn', 'fanOut',
@@ -21,7 +22,7 @@ export function parseView(raw: unknown): ViewSpec {
   ])
 
   const occ = obj(root.occupants, 'occupants', errs, ['packages', 'minFanIn', 'limit'])
-  const enc = obj(root.encoding, 'encoding', errs, ['size', 'color', 'height'])
+  const enc = obj(root.encoding, 'encoding', errs, ['size', 'color', 'height', 'scale'])
   const cam = obj(root.camera, 'camera', errs, ['focus', 'distance'])
   const edg = obj(root.edges ?? {}, 'edges', errs, ['show', 'opacity'])
 
@@ -35,6 +36,7 @@ export function parseView(raw: unknown): ViewSpec {
       size: field(enc.size, 'encoding.size', errs, 'fanIn'),
       color: field(enc.color, 'encoding.color', errs, 'pkg'),
       height: field(enc.height, 'encoding.height', errs, 'lines'),
+      scale: scaleKind(enc.scale, 'encoding.scale', errs),
     },
     camera: {
       focus: str(cam.focus, 'camera.focus', errs),
@@ -96,6 +98,17 @@ function str(v: unknown, path: string, errs: string[]): string | null {
     return null
   }
   return v
+}
+
+function scaleKind(v: unknown, path: string, errs: string[]): ScaleKind {
+  // Log by default: on a real codebase the interesting fields are heavily
+  // skewed, and linear makes every symbol below the top percentile identical.
+  if (v === undefined) return 'log'
+  if (typeof v !== 'string' || !SCALES.includes(v as ScaleKind)) {
+    errs.push(`${path}: expected one of ${SCALES.join(', ')}`)
+    return 'log'
+  }
+  return v as ScaleKind
 }
 
 function edgeShow(v: unknown, path: string, errs: string[]): EdgeShow {

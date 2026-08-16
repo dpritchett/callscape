@@ -8,7 +8,19 @@ const OK = {
 }
 
 test('accepts the documented shape, filling in the optional blocks', () => {
-  expect(parseView(OK)).toEqual({ ...OK, select: [], edges: { show: 'auto', opacity: 0.7 } })
+  expect(parseView(OK)).toEqual({
+    ...OK,
+    encoding: { ...OK.encoding, scale: 'log' },
+    select: [],
+    edges: { show: 'auto', opacity: 0.7 },
+  })
+})
+
+test('scale is optional, log by default, and validated', () => {
+  expect(parseView({ ...OK, encoding: { ...OK.encoding, scale: 'sqrt' } }).encoding.scale).toBe('sqrt')
+  expect(() => parseView({ ...OK, encoding: { ...OK.encoding, scale: 'loglog' } })).toThrow(
+    /encoding.scale/,
+  )
 })
 
 test('edges block is optional and validated', () => {

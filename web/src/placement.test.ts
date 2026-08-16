@@ -230,13 +230,11 @@ describe('determinism', () => {
       return { u: dot(rel, d.u), v: dot(rel, d.v) }
     }
     // Projecting onto the shell compresses distance from the district's centre,
-    // and the shell resizes when a package joins — so the preserved quantity is
-    // the direction within the district, not the distance.
+    // and the shell resizes when a package joins — so what is preserved is the
+    // seat's bearing within its own district, not its distance from the middle.
     const alone = local(view({ occupants: { ...BASE_VIEW.occupants, packages: ['*/internal/gitlab'] } }))
     const crowded = local(view())
-    expect(Math.sign(crowded.u)).toBe(Math.sign(alone.u))
-    expect(Math.sign(crowded.v)).toBe(Math.sign(alone.v))
-    expect(crowded.u / crowded.v).toBeCloseTo(alone.u / alone.v, 9)
+    expect(Math.atan2(crowded.v, crowded.u)).toBeCloseTo(Math.atan2(alone.v, alone.u), 9)
   })
 })
 
@@ -305,3 +303,43 @@ describe('edge display policy', () => {
 type V = { x: number; y: number; z: number }
 const dot = (a: V, b: V) => a.x * b.x + a.y * b.y + a.z * b.z
 const dist = (a: V, b: V) => Math.hypot(a.x - b.x, a.y - b.y, a.z - b.z)
+
+describe('district interior', () => {
+  const many: Graph = {
+    module: M,
+    nodes: Array.from({ length: 60 }, (_, i) =>
+      node(`${M}/internal/gitlab`, `f${String(i).padStart(2, '0')}`, i, 10 + i),
+    ),
+    edges: [],
+  }
+  const p = place(many, view({ occupants: { packages: ['*'], minFanIn: 0, limit: 0 } }))
+  const d = p.districts[0]
+  const radial = (id: string) => {
+    const s = p.seatOf.get(id)!
+    return Math.hypot(s.x - d.centre.x, s.y - d.centre.y, s.z - d.centre.z)
+  }
+
+  test('symbols fill the disc rather than a square inside it', () => {
+    const rs = p.nodes.map((n) => radial(n.id))
+    // the outermost symbol is near the rim, not at 70% of it like a grid corner
+    expect(Math.max(...rs) / d.radius).toBeGreaterThan(0.8)
+    // and the interior is populated, not just a ring
+    const inner = rs.filter((r) => r < d.radius / 2).length
+    expect(inner).toBeGreaterThan(p.nodes.length / 5)
+  })
+
+  test('the highest ranked symbol sits in the middle', () => {
+    const top = p.nodes.reduce((a, b) => (a.fanIn > b.fanIn ? a : b))
+    const others = p.nodes.filter((n) => n.id !== top.id)
+    expect(radial(top.id)).toBeLessThan(Math.min(...others.map((n) => radial(n.id))))
+  })
+
+  test('log scaling separates the crowded low end that linear flattens', () => {
+    const spread = (scale: 'linear' | 'log') => {
+      const q = place(many, view({ encoding: { ...BASE_VIEW.encoding, scale } , occupants: { packages: ['*'], minFanIn: 0, limit: 0 } }))
+      const small = q.nodes.filter((n) => n.fanIn <= 5).map((n) => n.size)
+      return Math.max(...small) - Math.min(...small)
+    }
+    expect(spread('log')).toBeGreaterThan(spread('linear') * 3)
+  })
+})

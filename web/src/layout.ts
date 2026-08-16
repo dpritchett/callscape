@@ -33,6 +33,7 @@ export interface Layout {
 }
 
 const CELL = 7 // spacing between symbols inside a district
+const GOLDEN_ANGLE = Math.PI * (3 - Math.sqrt(5)) // 137.5°, the sunflower turn
 const PAD = 10 // gap between neighbouring districts
 const MIN_RADIUS = 12
 
@@ -46,7 +47,7 @@ const MIN_RADIUS = 12
  * fifth the size, and every district is the same distance from the middle
  * rather than fifty times further than its neighbour.
  */
-export function layout(nodes: GraphNode[]): Layout {
+export function layout(nodes: GraphNode[], rank: (n: GraphNode) => number = () => 0): Layout {
   const byPkg = new Map<string, GraphNode[]>()
   for (const n of nodes) {
     const list = byPkg.get(n.pkg)
@@ -61,10 +62,11 @@ export function layout(nodes: GraphNode[]): Layout {
 
   const discs = pkgs.map((pkg) => {
     const members = byPkg.get(pkg)!
-    const cols = Math.ceil(Math.sqrt(members.length))
-    const rows = Math.ceil(members.length / cols)
-    const half = Math.hypot(cols * CELL, rows * CELL) / 2
-    return { pkg, members, cols, rows, radius: Math.max(MIN_RADIUS, half + CELL) }
+    // A disc's area is what has to hold the members, so its radius grows with
+    // the square root of the count. The old square grid was sized by its
+    // diagonal, which left the rim of every district empty.
+    const radius = Math.max(MIN_RADIUS, CELL * (0.62 * Math.sqrt(members.length) + 1))
+    return { pkg, members, radius }
   })
 
   const radii = discs.map((d) => d.radius)
@@ -92,12 +94,25 @@ export function layout(nodes: GraphNode[]): Layout {
       count: d.members.length,
     })
 
-    const members = [...d.members].sort((a, b) => (a.name < b.name ? -1 : a.name > b.name ? 1 : 0))
+    // Biggest first, so a district has a centre: whatever the view ranks highest
+    // sits in the middle and the small stuff rings the edge. Name breaks ties,
+    // which is what keeps this deterministic.
+    const members = [...d.members].sort((a, b) => {
+      const ra = rank(a)
+      const rb = rank(b)
+      if (ra !== rb) return rb - ra
+      return a.name < b.name ? -1 : a.name > b.name ? 1 : 0
+    })
+
+    // Sunflower packing: even density all the way to the rim, no corners, and
+    // no arbitrary row length. Position i sits at sqrt(i/n) of the radius,
+    // turned by the golden angle each step.
+    const inner = Math.max(0, d.radius - CELL)
     members.forEach((n, idx) => {
-      const col = idx % d.cols
-      const row = Math.floor(idx / d.cols)
-      const du = (col - (d.cols - 1) / 2) * CELL
-      const dv = (row - (d.rows - 1) / 2) * CELL
+      const rr = inner * Math.sqrt((idx + 0.5) / members.length)
+      const theta = idx * GOLDEN_ANGLE
+      const du = rr * Math.cos(theta)
+      const dv = rr * Math.sin(theta)
       // Lay the grid out on the tangent plane, then push it onto the sphere, so
       // symbols sit on the curve of the crust rather than on a flat card
       // floating above it. With a single district there is no sphere to push
