@@ -186,6 +186,11 @@ Every one of these cost real time. They are not hypothetical.
   in 0.8–1.7ms at 78 draw calls, against 9.1–10.6ms at 1,129 before. What is left in a
   frame is the districts: 355 caps and 355 rims, each its own object.
 - **Labels can be occluded by geometry.** Decluttering only checks label against label.
+- **District names are boxes floating over the map, and it is awkward.** They hold a fixed
+  pixel height so they read from anywhere, which is why they win, but a screenful of them
+  sits on top of the thing it is describing. Painting the name onto the district's own
+  ground is the obvious alternative and does not survive the arithmetic — `DECISIONS.md`
+  has the working. Still open, and not for want of an idea.
 - **Panels.** Agreed shape is MFDs — two or three small displays that swap modes — rather
   than a dashboard. `info`, `source` and `district` exist, and `/` opens a symbol search
   that takes the keyboard until Escape. Still missing: clickable callers/callees for

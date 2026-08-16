@@ -348,3 +348,16 @@ cross over. The shutter passes a whole second as its `dt`, which settles every f
 once: a screenshot caught mid-dissolve says nothing about what the page decided to show.
 Rejected: latching a label on for N frames once chosen, which makes the popping periodic
 instead of removing it.
+
+**A district's name cannot live on its ground.** Two shapes were worked through: the name
+arced around the rim like the text on a coin, and the name as a medallion in the middle
+with the buildings reseated into a ring around it. Both die on the same arithmetic. A
+district's radius is sized by its contents, 12 to 180 units, while its name is a fixed
+number of characters — a one-symbol district has 75 units of circumference to spend on
+`coderd/awsidentity`. Either the text comes out unreadable or the district grows to hold
+its name, and then radius stops saying how much code is in there, which is the only thing
+it currently says. Anything painted on the ground also foreshortens to a line when the
+cap is edge-on, which is most of the crust from most places. A billboard is screen-space
+and immune to both. Parked rather than rejected on taste: a ground name would have to be
+a second label that hands over to the billboard, not a replacement for it, and the
+floating boxes being awkward is still an open complaint.
