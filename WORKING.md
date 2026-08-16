@@ -111,7 +111,7 @@ Every one of these cost real time. They are not hypothetical.
   101× trying.
 - **three.js walks every object each frame.** 18k individual meshes cost 273ms/frame at
   12 draw calls — traversal, not drawing. Merging static lines and freezing matrices got
-  it to 80ms.
+  it to 80ms; making the buildings one `InstancedMesh` finished the job.
 - **A backgrounded tab stops rendering entirely**, including frame-rate logging.
 - **Poll with HEAD and an ETag.** Re-fetching a 10MB graph every 400ms to discover it is
   unchanged is 25MB/s of nothing.
@@ -122,8 +122,9 @@ Every one of these cost real time. They are not hypothetical.
   gitlab-kiosk only 4 of 67 drawn edges crossed a package. This is the thing to fix
   before the CLI query vector is trustworthy: "who calls this" returning a confidently
   incomplete answer is worse than one that admits it cannot see.
-- **~77ms/frame on full coder.** The remaining cost is three.js culling 18k individual
-  meshes. `InstancedMesh` is the fix; picking moves to `instanceId`.
+- **Symbols are instanced now.** On full coder (18,522 symbols) the same cued view renders
+  in 0.8–1.7ms at 78 draw calls, against 9.1–10.6ms at 1,129 before. What is left in a
+  frame is the districts: 355 caps and 355 rims, each its own object.
 - **Labels can be occluded by geometry.** Decluttering only checks label against label.
 - **Panels.** Agreed shape is MFDs — two or three small displays that swap modes — rather
   than a dashboard. `info` and `source` exist. The missing modes are a symbol search

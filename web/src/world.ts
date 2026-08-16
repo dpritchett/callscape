@@ -2,6 +2,7 @@ import * as THREE from 'three'
 import { MAX_LIFT, type PlacedEdge, type PlacedNode, type Placement } from './placement'
 import { disposeSprite, labelWorldHeight, makeLabel, setLabelHeight } from './labels'
 import { edgeKey, type Neighborhood } from './selection'
+import { devlog } from './devlog'
 import type { ResolvedEdgeShow } from './types'
 
 const LABEL_RANGE = 55 // symbol labels appear inside this radius
@@ -21,14 +22,41 @@ const EDGE_MUTED = new THREE.Color(0x1a1f2b)
 
 interface Symbol3D {
   node: PlacedNode
-  mesh: THREE.Mesh
+  /** Its slot in the buildings InstancedMesh, and its own index in `symbols`. */
+  index: number
   pos: THREE.Vector3
 }
 
-interface Materials {
-  base: THREE.MeshLambertMaterial
-  dim: THREE.MeshLambertMaterial
-  hot: THREE.MeshLambertMaterial
+/** Buildings stand along the local normal; this is the axis they start on. */
+const POLE = new THREE.Vector3(0, 1, 0)
+
+/**
+ * One material for every building. Per-instance colour multiplies the diffuse
+ * for free, but `emissive` is a uniform, and the per-node materials this
+ * replaces used the node's own colour for it — dropping that would darken every
+ * face the key light misses. The patch tints the emissive by the same instance
+ * colour, so the look is what it was before instancing.
+ */
+function buildingMaterial(): THREE.MeshLambertMaterial {
+  const mat = new THREE.MeshLambertMaterial({
+    color: 0xffffff, // instanceColor supplies the hue
+    emissive: 0xffffff,
+    emissiveIntensity: 0.18,
+  })
+  const FROM = 'vec3 totalEmissiveRadiance = emissive;'
+  mat.onBeforeCompile = (shader) => {
+    // A three upgrade that renames this chunk would silently flatten the
+    // buildings, so say so in the log rather than leaving it to be noticed.
+    if (!shader.fragmentShader.includes(FROM)) {
+      devlog('shader.patchMissed', { chunk: FROM })
+      return
+    }
+    shader.fragmentShader = shader.fragmentShader.replace(
+      FROM,
+      'vec3 totalEmissiveRadiance = emissive * vColor.rgb;',
+    )
+  }
+  return mat
 }
 
 /**
@@ -45,9 +73,16 @@ export class World {
   private disposables: (() => void)[] = []
   private positions = new Map<string, THREE.Vector3>()
 
-  private materials = new Map<number, Materials>()
-  private meshes: THREE.Mesh[] = []
-  private byId = new Map<string, { node: PlacedNode; mesh: THREE.Mesh }>()
+  /** Per-colour material for the selected few, which are not instanced. */
+  private hotMaterials = new Map<number, THREE.MeshLambertMaterial>()
+  private buildings: THREE.InstancedMesh | null = null
+  private boxGeom: THREE.BoxGeometry | null = null
+  /** Each instance's matrix as built, so hiding one is reversible. */
+  private baseMatrices = new Float32Array(0)
+  /** On screen at all — instanced or drawn hot. Indexed like `symbols`. */
+  private onScreen: boolean[] = []
+  private hotMeshes: THREE.Mesh[] = []
+  private byId = new Map<string, Symbol3D>()
   private edges: PlacedEdge[] = []
   private edgeColorAttr: THREE.Float32BufferAttribute | null = null
   private lines: THREE.LineSegments | null = null
@@ -81,43 +116,66 @@ export class World {
     this.buildEdges(p)
   }
 
+  /**
+   * Every symbol is one instance of a single box. A mesh per symbol cost 273ms
+   * a frame on coder's 18,522 of them at twelve draw calls — three.js walks and
+   * culls every object in the scene each frame, so the bill was traversal, not
+   * drawing. One object carries the whole crust.
+   */
   private buildSymbols(p: Placement) {
+    if (!p.nodes.length) return
     const geom = new THREE.BoxGeometry(1, 1, 1)
-    this.disposables.push(() => geom.dispose())
+    this.boxGeom = geom
+    const mat = buildingMaterial()
+    const mesh = new THREE.InstancedMesh(geom, mat, p.nodes.length)
+    this.disposables.push(() => {
+      geom.dispose()
+      mat.dispose()
+      mesh.dispose()
+    })
 
-    // Buildings stand along the local normal and straddle the ground, so no
-    // stalk is needed to tie one to its district — it passes through it.
-    const POLE = new THREE.Vector3(0, 1, 0)
+    const m = new THREE.Matrix4()
+    const quat = new THREE.Quaternion()
     const up = new THREE.Vector3()
+    const scale = new THREE.Vector3()
+    const pos = new THREE.Vector3()
+    const color = new THREE.Color()
 
-    for (const n of p.nodes) {
-      const mats = this.materialsFor(n.color)
-
-      const mesh = new THREE.Mesh(geom, mats.base)
+    p.nodes.forEach((n, i) => {
+      // Buildings stand along the local normal and straddle the ground, so no
+      // stalk is needed to tie one to its district — it passes through it.
       up.set(n.nx, n.ny, n.nz)
-      mesh.quaternion.setFromUnitVectors(POLE, up)
-      mesh.scale.set(n.size, n.height, n.size)
-      mesh.position.set(n.x, n.y, n.z)
-      mesh.userData.id = n.id
-      // Nothing moves a symbol after it is placed, so its matrix is computed
-      // once instead of every frame.
-      mesh.matrixAutoUpdate = false
-      mesh.updateMatrix()
-      this.group.add(mesh)
-      this.meshes.push(mesh)
-      this.byId.set(n.id, { node: n, mesh })
+      quat.setFromUnitVectors(POLE, up)
+      scale.set(n.size, n.height, n.size)
+      pos.set(n.x, n.y, n.z)
+      mesh.setMatrixAt(i, m.compose(pos, quat, scale))
+      mesh.setColorAt(i, color.setHex(n.color))
 
-      const pos = mesh.position.clone()
-      this.positions.set(n.id, pos)
-      this.symbols.push({ node: n, mesh, pos })
-    }
+      const at = pos.clone()
+      this.positions.set(n.id, at)
+      const s: Symbol3D = { node: n, index: i, pos: at }
+      this.symbols.push(s)
+      this.byId.set(n.id, s)
+      this.onScreen.push(true)
+    })
+
+    mesh.instanceMatrix.needsUpdate = true
+    if (mesh.instanceColor) mesh.instanceColor.needsUpdate = true
+    // Culling needs the extent of the instances, not of the unit box.
+    mesh.computeBoundingSphere()
+    // Nothing moves after placement, here or on the object itself.
+    mesh.matrixAutoUpdate = false
+    mesh.updateMatrix()
+    this.baseMatrices = new Float32Array(mesh.instanceMatrix.array)
+    this.group.add(mesh)
+    this.buildings = mesh
   }
 
   private buildDistricts(p: Placement) {
     // A district is a patch of the crust, not a card lying on top of one: a
     // spherical cap of the same sphere, so its edge follows the curve and its
     // symbols stand radially out of it.
-    const POLE = new THREE.Vector3(0, 1, 0) // SphereGeometry's own pole
+    // POLE is SphereGeometry's own pole as well as the box's standing axis.
     const normal = new THREE.Vector3()
     const quat = new THREE.Quaternion()
 
@@ -248,27 +306,59 @@ export class World {
     })
   }
 
-  private materialsFor(color: number): Materials {
-    let mats = this.materials.get(color)
-    if (mats) return mats
-    mats = {
-      base: new THREE.MeshLambertMaterial({ color, emissive: color, emissiveIntensity: 0.18 }),
-      dim: new THREE.MeshLambertMaterial({
-        color,
-        transparent: true,
-        opacity: 0.13,
-        depthWrite: false,
-      }),
-      hot: new THREE.MeshLambertMaterial({ color: 0xffffff, emissive: color, emissiveIntensity: 1.1 }),
+  /** The selected symbol's material: white, lit from inside in its own hue. */
+  private hotMaterialFor(color: number): THREE.MeshLambertMaterial {
+    let mat = this.hotMaterials.get(color)
+    if (mat) return mat
+    mat = new THREE.MeshLambertMaterial({ color: 0xffffff, emissive: color, emissiveIntensity: 1.1 })
+    this.hotMaterials.set(color, mat)
+    const m = mat
+    this.disposables.push(() => m.dispose())
+    return mat
+  }
+
+  /**
+   * Show or hide one instance. InstancedMesh has no per-instance visibility, so
+   * a hidden one keeps its position and loses its basis: eight corners at one
+   * point, which rasterises to nothing and cannot be hit by a ray.
+   */
+  private setInstanceShown(i: number, shown: boolean) {
+    const dst = this.buildings!.instanceMatrix.array as Float32Array
+    const src = this.baseMatrices
+    const o = i * 16
+    if (shown) {
+      dst.set(src.subarray(o, o + 16), o)
+      return
     }
-    this.materials.set(color, mats)
-    const m = mats
-    this.disposables.push(() => {
-      m.base.dispose()
-      m.dim.dispose()
-      m.hot.dispose()
-    })
-    return mats
+    for (let k = 0; k < 12; k++) dst[o + k] = 0 // the three basis columns
+    dst[o + 12] = src[o + 12]
+    dst[o + 13] = src[o + 13]
+    dst[o + 14] = src[o + 14]
+    dst[o + 15] = 1
+  }
+
+  private clearHot() {
+    for (const mesh of this.hotMeshes) mesh.removeFromParent()
+    this.hotMeshes = []
+  }
+
+  /**
+   * The selection itself is a handful of real meshes rather than instances.
+   * Its material differs in more than colour — white with a strong emissive —
+   * and per-instance colour cannot express that. One or two objects is not a
+   * traversal cost worth avoiding.
+   */
+  private addHot(node: PlacedNode) {
+    if (!this.boxGeom) return
+    const mesh = new THREE.Mesh(this.boxGeom, this.hotMaterialFor(node.color))
+    mesh.quaternion.setFromUnitVectors(POLE, new THREE.Vector3(node.nx, node.ny, node.nz))
+    mesh.scale.set(node.size, node.height, node.size)
+    mesh.position.set(node.x, node.y, node.z)
+    mesh.userData.id = node.id
+    mesh.matrixAutoUpdate = false
+    mesh.updateMatrix()
+    this.group.add(mesh)
+    this.hotMeshes.push(mesh)
   }
 
   /**
@@ -284,21 +374,18 @@ export class World {
     // Dimming does not scale. At 1600 symbols, 13% opacity each is a haze you
     // cannot see through, so a selection hides everything it is not about.
     const pkgs = new Set<string>()
-    for (const { node, mesh } of this.byId.values()) {
-      const mats = this.materialsFor(node.color)
-      if (n.empty) {
-        mesh.material = mats.base
-        mesh.visible = true
-        continue
-      }
-      const isSelected = n.selected.has(node.id)
-      const isRelated = n.related.has(node.id)
-      mesh.visible = isRelated
-      if (isRelated) {
-        mesh.material = isSelected ? mats.hot : mats.base
-        pkgs.add(node.pkg)
-      }
+    this.clearHot()
+    for (const s of this.symbols) {
+      const node = s.node
+      const shown = n.empty || n.related.has(node.id)
+      const hot = !n.empty && n.selected.has(node.id)
+      this.onScreen[s.index] = shown
+      // A hot symbol is drawn by its own mesh, so its instance stands down.
+      if (this.buildings) this.setInstanceShown(s.index, shown && !hot)
+      if (hot) this.addHot(node)
+      if (shown && !n.empty) pkgs.add(node.pkg)
     }
+    if (this.buildings) this.buildings.instanceMatrix.needsUpdate = true
 
     // Same for the districts: 69 translucent discs stacked between you and the
     // thing you selected is most of the milk in the picture.
@@ -370,8 +457,17 @@ export class World {
 
   /** The id of the symbol under a ray, or null. */
   pick(raycaster: THREE.Raycaster): string | null {
-    const hits = raycaster.intersectObjects(this.meshes, false)
-    return hits.length ? ((hits[0].object.userData.id as string) ?? null) : null
+    const targets: THREE.Object3D[] = [...this.hotMeshes]
+    if (this.buildings) targets.push(this.buildings)
+    const hits = raycaster.intersectObjects(targets, false)
+    for (const hit of hits) {
+      if (hit.instanceId === undefined) return (hit.object.userData.id as string) ?? null
+      const s = this.symbols[hit.instanceId]
+      // A hidden instance is degenerate and should not be hit at all, but a ray
+      // that grazes one must not select something nobody can see.
+      if (s && this.onScreen[s.index]) return s.node.id
+    }
+    return null
   }
 
   /**
@@ -391,11 +487,12 @@ export class World {
 
     const v = new THREE.Vector3()
     let best: { id: string; d: number } | null = null
-    for (const [id, { mesh }] of this.byId) {
-      v.copy(mesh.position).project(camera)
+    for (const s of this.symbols) {
+      if (!this.onScreen[s.index]) continue // a selection hides most of them
+      v.copy(s.pos).project(camera)
       if (v.z > 1) continue // behind the camera
       const d = Math.hypot((v.x * viewport.w) / 2, (v.y * viewport.h) / 2)
-      if (!best || d < best.d) best = { id, d }
+      if (!best || d < best.d) best = { id: s.node.id, d }
     }
     if (!best) return { id: null, exact: false, nearestPx: null }
     return {
@@ -578,8 +675,12 @@ export class World {
     this.districtLabels = []
     this.symbols = []
     this.positions.clear()
-    this.materials.clear()
-    this.meshes = []
+    this.hotMaterials.clear()
+    this.hotMeshes = []
+    this.buildings = null
+    this.boxGeom = null
+    this.baseMatrices = new Float32Array(0)
+    this.onScreen = []
     this.byId.clear()
     this.edges = []
     this.edgeColorAttr = null

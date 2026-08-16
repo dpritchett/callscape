@@ -63,3 +63,20 @@ z-ordering and occlusion handling.
 **No screenshot in the deliverables.** Headless Chromium on this WSL box is missing
 system libraries (`libasound.so.2`), and installing them needs root. Rejected: adding
 Playwright to `web/` for one image.
+
+**Symbols are one `InstancedMesh`; the selection is not.** Per-instance colour can carry
+the hue but not the selected symbol's whole material, which is white with a strong
+emissive in the node's colour. One or two real meshes for whatever is selected costs
+nothing to traverse and keeps the look identical. Rejected: a second instanced mesh for
+the hot ones, which needs the instance colour to mean two different things.
+
+**Instanced emissive comes from a two-line shader patch.** `emissive` is a uniform, and
+the per-node materials this replaced tinted it with the node's own colour — dropping it
+darkens every face the key light misses. `onBeforeCompile` multiplies it by `vColor`,
+and a missed chunk match is logged rather than left to be noticed. Rejected: one
+`InstancedMesh` per colour, which is fine for the 12-entry palette and degenerates into
+thousands of draw calls the moment `encoding.color` names a numeric field.
+
+**A hidden instance keeps its position and loses its basis.** `InstancedMesh` has no
+per-instance visibility; zeroing the three basis columns collapses the box to a point,
+which draws nothing and cannot be hit by a ray. Rejected: a zero matrix, whose `w` is 0.
