@@ -9,9 +9,13 @@
     "color": "pkg",
     "height": "lines"
   },
+  "edges": {
+    "show": "auto",
+    "opacity": 0.7
+  },
   "camera": {
-    "focus": "helm.sh/helm/v4/internal/logging.LogHolder.Logger",
-    "distance": 140
+    "focus": "github.com/coder/coder/v2/coderd/httpmw.ExtractHTTPRoute",
+    "distance": 160
   },
   "select": []
 }

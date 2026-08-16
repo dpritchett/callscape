@@ -51,6 +51,10 @@ export class FlyController implements Controller {
   private padPickHeld = false
   private padClearHeld = false
   private padRevealHeld = false
+  private padBoostHeld = false
+  /** Fast is the default; shift or a bumper toggles it. */
+  private fast = true
+  onSpeedChange: ((fast: boolean) => void) | null = null
 
   // Focus tween state. Flying to a symbol beats being teleported to it.
   private tween: { from: THREE.Vector3; to: THREE.Vector3; look: THREE.Vector3; t: number } | null = null
@@ -103,7 +107,7 @@ export class FlyController implements Controller {
     // stick plus keyboard does not stack into double acceleration.
     if (this.input.lengthSq() > 1) this.input.normalize()
 
-    const boosting = k.has('ShiftLeft') || k.has('ShiftRight') || (pad?.boost ?? false)
+    const boosting = this.fast
     const scale = speedScale(this.camera.position.length())
     const next = stepVelocity(this.vel, this.input, dt, this.tuning, scale, boosting)
     this.vel.set(next.x, next.y, next.z)
@@ -185,13 +189,20 @@ export class FlyController implements Controller {
     if (reveal && !this.padRevealHeld) this.onToggleReveal?.()
     this.padRevealHeld = reveal
 
+    const bumper = (pad.buttons[4]?.pressed ?? false) || (pad.buttons[5]?.pressed ?? false)
+    if (bumper && !this.padBoostHeld) {
+      this.fast = !this.fast
+      this.onSpeedChange?.(this.fast)
+    }
+    this.padBoostHeld = bumper
+
     const down = deadzone1(pad.buttons[6]?.value ?? 0)
     const up = deadzone1(pad.buttons[7]?.value ?? 0)
     return {
       forward: -move.y, // stick up is forward
       strafe: move.x,
       rise: up - down,
-      boost: (pad.buttons[4]?.pressed ?? false) || (pad.buttons[5]?.pressed ?? false),
+      boost: false, // the pad toggles below rather than holding
     }
   }
 
@@ -270,6 +281,13 @@ export class FlyController implements Controller {
     if (e.code !== 'KeyF' && e.code !== 'Space') this.tween = null
     if (!fresh) return // key repeat must not re-fire a toggle
     devlog('keydown', { code: e.code, locked: this.locked })
+    // Fast is the default and shift toggles it, rather than fast being a thing
+    // you hold a key down for the entire time you are going anywhere.
+    if (e.code === 'ShiftLeft' || e.code === 'ShiftRight') {
+      this.fast = !this.fast
+      devlog('speed', { fast: this.fast })
+      this.onSpeedChange?.(this.fast)
+    }
     if (e.code === 'Space') this.onPick?.()
     if (e.code === 'KeyX') this.onClearSelection?.()
     if (e.code === 'KeyR') this.onToggleReveal?.()

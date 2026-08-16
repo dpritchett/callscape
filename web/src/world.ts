@@ -64,6 +64,12 @@ export class World {
   /** Ids whose labels show regardless of distance, because they're selected. */
   private pinned = new Set<string>()
   private selecting = false
+  /** Which symbols currently carry a label, and the camera that chose them. */
+  private labelled: Symbol3D[] = []
+  private labelsDirty = true
+  private lastEye = new THREE.Vector3(Infinity, 0, 0)
+  private scratchA = new THREE.Vector3()
+  private scratchB = new THREE.Vector3()
 
   build(p: Placement, opacity = 0.7) {
     this.clear()
@@ -78,6 +84,14 @@ export class World {
     const geom = new THREE.BoxGeometry(1, 1, 1)
     this.disposables.push(() => geom.dispose())
 
+    // Stalks go into one geometry rather than one Line each. At coder's scale
+    // that is the difference between 18,522 scene objects and zero: three.js
+    // walks every object each frame for matrices and culling, and that traversal
+    // — not the 53 draw calls it ends up issuing — was the whole frame budget.
+    const stalkVerts: number[] = []
+    const stalkColors: number[] = []
+    const colour = new THREE.Color()
+
     for (const n of p.nodes) {
       const mats = this.materialsFor(n.color)
 
@@ -85,6 +99,10 @@ export class World {
       mesh.scale.setScalar(n.size)
       mesh.position.set(n.x, n.y, n.z)
       mesh.userData.id = n.id
+      // Nothing moves a symbol after it is placed, so its matrix is computed
+      // once instead of every frame.
+      mesh.matrixAutoUpdate = false
+      mesh.updateMatrix()
       this.group.add(mesh)
       this.meshes.push(mesh)
       this.byId.set(n.id, { node: n, mesh })
@@ -93,23 +111,37 @@ export class World {
       this.positions.set(n.id, pos)
       this.symbols.push({ node: n, mesh, pos })
 
-      // Stalk back to the district's plane, so a lifted symbol still reads as
+      // Stalk back to the district's surface, so a lifted symbol still reads as
       // belonging to it.
       const seat = p.seatOf.get(n.id)
       if (seat) {
-        const foot = new THREE.Vector3(seat.x, seat.y, seat.z)
-        if (foot.distanceTo(mesh.position) > n.size / 2 + 0.5) {
-          const stalk = new THREE.Line(
-            new THREE.BufferGeometry().setFromPoints([foot, mesh.position.clone()]),
-            new THREE.LineBasicMaterial({ color: n.color, transparent: true, opacity: 0.22 }),
-          )
-          this.group.add(stalk)
-          this.disposables.push(() => {
-            stalk.geometry.dispose()
-            ;(stalk.material as THREE.Material).dispose()
-          })
+        const dx = seat.x - n.x
+        const dy = seat.y - n.y
+        const dz = seat.z - n.z
+        if (Math.hypot(dx, dy, dz) > n.size / 2 + 0.5) {
+          colour.set(n.color)
+          stalkVerts.push(seat.x, seat.y, seat.z, n.x, n.y, n.z)
+          for (let k = 0; k < 2; k++) stalkColors.push(colour.r, colour.g, colour.b)
         }
       }
+    }
+
+    if (stalkVerts.length) {
+      const sGeom = new THREE.BufferGeometry()
+      sGeom.setAttribute('position', new THREE.Float32BufferAttribute(stalkVerts, 3))
+      sGeom.setAttribute('color', new THREE.Float32BufferAttribute(stalkColors, 3))
+      const sMat = new THREE.LineBasicMaterial({
+        vertexColors: true,
+        transparent: true,
+        opacity: 0.22,
+      })
+      const stalks = new THREE.LineSegments(sGeom, sMat)
+      stalks.matrixAutoUpdate = false
+      this.group.add(stalks)
+      this.disposables.push(() => {
+        sGeom.dispose()
+        sMat.dispose()
+      })
     }
   }
 
@@ -137,6 +169,8 @@ export class World {
       })
       const floor = new THREE.Mesh(capGeom, mat)
       floor.quaternion.copy(quat)
+      floor.matrixAutoUpdate = false
+      floor.updateMatrix()
       this.group.add(floor)
       this.disposables.push(() => {
         capGeom.dispose()
@@ -164,6 +198,8 @@ export class World {
       })
       const rim = new THREE.Line(rimGeom, rimMat)
       rim.quaternion.copy(quat)
+      rim.matrixAutoUpdate = false
+      rim.updateMatrix()
       this.group.add(rim)
       this.disposables.push(() => {
         rimGeom.dispose()
@@ -261,6 +297,7 @@ export class World {
   applySelection(n: Neighborhood) {
     this.pinned = n.related
     this.selecting = !n.empty
+    this.labelsDirty = true
 
     // Dimming does not scale. At 1600 symbols, 13% opacity each is a haze you
     // cannot see through, so a selection hides everything it is not about.
@@ -411,49 +448,75 @@ export class World {
   updateLabels(camera: THREE.PerspectiveCamera, viewportHeight: number) {
     const eye = camera.position
 
-    // Nearest-N rather than everything-within-D. From across a 69-district
-    // shell the second rule gives you either a wall of overlapping text or
-    // nothing at all; this way there is always something readable in front of
-    // you and never a pile. No upper clamp on size, so a label stays the same
-    // number of pixels tall however far away it is.
     // Float each name on whichever side of its district the camera is on. Park
     // it at a fixed offset and the district's own cap occludes it from one side
     // — which is what happens to a label sitting inside the shell when you are
     // outside it.
-    const toCamera = new THREE.Vector3()
+    const toCamera = this.scratchA
     for (const part of this.districtParts) {
       toCamera.copy(eye).sub(part.centre)
       const len = toCamera.length() || 1
       part.label.position.copy(part.centre).addScaledVector(toCamera, (MAX_LIFT + 6) / len)
     }
 
-    const districts = this.districtLabels
-      .map((label) => ({ label, d: label.position.distanceTo(eye) }))
-      .sort((a, b) => a.d - b.d)
-
-    const hidden = new Set(
-      this.districtParts.filter((p) => !p.floor.visible).map((p) => p.label),
-    )
-    districts.forEach(({ label, d }, i) => {
-      label.visible = i < DISTRICT_LABELS && !hidden.has(label)
-      if (!label.visible) return
-      setLabelHeight(label, labelWorldHeight(DISTRICT_PX, d, camera.fov, viewportHeight, 0.05, 1e6))
-    })
-
-    // With a selection up, only the neighbourhood is labelled — at any
-    // distance, since you selected it to read it and it is usually behind you
-    // by the time you stop moving.
-    const candidates: { s: Symbol3D; d: number }[] = []
-    for (const s of this.symbols) {
-      const d = s.pos.distanceTo(eye)
-      const wanted = this.selecting ? this.pinned.has(s.node.id) : d < LABEL_RANGE
-      if (wanted) candidates.push({ s, d })
+    // Choosing *which* labels to show is a pass over every symbol, so it only
+    // happens when the camera has actually moved. At coder's 18,522 symbols,
+    // scanning and sorting per frame cost 270ms a frame — the scene itself was
+    // drawing in 50 calls, and labels were eating the whole budget.
+    if (this.labelsDirty || eye.distanceToSquared(this.lastEye) > 4) {
+      this.chooseLabels(eye)
+      this.lastEye.copy(eye)
+      this.labelsDirty = false
     }
-    candidates.sort((a, b) => a.d - b.d)
 
-    const shown = new Set<string>()
-    for (const { s, d } of candidates.slice(0, SYMBOL_LABELS)) {
-      shown.add(s.node.id)
+    // Sizing the handful that survived is cheap, and has to happen every frame
+    // so they hold their pixel height as you move.
+    for (const label of this.districtLabels) {
+      if (!label.visible) continue
+      const d = label.position.distanceTo(eye)
+      setLabelHeight(label, labelWorldHeight(DISTRICT_PX, d, camera.fov, viewportHeight, 0.05, 1e6))
+    }
+    const away = this.scratchB
+    for (const s of this.labelled) {
+      const label = this.symbolLabels.get(s.node.id)
+      if (!label?.visible) continue
+      const d = s.pos.distanceTo(eye)
+      const h = labelWorldHeight(SYMBOL_PX, d, camera.fov, viewportHeight, 0.05, 1e6)
+      setLabelHeight(label, h)
+      // Sit just clear of the box, on the side the camera is on.
+      away.copy(s.pos).sub(eye).normalize().multiplyScalar(-(s.node.size / 2 + h * 0.8))
+      label.position.copy(s.pos).add(away)
+    }
+  }
+
+  /**
+   * Nearest-N rather than everything-within-D: from across a 355-district shell
+   * the second rule gives either a wall of overlapping text or nothing at all.
+   * Keeps a small best-of list in one pass rather than sorting every symbol.
+   */
+  private chooseLabels(eye: THREE.Vector3) {
+    const best: { s: Symbol3D; d: number }[] = []
+    let worst = Infinity
+    const range = LABEL_RANGE * LABEL_RANGE
+
+    for (const s of this.symbols) {
+      // With a selection up, only the neighbourhood is labelled — at any
+      // distance, since you selected it to read it and it is usually behind you
+      // by the time you stop moving.
+      if (this.selecting && !this.pinned.has(s.node.id)) continue
+      const d = s.pos.distanceToSquared(eye)
+      if (!this.selecting && d > range) continue
+      if (best.length === SYMBOL_LABELS && d >= worst) continue
+      let at = best.length
+      while (at > 0 && best[at - 1].d > d) at--
+      best.splice(at, 0, { s, d })
+      if (best.length > SYMBOL_LABELS) best.pop()
+      worst = best[best.length - 1].d
+    }
+
+    this.labelled = best.map((b) => b.s)
+    const shown = new Set(this.labelled.map((s) => s.node.id))
+    for (const s of this.labelled) {
       let label = this.symbolLabels.get(s.node.id)
       if (!label) {
         label = makeLabel(s.node.name, { size: 1, color: '#dbe4f3', onTop: this.selecting })
@@ -461,15 +524,17 @@ export class World {
         this.symbolLabels.set(s.node.id, label)
       }
       label.visible = true
-      const h = labelWorldHeight(SYMBOL_PX, d, camera.fov, viewportHeight, 0.05, 1e6)
-      setLabelHeight(label, h)
-      // Sit just clear of the box, on the side the camera is on.
-      const away = s.pos.clone().sub(eye).normalize().multiplyScalar(-(s.node.size / 2 + h * 0.8))
-      label.position.copy(s.pos).add(away)
     }
     for (const [id, label] of this.symbolLabels) {
       if (!shown.has(id)) label.visible = false
     }
+
+    const districts = this.districtParts
+      .map((part) => ({ part, d: part.label.position.distanceToSquared(eye) }))
+      .sort((a, b) => a.d - b.d)
+    districts.forEach(({ part }, i) => {
+      part.label.visible = i < DISTRICT_LABELS && part.floor.visible
+    })
   }
 
   positionOf(id: string): THREE.Vector3 | undefined {
@@ -494,6 +559,8 @@ export class World {
     this.districtParts = []
     this.pinned = new Set()
     this.selecting = false
+    this.labelled = []
+    this.labelsDirty = true
     this.group.clear()
   }
 }

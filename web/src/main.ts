@@ -191,8 +191,20 @@ function renderErrors() {
  */
 function watch(url: string, onChange: (raw: unknown) => void) {
   let last: string | null = null
+  let stamp: string | null = null
+
   const tick = async () => {
     try {
+      // Ask what changed before asking for the bytes. coder's graph is 10MB;
+      // re-fetching and re-parsing it every 400ms to discover it is identical
+      // is 25MB/s of work to learn nothing.
+      const head = await fetch(url, { method: 'HEAD', cache: 'no-store' })
+      const tag = head.headers.get('etag') ?? head.headers.get('last-modified')
+      if (tag && tag === stamp) {
+        clearError(url)
+        return
+      }
+
       const res = await fetch(`${url}?t=${Date.now()}`, { cache: 'no-store' })
       if (!res.ok) throw new Error(`${res.status} ${res.statusText}`)
       const text = await res.text()
@@ -200,6 +212,8 @@ function watch(url: string, onChange: (raw: unknown) => void) {
         onChange(JSON.parse(text))
         last = text
       }
+      // Only after a successful apply, so a broken file keeps being retried.
+      stamp = tag
       clearError(url)
     } catch (e) {
       setError(url, e)
@@ -227,9 +241,20 @@ let worst = 0
 let since = 0
 
 const shutter = new Shutter(renderer.domElement, () => {
+  // Timed, because a backgrounded tab reports no frame rate at all — this is
+  // the only cost measurement available when nobody is watching the page.
+  const t0 = performance.now()
   world.updateLabels(camera, renderer.domElement.clientHeight)
+  const t1 = performance.now()
   renderer.render(scene, camera)
-  devlog('labels', world.labelStats())
+  devlog('renderMs', {
+    labelMs: +(t1 - t0).toFixed(1),
+    renderMs: +(performance.now() - t1).toFixed(1),
+    nodes: placement?.nodes.length ?? 0,
+    calls: renderer.info.render.calls,
+    ...world.labelStats(),
+  })
+
 })
 shutter.start()
 
@@ -260,8 +285,6 @@ renderer.setAnimationLoop(() => {
   controls.update(dt)
   world.updateLabels(camera, renderer.domElement.clientHeight)
   renderer.render(scene, camera)
-  devlog('labels', world.labelStats())
-
 
   frames++
   since += dt
