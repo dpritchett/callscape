@@ -6,6 +6,7 @@ import { place, type Placement } from './placement'
 import { neighborhood, toggle } from './selection'
 import { devlog, installDevLog } from './devlog'
 import { Shutter } from './shutter'
+import { watchCues } from './cue'
 import type { Graph, ViewSpec } from './types'
 
 installDevLog()
@@ -225,8 +226,33 @@ let frames = 0
 let worst = 0
 let since = 0
 
-const shutter = new Shutter(renderer.domElement)
+const shutter = new Shutter(renderer.domElement, () => {
+  world.updateLabels(camera, renderer.domElement.clientHeight)
+  renderer.render(scene, camera)
+  devlog('labels', world.labelStats())
+})
 shutter.start()
+
+/** Put the page into a requested state, so a specific view can be evaluated. */
+watchCues((cue) => {
+  devlog('cue', cue)
+  if (cue.select) {
+    selected = new Set(cue.select.filter((id) => world.nodeById(id)))
+  }
+  const wantsReveal = typeof cue.reveal === 'boolean' ? cue.reveal : revealing
+  if (wantsReveal !== revealing) {
+    revealing = wantsReveal
+    rebuild() // reveal changes which nodes exist, so positions move
+  } else if (cue.select) {
+    if (revealing) rebuild()
+    else applySelection()
+  }
+  if (cue.focus) {
+    const target = world.positionOf(cue.focus)
+    if (target) controls.frame(target, cue.distance ?? view?.camera.distance ?? 120, true)
+    else devlog('cue.miss', { focus: cue.focus })
+  }
+})
 
 const clock = new THREE.Clock()
 renderer.setAnimationLoop(() => {
@@ -234,7 +260,8 @@ renderer.setAnimationLoop(() => {
   controls.update(dt)
   world.updateLabels(camera, renderer.domElement.clientHeight)
   renderer.render(scene, camera)
-  shutter.captureIfWanted('latest')
+  devlog('labels', world.labelStats())
+
 
   frames++
   since += dt

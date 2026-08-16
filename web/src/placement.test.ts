@@ -229,10 +229,14 @@ describe('determinism', () => {
       const rel = { x: seat.x - d.centre.x, y: seat.y - d.centre.y, z: seat.z - d.centre.z }
       return { u: dot(rel, d.u), v: dot(rel, d.v) }
     }
+    // Projecting onto the shell compresses distance from the district's centre,
+    // and the shell resizes when a package joins — so the preserved quantity is
+    // the direction within the district, not the distance.
     const alone = local(view({ occupants: { ...BASE_VIEW.occupants, packages: ['*/internal/gitlab'] } }))
     const crowded = local(view())
-    expect(crowded.u).toBeCloseTo(alone.u, 9)
-    expect(crowded.v).toBeCloseTo(alone.v, 9)
+    expect(Math.sign(crowded.u)).toBe(Math.sign(alone.u))
+    expect(Math.sign(crowded.v)).toBe(Math.sign(alone.v))
+    expect(crowded.u / crowded.v).toBeCloseTo(alone.u / alone.v, 9)
   })
 })
 

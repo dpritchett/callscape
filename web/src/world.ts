@@ -5,8 +5,8 @@ import { edgeKey, type Neighborhood } from './selection'
 import type { ResolvedEdgeShow } from './types'
 
 const LABEL_RANGE = 55 // symbol labels appear inside this radius
-const DISTRICT_PX = 20 // on-screen label heights
-const SYMBOL_PX = 13
+const DISTRICT_PX = 26 // on-screen label heights
+const SYMBOL_PX = 17
 const DISTRICT_LABELS = 14 // nearest N, so there is always something readable
 const SYMBOL_LABELS = 24
 
@@ -51,6 +51,14 @@ export class World {
   private edges: PlacedEdge[] = []
   private edgeColorAttr: THREE.Float32BufferAttribute | null = null
   private lines: THREE.LineSegments | null = null
+  private activeLines: THREE.LineSegments | null = null
+  private districtParts: {
+    pkg: string
+    centre: THREE.Vector3
+    floor: THREE.Object3D
+    rim: THREE.Object3D
+    label: THREE.Sprite
+  }[] = []
   private edgeShow: ResolvedEdgeShow = 'all'
   private edgeOpacity = 0.7
   /** Ids whose labels show regardless of distance, because they're selected. */
@@ -106,58 +114,83 @@ export class World {
   }
 
   private buildDistricts(p: Placement) {
-    const disc = new THREE.CircleGeometry(1, 48)
-    const rimGeom = new THREE.RingGeometry(0.985, 1, 64)
-    this.disposables.push(() => {
-      disc.dispose()
-      rimGeom.dispose()
-    })
-
-    const FACE = new THREE.Vector3(0, 0, 1) // CircleGeometry's own normal
+    // A district is a patch of the crust, not a card lying on top of one: a
+    // spherical cap of the same sphere, so its edge follows the curve and its
+    // symbols stand radially out of it.
+    const POLE = new THREE.Vector3(0, 1, 0) // SphereGeometry's own pole
     const normal = new THREE.Vector3()
     const quat = new THREE.Quaternion()
 
     for (const d of p.districts) {
       normal.set(d.normal.x, d.normal.y, d.normal.z)
-      quat.setFromUnitVectors(FACE, normal)
+      quat.setFromUnitVectors(POLE, normal)
 
+      const capGeom = new THREE.SphereGeometry(p.shell || d.radius, 40, 20, 0, Math.PI * 2, 0, d.cap)
       const mat = new THREE.MeshBasicMaterial({
         color: d.color,
         transparent: true,
         opacity: 0.07,
+        // A 7% surface has no business hiding what is behind it: with depth
+        // writing on, these caps silently occluded every label past them.
+        depthWrite: false,
         side: THREE.DoubleSide,
       })
-      const floor = new THREE.Mesh(disc, mat)
+      const floor = new THREE.Mesh(capGeom, mat)
       floor.quaternion.copy(quat)
-      floor.scale.setScalar(d.radius)
-      floor.position.set(d.centre.x, d.centre.y, d.centre.z)
       this.group.add(floor)
-      this.disposables.push(() => mat.dispose())
+      this.disposables.push(() => {
+        capGeom.dispose()
+        mat.dispose()
+      })
 
-      const rimMat = new THREE.MeshBasicMaterial({
+      // Rim: the circle where the cap meets the rest of the shell.
+      const rimPoints: THREE.Vector3[] = []
+      const R = p.shell || d.radius
+      for (let k = 0; k <= 64; k++) {
+        const a = (k / 64) * Math.PI * 2
+        rimPoints.push(
+          new THREE.Vector3(
+            R * Math.sin(d.cap) * Math.cos(a),
+            R * Math.cos(d.cap),
+            R * Math.sin(d.cap) * Math.sin(a),
+          ),
+        )
+      }
+      const rimGeom = new THREE.BufferGeometry().setFromPoints(rimPoints)
+      const rimMat = new THREE.LineBasicMaterial({
         color: d.color,
         transparent: true,
-        opacity: 0.5,
-        side: THREE.DoubleSide,
+        opacity: 0.55,
       })
-      const rim = new THREE.Mesh(rimGeom, rimMat)
+      const rim = new THREE.Line(rimGeom, rimMat)
       rim.quaternion.copy(quat)
-      rim.scale.setScalar(d.radius)
-      rim.position.copy(floor.position).addScaledVector(normal, -0.05)
       this.group.add(rim)
-      this.disposables.push(() => rimMat.dispose())
+      this.disposables.push(() => {
+        rimGeom.dispose()
+        rimMat.dispose()
+      })
 
       // Package paths break at the slash, so a label is two short lines rather
       // than one long one — they collide far less at the same legibility.
       const label = makeLabel(`${d.label.split('/').join('\n')}\n(${d.count})`, {
         size: 7,
-        bg: 'rgba(10,13,20,0.72)',
+        bg: 'rgba(10,13,20,0.85)',
+        onTop: false, // fog was the reason distant names vanished; depth still tells you which district a name belongs to
       })
+      // The cap is centred on the origin like the sphere it belongs to, so the
+      // label hangs off the district's own centre rather than the mesh's.
       label.position
-        .copy(floor.position)
-        .addScaledVector(normal, -(MAX_LIFT + 16))
+        .set(d.centre.x, d.centre.y, d.centre.z)
+        .addScaledVector(normal, -(MAX_LIFT + 4))
       this.group.add(label)
       this.districtLabels.push(label)
+      this.districtParts.push({
+        pkg: d.pkg,
+        centre: new THREE.Vector3(d.centre.x, d.centre.y, d.centre.z),
+        floor,
+        rim,
+        label,
+      })
       this.disposables.push(() => disposeSprite(label))
     }
   }
@@ -229,42 +262,91 @@ export class World {
     this.pinned = n.related
     this.selecting = !n.empty
 
+    // Dimming does not scale. At 1600 symbols, 13% opacity each is a haze you
+    // cannot see through, so a selection hides everything it is not about.
+    const pkgs = new Set<string>()
     for (const { node, mesh } of this.byId.values()) {
       const mats = this.materialsFor(node.color)
-      if (n.empty) mesh.material = mats.base
-      else if (n.selected.has(node.id)) mesh.material = mats.hot
-      else if (n.related.has(node.id)) mesh.material = mats.base
-      else mesh.material = mats.dim
+      if (n.empty) {
+        mesh.material = mats.base
+        mesh.visible = true
+        continue
+      }
+      const isSelected = n.selected.has(node.id)
+      const isRelated = n.related.has(node.id)
+      mesh.visible = isRelated
+      if (isRelated) {
+        mesh.material = isSelected ? mats.hot : mats.base
+        pkgs.add(node.pkg)
+      }
     }
 
+    // Same for the districts: 69 translucent discs stacked between you and the
+    // thing you selected is most of the milk in the picture.
+    for (const d of this.districtParts) {
+      const keep = n.empty || pkgs.has(d.pkg)
+      d.floor.visible = keep
+      d.rim.visible = keep
+      d.label.visible = keep
+    }
+
+    this.buildNeighbourhoodEdges(n)
+
     // At rest, `selected` and `none` draw nothing at all: 954 bright chords
-    // across a 700-unit ring is the hairball the districts exist to avoid.
+    // across the shell is the hairball the districts exist to avoid.
     if (this.lines) {
       this.lines.visible =
-        this.edgeShow === 'none' ? false : this.edgeShow === 'selected' ? !n.empty : true
+        n.empty === false
+          ? false // the neighbourhood lines take over entirely
+          : this.edgeShow === 'none' || this.edgeShow === 'selected'
+            ? false
+            : true
     }
 
     const attr = this.edgeColorAttr
-    if (!attr) return
+    if (!attr || !n.empty) return
     this.edges.forEach((e, i) => {
-      let c: THREE.Color
-      if (n.empty) {
-        c = this.edgeShow === 'cross' && !e.cross ? EDGE_MUTED : e.cross ? EDGE_CROSS : EDGE_INTRA
-      } else {
-        const role = n.role.get(edgeKey(e.from, e.to))
-        c =
-          role === 'in'
-            ? EDGE_IN
-            : role === 'out'
-              ? EDGE_OUT
-              : role === 'internal'
-                ? EDGE_INTERNAL
-                : EDGE_MUTED
-      }
+      const c = this.edgeShow === 'cross' && !e.cross ? EDGE_MUTED : e.cross ? EDGE_CROSS : EDGE_INTRA
       attr.setXYZ(i * 2, c.r, c.g, c.b)
       attr.setXYZ(i * 2 + 1, c.r, c.g, c.b)
     })
     attr.needsUpdate = true
+  }
+
+  /**
+   * A separate, tiny geometry holding only the selection's own edges. Recolouring
+   * the full set and leaving the rest muted still draws 2000 faint lines across
+   * everything, which is the difference between quiet and invisible.
+   */
+  private buildNeighbourhoodEdges(n: Neighborhood) {
+    this.activeLines?.removeFromParent()
+    this.activeLines?.geometry.dispose()
+    ;(this.activeLines?.material as THREE.Material | undefined)?.dispose()
+    this.activeLines = null
+    if (n.empty) return
+
+    const verts: number[] = []
+    const colors: number[] = []
+    for (const e of this.edges) {
+      const role = n.role.get(edgeKey(e.from, e.to))
+      if (!role || role === 'none') continue
+      const a = this.positions.get(e.from)
+      const b = this.positions.get(e.to)
+      if (!a || !b) continue
+      const c = role === 'in' ? EDGE_IN : role === 'out' ? EDGE_OUT : EDGE_INTERNAL
+      verts.push(a.x, a.y, a.z, b.x, b.y, b.z)
+      colors.push(c.r, c.g, c.b, c.r, c.g, c.b)
+    }
+    if (!verts.length) return
+
+    const geom = new THREE.BufferGeometry()
+    geom.setAttribute('position', new THREE.Float32BufferAttribute(verts, 3))
+    geom.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3))
+    this.activeLines = new THREE.LineSegments(
+      geom,
+      new THREE.LineBasicMaterial({ vertexColors: true, transparent: true, opacity: 0.95 }),
+    )
+    this.group.add(this.activeLines)
   }
 
   /** The id of the symbol under a ray, or null. */
@@ -304,6 +386,18 @@ export class World {
     }
   }
 
+  /** What the labels are actually doing, for the log. */
+  labelStats() {
+    const d = this.districtLabels.filter((l) => l.visible)
+    const s = [...this.symbolLabels.values()].filter((l) => l.visible)
+    return {
+      districtsVisible: d.length,
+      districtsTotal: this.districtLabels.length,
+      symbolsVisible: s.length,
+      sample: d[0] ? { scaleY: +d[0].scale.y.toFixed(2), pos: d[0].position.toArray().map((v) => Math.round(v)) } : null,
+    }
+  }
+
   nodeById(id: string): PlacedNode | undefined {
     return this.byId.get(id)?.node
   }
@@ -322,12 +416,26 @@ export class World {
     // nothing at all; this way there is always something readable in front of
     // you and never a pile. No upper clamp on size, so a label stays the same
     // number of pixels tall however far away it is.
+    // Float each name on whichever side of its district the camera is on. Park
+    // it at a fixed offset and the district's own cap occludes it from one side
+    // — which is what happens to a label sitting inside the shell when you are
+    // outside it.
+    const toCamera = new THREE.Vector3()
+    for (const part of this.districtParts) {
+      toCamera.copy(eye).sub(part.centre)
+      const len = toCamera.length() || 1
+      part.label.position.copy(part.centre).addScaledVector(toCamera, (MAX_LIFT + 6) / len)
+    }
+
     const districts = this.districtLabels
       .map((label) => ({ label, d: label.position.distanceTo(eye) }))
       .sort((a, b) => a.d - b.d)
 
+    const hidden = new Set(
+      this.districtParts.filter((p) => !p.floor.visible).map((p) => p.label),
+    )
     districts.forEach(({ label, d }, i) => {
-      label.visible = i < DISTRICT_LABELS
+      label.visible = i < DISTRICT_LABELS && !hidden.has(label)
       if (!label.visible) return
       setLabelHeight(label, labelWorldHeight(DISTRICT_PX, d, camera.fov, viewportHeight, 0.05, 1e6))
     })
@@ -348,7 +456,7 @@ export class World {
       shown.add(s.node.id)
       let label = this.symbolLabels.get(s.node.id)
       if (!label) {
-        label = makeLabel(s.node.name, { size: 1, color: '#dbe4f3' })
+        label = makeLabel(s.node.name, { size: 1, color: '#dbe4f3', onTop: this.selecting })
         this.group.add(label)
         this.symbolLabels.set(s.node.id, label)
       }
@@ -382,6 +490,8 @@ export class World {
     this.edges = []
     this.edgeColorAttr = null
     this.lines = null
+    this.activeLines = null
+    this.districtParts = []
     this.pinned = new Set()
     this.selecting = false
     this.group.clear()

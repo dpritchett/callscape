@@ -87,18 +87,17 @@ export function place(graph: Graph, view: ViewSpec, reveal: Iterable<string> = [
   const liftOf = scaler(selected, view.encoding.height, 0, MAX_LIFT)
   const colorOf = colorer(selected, view.encoding.color)
 
-  const districtOf = new Map(lay.districts.map((d) => [d.pkg, d]))
-
   const nodes: PlacedNode[] = selected.map((n) => {
     const seat = lay.pos.get(n.id)!
     const size = sizeOf(n) * BASE
     // Symbols rise towards the middle of the shell rather than away from it, so
     // the view from inside is of buildings pointing at you rather than roots.
+    // The seat is on the sphere, so its own direction is the local up.
     const lift = liftOf(n) + size / 2
-    const d = districtOf.get(n.pkg)
-    const nx = d?.normal.x ?? 0
-    const ny = d?.normal.y ?? 1
-    const nz = d?.normal.z ?? 0
+    const mag = Math.hypot(seat.x, seat.y, seat.z) || 1
+    const nx = seat.x / mag
+    const ny = seat.y / mag
+    const nz = seat.z / mag
     return {
       id: n.id,
       pkg: n.pkg,

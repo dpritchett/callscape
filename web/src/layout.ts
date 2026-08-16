@@ -17,6 +17,8 @@ export interface District {
   u: Vec3
   v: Vec3
   radius: number
+  /** Angular radius of the district's cap on the shell, in radians. */
+  cap: number
   count: number
 }
 
@@ -86,6 +88,7 @@ export function layout(nodes: GraphNode[]): Layout {
       u,
       v,
       radius: d.radius,
+      cap: shell > 0 ? Math.asin(Math.min(1, d.radius / shell)) : Math.PI / 2,
       count: d.members.length,
     })
 
@@ -95,11 +98,16 @@ export function layout(nodes: GraphNode[]): Layout {
       const row = Math.floor(idx / d.cols)
       const du = (col - (d.cols - 1) / 2) * CELL
       const dv = (row - (d.rows - 1) / 2) * CELL
-      pos.set(n.id, {
+      // Lay the grid out on the tangent plane, then push it onto the sphere, so
+      // symbols sit on the curve of the crust rather than on a flat card
+      // floating above it. With a single district there is no sphere to push
+      // onto — the shell has no radius — so the plane is the answer.
+      const tangent = {
         x: centre.x + u.x * du + v.x * dv,
         y: centre.y + u.y * du + v.y * dv,
         z: centre.z + u.z * du + v.z * dv,
-      })
+      }
+      pos.set(n.id, shell > 0 ? scale(normalise(tangent), shell) : tangent)
     })
   })
 

@@ -16,8 +16,12 @@ import { devlog } from './devlog'
  */
 export interface Controller {
   update(dt: number): void
-  /** Place the camera `distance` away from `target`, looking at it. */
-  frame(target: THREE.Vector3, distance: number): void
+  /**
+   * Place the camera `distance` away from `target`, looking at it. Flies there
+   * unless `instant`, which matters when nothing is driving update() — a
+   * backgrounded tab has no animation loop to advance the flight.
+   */
+  frame(target: THREE.Vector3, distance: number, instant?: boolean): void
   dispose(): void
 }
 
@@ -111,7 +115,7 @@ export class FlyController implements Controller {
     this.camera.position.addScaledVector(this.vel, dt)
   }
 
-  frame(target: THREE.Vector3, distance: number) {
+  frame(target: THREE.Vector3, distance: number, instant = false) {
     // Approach from the side and slightly above: looking straight down at a
     // flat district tells you nothing.
     const offset = new THREE.Vector3(0.55, 0.42, 0.72).normalize().multiplyScalar(distance)
@@ -122,6 +126,7 @@ export class FlyController implements Controller {
       look: target.clone(),
       t: 0,
     }
+    if (instant) this.stepTween(FOCUS_SECONDS)
   }
 
   dispose() {

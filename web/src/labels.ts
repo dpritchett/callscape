@@ -19,14 +19,26 @@ export function labelWorldHeight(
   return Math.min(max, Math.max(min, px * perPixel))
 }
 
-/** Sets a label's scale from a world height, keeping its texture's aspect. */
+/**
+ * Sets a label's scale so that one *line of text* is `height` tall in the
+ * world, keeping the texture's aspect.
+ *
+ * Sizing the whole sprite instead is the obvious mistake and a bad one: a
+ * sprite is a padded canvas, so a one-line label spends about half its height
+ * on glyphs and a three-line package name spends a fifth of it per line. Asking
+ * for 26px of sprite got about 5px of readable text.
+ */
 export function setLabelHeight(sprite: THREE.Sprite, height: number) {
   const aspect = (sprite.userData.aspect as number) || 1
-  sprite.scale.set(height * aspect, height, 1)
+  const perLine = (sprite.userData.perLine as number) || 1
+  sprite.scale.set(height * perLine * aspect, height * perLine, 1)
 }
 
 /** Text sprite drawn on a canvas texture. Cheap enough for a few hundred. */
-export function makeLabel(text: string, opts: { size?: number; color?: string; bg?: string } = {}): THREE.Sprite {
+export function makeLabel(
+  text: string,
+  opts: { size?: number; color?: string; bg?: string; onTop?: boolean } = {},
+): THREE.Sprite {
   const px = 64
   const color = opts.color ?? '#e6edf7'
   const font = `600 ${px}px ui-monospace, Menlo, monospace`
@@ -60,8 +72,23 @@ export function makeLabel(text: string, opts: { size?: number; color?: string; b
   tex.minFilter = THREE.LinearFilter
   tex.generateMipmaps = false
 
-  const sprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, depthWrite: false, transparent: true }))
+  const sprite = new THREE.Sprite(
+    new THREE.SpriteMaterial({
+      map: tex,
+      depthWrite: false,
+      transparent: true,
+      // Fog applies to sprites, which quietly dissolved every label past the
+      // fog's near plane — the reason distant names were unreadable was that
+      // they were being blended into the background, not that they were small.
+      fog: false,
+      // Names you navigate by should not be hidden behind the geometry they
+      // are naming.
+      depthTest: !opts.onTop,
+    }),
+  )
+  if (opts.onTop) sprite.renderOrder = 10
   sprite.userData.aspect = w / h
+  sprite.userData.perLine = h / lineHeight // sprite heights per line of text
   setLabelHeight(sprite, opts.size ?? 6)
   return sprite
 }

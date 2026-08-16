@@ -1,5 +1,5 @@
 import { expect, test } from 'vitest'
-import { labelWorldHeight } from './labels'
+import { labelWorldHeight, setLabelHeight } from './labels'
 
 const FOV = 65
 const VH = 900
@@ -34,4 +34,16 @@ test('clamps instead of filling the screen from far away', () => {
 
 test('survives a zero-height viewport', () => {
   expect(labelWorldHeight(20, 50, FOV, 0, 2, 18)).toBe(2)
+})
+
+test('a label is sized by its line of text, not by its padded canvas', () => {
+  const sprite = {
+    userData: { aspect: 4, perLine: 3.33 },
+    scale: { set(x: number, y: number) { (this as unknown as {x:number;y:number}).x = x; (this as unknown as {x:number;y:number}).y = y } },
+  } as unknown as Parameters<typeof setLabelHeight>[0]
+  setLabelHeight(sprite, 10)
+  // three lines of text means the sprite has to be 3.33x taller for each line
+  // to come out at the requested height
+  expect((sprite.scale as unknown as { y: number }).y).toBeCloseTo(33.3, 6)
+  expect((sprite.scale as unknown as { x: number }).x).toBeCloseTo(133.2, 6)
 })

@@ -99,8 +99,55 @@ function devLogSink(): Plugin {
   }
 }
 
+export interface Cue {
+  seq: number
+  focus?: string | null
+  select?: string[]
+  reveal?: boolean
+  distance?: number
+}
+
+/**
+ * Remote control. Lets whoever is driving put the page into a specific state —
+ * this symbol selected, camera here, neighbours revealed — instead of asking
+ * someone to fly there and describe it.
+ */
+function remoteCue(): Plugin {
+  let cue: Cue = { seq: 0 }
+
+  return {
+    name: 'lspvue-remote-cue',
+    configureServer(server) {
+      server.middlewares.use('/__cue', (req, res) => {
+        if (req.method === 'GET') {
+          res.setHeader('content-type', 'application/json')
+          res.end(JSON.stringify(cue))
+          return
+        }
+        if (req.method !== 'POST') {
+          res.statusCode = 405
+          res.end()
+          return
+        }
+        let body = ''
+        req.on('data', (chunk) => (body += chunk))
+        req.on('end', () => {
+          try {
+            cue = { ...(JSON.parse(body) as Omit<Cue, 'seq'>), seq: cue.seq + 1 }
+            server.config.logger.info(`cue: ${JSON.stringify(cue)}`)
+          } catch (err) {
+            server.config.logger.warn(`cue failed: ${String(err)}`)
+          }
+          res.setHeader('content-type', 'application/json')
+          res.end(JSON.stringify(cue))
+        })
+      })
+    },
+  }
+}
+
 export default defineConfig({
-  plugins: [devLogSink(), remoteShutter()],
+  plugins: [devLogSink(), remoteShutter(), remoteCue()],
   server: {
     // graph.json and view.json live in public/ and are polled by the client.
     // Without this, Vite full-reloads the page whenever they change, which
