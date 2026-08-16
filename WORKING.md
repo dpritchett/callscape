@@ -48,6 +48,13 @@ line never varies. Edit that file to change what you are looking at.
 canvas, so no screenshot has ever contained the HUD or the panel — the log and
 `search.test.ts` are the only readers of that text.
 
+`"hold": true` takes the wheel: local input is ignored so an experiment is not fighting
+whoever is holding the mouse, and a banner says so across the top. `"hold": false` gives
+it back, Escape at the keyboard always takes it back, and it expires by itself after two
+minutes — an agent that dies mid-experiment must not leave the page locked. Note the
+banner is DOM, so it is in no screenshot; the person at the screen sees it, `make shot`
+does not.
+
 `"clear": true` presses the clear key, including its undo — a second one puts back what
 the first dropped.
 
@@ -87,7 +94,12 @@ vite log for the reload, before trusting a capture.
 input), `mfd.ts` (the panel), `sound.ts` (the voice), `sky.ts`, `shutter.ts`, `cue.ts`,
 `devlog.ts`.
 
-**Audio**: `web/public/sounds/*.wav`, one file per event slug, spoken by a navigator.
+**Audio**: `web/public/sounds/*.wav`, one file per slug — nineteen spoken one-shots and
+two flight beds, `flight-slow` and `flight-fast`, which loop while the camera is moving.
+The beds are one sound at two speeds sharing a noise seed, so their gains are ridden
+against each other rather than one being stopped and the other started. Both run for the
+life of the page. `remote-on` and `remote-off` are wired but not yet in the recipe, so
+they are silent.
 They are baked by [beepboop](../beepboop) from `recipes/navigator.json` over there and
 committed here, so a clone runs with sound and without that toolchain. `make sounds`
 rebakes; the recipe is the source of truth and the output is deterministic, so an

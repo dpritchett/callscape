@@ -173,6 +173,11 @@ function searchKey(e: KeyboardEvent) {
 }
 
 addEventListener('keydown', (e) => {
+  // Escape outranks the remote, and is the only key that does.
+  if (held) {
+    if (e.key === 'Escape') giveWheel('local')
+    return
+  }
   if (search.active) return searchKey(e)
   if (e.key === '/') {
     e.preventDefault() // firefox opens quick-find on this key
@@ -198,6 +203,7 @@ document.addEventListener('pointerlockchange', () => {
 })
 
 flyControls.onSpeedChange = (fast) => voice.play(fast ? 'fast-on' : 'fast-off')
+flyControls.onMotion = (moving, fast) => voice.bed(moving, fast)
 
 function pickAtReticle() {
   // A cue can fly the camera and pull the trigger in the same breath, before
@@ -226,6 +232,45 @@ function toggleReveal() {
   devlog('reveal', { on: revealing, selected: selected.size })
   voice.play(revealing ? 'reveal-on' : 'reveal-off')
   rebuild()
+}
+
+/**
+ * Remote control of the wheel. While something at the other end of a cue is
+ * driving, local input is ignored so an experiment is not fighting whoever is
+ * holding the mouse.
+ *
+ * Two ways out, both mandatory. It expires on its own, because an agent that
+ * dies mid-experiment must not leave the page locked; and Escape takes it back
+ * immediately, because the person sitting in front of it outranks the remote.
+ */
+const HOLD_SECONDS = 120
+const holdBar = document.getElementById('hold')!
+let held = false
+let holdTimer: ReturnType<typeof setTimeout> | null = null
+
+function takeWheel() {
+  if (holdTimer) clearTimeout(holdTimer)
+  holdTimer = setTimeout(() => giveWheel('expired'), HOLD_SECONDS * 1000)
+  if (held) return // a later cue only refreshes the deadman
+  held = true
+  controls.setLocked(true)
+  closeSearch()
+  document.exitPointerLock()
+  holdBar.textContent = 'REMOTE HAS THE WHEEL · esc to take it back'
+  holdBar.style.display = 'block'
+  devlog('hold', { on: true, seconds: HOLD_SECONDS })
+  voice.play('remote-on')
+}
+
+function giveWheel(why: string) {
+  if (holdTimer) clearTimeout(holdTimer)
+  holdTimer = null
+  if (!held) return
+  held = false
+  controls.setLocked(false)
+  holdBar.style.display = 'none'
+  devlog('hold', { on: false, why })
+  voice.play('remote-off')
 }
 
 /** A miss has to look different from a broken button. */
@@ -468,6 +513,8 @@ shutter.start()
 /** Put the page into a requested state, so a specific view can be evaluated. */
 watchCues((cue) => {
   devlog('cue', cue)
+  if (cue.hold === true) takeWheel()
+  if (cue.hold === false) giveWheel('remote')
   if (cue.select) {
     selected = new Set(cue.select.filter((id) => world.nodeById(id)))
   }

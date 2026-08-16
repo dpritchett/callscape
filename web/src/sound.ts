@@ -27,12 +27,30 @@ export const CUES = [
   'capture',
   'release',
   'view-error',
+  // Not in the recipe yet: silent until beepboop bakes them, which is what the
+  // banner across the top is for in the meantime.
+  'remote-on',
+  'remote-off',
 ] as const
 
 export type Cue = (typeof CUES)[number]
 
+/**
+ * Airflow. Two-second loops that wrap seamlessly, played continuously while the
+ * camera is moving rather than fired per event.
+ *
+ * They are one sound at two speeds, not two sounds: `flight-fast` is the same
+ * partials and the same noise seed with the tone filter opened up. Riding the
+ * two gains against each other reads as one airflow accelerating, which is why
+ * both run all the time and neither is ever stopped.
+ */
+const BEDS = ['flight-slow', 'flight-fast'] as const
+type Bed = (typeof BEDS)[number]
+
 /** Long enough not to click, short enough not to be a crossfade. */
 const CUT_SECONDS = 0.015
+/** How long the bed takes to come up, go away, or change gear. */
+const BED_FADE = 0.35
 
 /**
  * Speech on the audio thread, decoded up front.
@@ -52,7 +70,8 @@ const CUT_SECONDS = 0.015
 export class Voice {
   private ctx = new AudioContext()
   private master = this.ctx.createGain()
-  private buffers = new Map<Cue, AudioBuffer>()
+  private buffers = new Map<Cue | Bed, AudioBuffer>()
+  private beds: Record<Bed, GainNode> | null = null
   private now: { src: AudioBufferSourceNode; gain: GainNode } | null = null
   private enabled = true
 
@@ -68,24 +87,79 @@ export class Voice {
    * problem this class exists to avoid.
    */
   private async preload() {
+    const wanted = [...CUES, ...BEDS]
     await Promise.all(
-      CUES.map(async (cue) => {
+      wanted.map(async (cue) => {
         try {
           const res = await fetch(`/sounds/${cue}.wav`)
           if (!res.ok) throw new Error(`${res.status} ${res.statusText}`)
           this.buffers.set(cue, await this.ctx.decodeAudioData(await res.arrayBuffer()))
         } catch (err) {
+          // A slug the recipe has not baked yet is silence, not a broken page.
           devlog('voice.missing', { cue, err: String(err) })
         }
       }),
     )
-    devlog('voice.ready', { loaded: this.buffers.size, of: CUES.length })
+    devlog('voice.ready', { loaded: this.buffers.size, of: wanted.length })
   }
 
   set(enabled: boolean, volume: number) {
     this.enabled = enabled
     this.master.gain.value = Math.max(0, Math.min(1, volume))
-    if (!enabled) this.cut()
+    if (!enabled) {
+      this.cut()
+      this.bed(false, false)
+    }
+  }
+
+  /**
+   * Airflow while the camera is moving, and which gear it is in. Safe to call
+   * on every change of either: it only ever moves two gain ramps, and the
+   * sources themselves start once and run for the life of the page.
+   *
+   * The levels come from the recipe already balanced against the voice — 0.26
+   * and 0.38 against 0.72 — so callouts stay intelligible over the bed. Nothing
+   * here normalises them.
+   */
+  bed(moving: boolean, fast: boolean) {
+    const on = moving && this.enabled
+    if (!this.startBeds()) return
+    // Both gains ramp together over the same window, so the pair reads as one
+    // airflow changing gear rather than as one sound replacing another.
+    this.rampTo(this.beds!['flight-slow'].gain, on && !fast ? 1 : 0)
+    this.rampTo(this.beds!['flight-fast'].gain, on && fast ? 1 : 0)
+  }
+
+  /** Starts both loops the first time there is anything to play. */
+  private startBeds(): boolean {
+    if (this.beds) return true
+    if (!BEDS.every((b) => this.buffers.has(b))) return false
+    if (this.ctx.state === 'suspended') void this.ctx.resume()
+
+    const made = {} as Record<Bed, GainNode>
+    for (const name of BEDS) {
+      const src = this.ctx.createBufferSource()
+      const gain = this.ctx.createGain()
+      src.buffer = this.buffers.get(name)!
+      // Sample-accurate looping. An <audio loop> re-opens the stream on each
+      // repeat in several browsers and inserts a gap the file does not have.
+      src.loop = true
+      gain.gain.value = 0
+      src.connect(gain).connect(this.master)
+      src.start()
+      made[name] = gain
+    }
+    this.beds = made
+    devlog('voice.beds', { started: BEDS.length })
+    return true
+  }
+
+  private rampTo(param: AudioParam, value: number) {
+    if (Math.abs(param.value - value) < 0.001) return
+    const at = this.ctx.currentTime
+    param.cancelScheduledValues(at)
+    param.setValueAtTime(param.value, at)
+    param.linearRampToValueAtTime(value, at + BED_FADE)
   }
 
   play(cue: Cue) {

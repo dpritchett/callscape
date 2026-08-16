@@ -39,6 +39,14 @@
       #sel .t4 { color: #9ece6a; }        /* strings and runes */
       #sel .t5 { color: #ff9e64; }        /* numbers */
       #sel .t6 { color: #5c6a82; font-style: italic; }  /* comments */
+      /* Remote control. Loud on purpose: input going nowhere reads as a broken
+         page unless something says otherwise. */
+      #hold {
+        position: fixed; top: 0; left: 0; right: 0;
+        font: 600 13px/2.2 ui-monospace, SFMono-Regular, Menlo, monospace;
+        color: #0b0e14; background: #ffc978; text-align: center;
+        letter-spacing: 0.08em; pointer-events: none; display: none;
+      }
       #reticle {
         position: fixed; left: 50%; top: 50%; width: 5px; height: 5px;
         margin: -3px 0 0 -3px; border-radius: 50%;
@@ -52,6 +60,7 @@
   </head>
   <body>
     <div id="hud"></div>
+    <div id="hold"></div>
     <div id="sel"></div>
     <div id="reticle"></div>
     <div id="hint">click to capture &middot; hold LMB/RMB to fly forward/back &middot; wheel to dolly &middot; WASD + mouse look &middot; QE up/down &middot; shift burns (drops back when you stop) &middot; F focus &middot; middle-click or space to select &middot; X clears &middot; R reveals hidden neighbours &middot; / search &middot; esc release

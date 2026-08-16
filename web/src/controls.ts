@@ -36,6 +36,11 @@ export interface Controller {
    * flight control, and `x` drops the selection you were looking for.
    */
   setTyping(on: boolean): void
+  /**
+   * Ignore every local input — keys, mouse, wheel, gamepad — because something
+   * remote is driving. Broader than `setTyping`, which only wants the keyboard.
+   */
+  setLocked(on: boolean): void
 }
 
 const WHEEL_IMPULSE = 0.22 // velocity per wheel unit, along the view direction
@@ -47,6 +52,8 @@ export class FlyController implements Controller {
   private euler = new THREE.Euler(0, 0, 0, 'YXZ')
   private locked = false
   private typing = false
+  /** Something remote has the wheel; every local input is ignored. */
+  private remote = false
   private sensitivity = 0.0022
 
   private vel = new THREE.Vector3()
@@ -71,6 +78,10 @@ export class FlyController implements Controller {
   /** Seconds spent at rest, which is what expires the burn. */
   private still = 0
   onSpeedChange: ((fast: boolean) => void) | null = null
+  /** Whether the camera is moving, and in which gear. Fires only on a change. */
+  onMotion: ((moving: boolean, fast: boolean) => void) | null = null
+  private wasMoving = false
+  private wasFast = false
 
   // Focus tween state. Flying to a symbol beats being teleported to it.
   private tween: { from: THREE.Vector3; to: THREE.Vector3; look: THREE.Vector3; t: number } | null = null
@@ -98,8 +109,10 @@ export class FlyController implements Controller {
   update(dt: number) {
     if (this.tween) {
       // A focus flight is the camera moving, so it does not count as standing
-      // still — burn should not expire underneath a flight you asked for.
+      // still — burn should not expire underneath a flight you asked for, and
+      // the airflow should be there while you are flying.
       this.still = 0
+      this.reportMotion(true)
       this.stepTween(dt)
       return
     }
@@ -140,6 +153,7 @@ export class FlyController implements Controller {
     const burn = stepBurn(this.still, moving, dt)
     this.still = burn.still
     if (this.fast && burn.expired) this.setFast(false, 'rest')
+    this.reportMotion(moving)
   }
 
   frame(
@@ -187,6 +201,7 @@ export class FlyController implements Controller {
    * input vector, not a mouse accessory.
    */
   private readGamepad(dt: number) {
+    if (this.remote) return null // a pad is polled, so it has to be asked to stop
     const pads = navigator.getGamepads?.() ?? []
     let pad: Gamepad | null = null
     for (const p of pads) {
@@ -250,6 +265,7 @@ export class FlyController implements Controller {
   // What a click means depends on whether the pointer is captured, so the two
   // states get their own bindings.
   private onMouseDown = (e: MouseEvent) => {
+    if (this.remote) return
     devlog('mousedown', { button: e.button, locked: this.locked })
     if (this.locked) this.pressCaptured(e.button)
     else this.pressUncaptured(e.button)
@@ -280,7 +296,7 @@ export class FlyController implements Controller {
   }
 
   private onWheel = (e: WheelEvent) => {
-    if (!this.locked) return
+    if (this.remote || !this.locked) return
     e.preventDefault()
     this.camera.getWorldDirection(this.dir)
     // Dolly along the view direction. Q/E stay world-vertical; this is the one
@@ -299,12 +315,24 @@ export class FlyController implements Controller {
   }
 
   private onMouseMove = (e: MouseEvent) => {
-    if (!this.locked) return
+    if (this.remote || !this.locked) return
     this.euler.y -= e.movementX * this.sensitivity
     this.euler.x -= e.movementY * this.sensitivity
     this.euler.x = Math.max(-Math.PI / 2 + 0.01, Math.min(Math.PI / 2 - 0.01, this.euler.x))
     this.camera.quaternion.setFromEuler(this.euler)
     if (this.tween) this.tween = null
+  }
+
+  /**
+   * Tells whoever is listening that the camera started or stopped moving, or
+   * changed gear. Only on a change: the flight bed is a loop that is ridden
+   * with a gain, not something to retrigger sixty times a second.
+   */
+  private reportMotion(moving: boolean) {
+    if (moving === this.wasMoving && this.fast === this.wasFast) return
+    this.wasMoving = moving
+    this.wasFast = this.fast
+    this.onMotion?.(moving, this.fast)
   }
 
   /** The one place the burn changes, so every route through it says so. */
@@ -316,6 +344,16 @@ export class FlyController implements Controller {
     this.onSpeedChange?.(on)
   }
 
+  setLocked(on: boolean) {
+    this.remote = on
+    if (!on) return
+    // Nothing is held any more as far as flying is concerned, and no keyup or
+    // mouseup is coming while the input is being ignored.
+    this.keys.clear()
+    this.buttons.clear()
+    this.vel.set(0, 0, 0)
+  }
+
   setTyping(on: boolean) {
     this.typing = on
     // Whatever was held when the query opened is not held any more as far as
@@ -324,7 +362,7 @@ export class FlyController implements Controller {
   }
 
   private onKeyDown = (e: KeyboardEvent) => {
-    if (this.typing) return
+    if (this.typing || this.remote) return
     const fresh = !this.keys.has(e.code)
     this.keys.add(e.code)
     if (e.code !== 'KeyF' && e.code !== 'Space') this.tween = null
@@ -339,7 +377,7 @@ export class FlyController implements Controller {
   }
 
   private onKeyUp = (e: KeyboardEvent) => {
-    if (this.typing) return
+    if (this.typing || this.remote) return
     this.keys.delete(e.code)
   }
 

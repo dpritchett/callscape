@@ -22,6 +22,15 @@ export interface Cue {
    */
   clear?: boolean
   /**
+   * Take the wheel, or give it back. While it is held, every local input is
+   * ignored and the page says so across the top — a page that quietly stops
+   * answering the keyboard is indistinguishable from a broken one.
+   *
+   * It expires on its own, and Escape always takes it back, so an agent that
+   * dies mid-experiment cannot leave the controls locked.
+   */
+  hold?: boolean
+  /**
    * Open the symbol search on this query; the empty string closes it. The hits
    * land in the log, so what ranking actually returns on a real graph is
    * readable from a terminal rather than only from the panel.

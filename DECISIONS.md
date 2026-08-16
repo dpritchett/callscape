@@ -134,6 +134,25 @@ the movement model, so "half a second" is tested without a clock: never early, n
 than one frame late, at 24, 60 and 144fps. Rejected: hold-to-burn, which is a key held
 down for the entire time you are going anywhere.
 
+**A remote hold locks the local controls, and has two ways out.** An agent taking
+screenshots and a person flying by hand were fighting over the same camera, and neither
+could tell which of them had moved it. `"hold": true` in a cue ignores every local input
+for two minutes. The escapes are not optional: it expires on its own, because an agent
+that dies mid-experiment must not leave the page locked, and Escape at the keyboard takes
+it back immediately, because the person sitting in front of it outranks the remote. It
+says so in a banner across the top, since a page that quietly stops answering the
+keyboard is indistinguishable from a broken one. Rejected: a silent lock, which is the
+bug it exists to avoid, wearing a different hat.
+
+**The flight beds are two loops that never stop.** They are one airflow at two speeds —
+same partials, same noise seed, filter opened — so the speed change is a crossfade
+between two gains rather than one source stopping and another starting. Both run for the
+life of the page and are ridden at zero when the camera is still. `AudioBufferSourceNode`
+with `loop = true`, because the HTML `<audio loop>` attribute re-opens the stream on each
+repeat in several browsers and inserts a gap the file does not have. Rejected:
+normalising them, which would undo the levelling that keeps callouts intelligible over
+the bed.
+
 **The voice goes through Web Audio, not an `<audio>` element.** An element is driven from
 the main thread, which here also runs `place()` and every frame, so a rebuild cut the
 line that was talking — the audio was audibly bound to the rendering. Buffers are decoded

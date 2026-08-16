@@ -191,6 +191,7 @@ export interface Cue {
   pick?: boolean
   clear?: boolean
   search?: string
+  hold?: boolean
 }
 
 /**
