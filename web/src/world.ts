@@ -154,7 +154,7 @@ export class World {
     const normal = new THREE.Vector3()
     const quat = new THREE.Quaternion()
 
-    for (const d of p.districts) {
+    p.districts.forEach((d, index) => {
       normal.set(d.normal.x, d.normal.y, d.normal.z)
       quat.setFromUnitVectors(POLE, normal)
 
@@ -172,15 +172,21 @@ export class World {
       floor.quaternion.copy(quat)
       floor.matrixAutoUpdate = false
       floor.updateMatrix()
+      // Transparent objects are painted back to front by distance, and every
+      // cap sits on the same sphere — so turning the camera reshuffles which
+      // one is "nearest" and the surfaces visibly swap places. A fixed order
+      // per district makes the sort independent of where you are looking.
+      floor.renderOrder = -1000 + index * 2
       this.group.add(floor)
       this.disposables.push(() => {
         capGeom.dispose()
         mat.dispose()
       })
 
-      // Rim: the circle where the cap meets the rest of the shell.
+      // Rim: the circle where the cap meets the rest of the shell, drawn a
+      // whisker outside it so the two are not coplanar and fighting for depth.
       const rimPoints: THREE.Vector3[] = []
-      const R = p.shell || d.radius
+      const R = (p.shell || d.radius) * 1.002
       for (let k = 0; k <= 64; k++) {
         const a = (k / 64) * Math.PI * 2
         rimPoints.push(
@@ -201,6 +207,7 @@ export class World {
       rim.quaternion.copy(quat)
       rim.matrixAutoUpdate = false
       rim.updateMatrix()
+      rim.renderOrder = -1000 + index * 2 + 1
       this.group.add(rim)
       this.disposables.push(() => {
         rimGeom.dispose()
@@ -229,7 +236,7 @@ export class World {
         label,
       })
       this.disposables.push(() => disposeSprite(label))
-    }
+    })
   }
 
   /** One LineSegments for everything; colours are rewritten on selection. */
