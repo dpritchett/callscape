@@ -48,6 +48,9 @@ line never varies. Edit that file to change what you are looking at.
 canvas, so no screenshot has ever contained the HUD or the panel — the log and
 `search.test.ts` are the only readers of that text.
 
+`"clear": true` presses the clear key, including its undo — a second one puts back what
+the first dropped.
+
 `"pick": true` in a cue pulls the trigger: it runs the click handler on whatever the
 reticle is on once the rest of the cue has been applied, and the result lands in the log
 as a `pick` event with the id it hit and whether the ray hit exactly. That is the only

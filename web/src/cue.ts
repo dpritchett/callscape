@@ -16,6 +16,12 @@ export interface Cue {
    */
   pick?: boolean
   /**
+   * Press the clear key, including its undo — a second one puts back what the
+   * first dropped. Same reason as `pick`: `select` names ids outright and skips
+   * the code that decides them.
+   */
+  clear?: boolean
+  /**
    * Open the symbol search on this query; the empty string closes it. The hits
    * land in the log, so what ranking actually returns on a real graph is
    * readable from a terminal rather than only from the panel.

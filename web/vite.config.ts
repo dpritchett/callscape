@@ -150,6 +150,7 @@ export interface Cue {
   yaw?: number
   pitch?: number
   pick?: boolean
+  clear?: boolean
   search?: string
 }
 

@@ -235,15 +235,35 @@ function flashMiss() {
   setTimeout(() => reticle.classList.remove('miss'), 220)
 }
 
+/** What the last clear dropped, so hitting it by accident can be taken back. */
+let cleared = new Set<string>()
+
+/**
+ * Clear, and clear again to undo. X is next to the keys you fly with and it
+ * throws away work — finding the symbol again is the expensive part, not
+ * selecting it — so the second press puts back what the first one dropped.
+ */
 function clearSelection() {
-  devlog('clear', { had: selected.size })
-  if (!selected.size) {
-    voice.play('clear-nothing')
-    return
+  devlog('clear', { had: selected.size, undo: cleared.size })
+  if (selected.size) {
+    cleared = selected
+    selected = new Set()
+    voice.play('clear')
+  } else {
+    // A view change between the clear and the undo can filter a symbol out of
+    // the scene, and there is nothing to put back for one that is not placed.
+    const live = new Set([...cleared].filter((id) => world.nodeById(id)))
+    if (!live.size) {
+      voice.play('clear-nothing')
+      return
+    }
+    selected = live
+    voice.play('select')
   }
-  voice.play('clear')
-  selected = new Set()
-  applySelection()
+  // Reveal decides which nodes exist from the selection, so changing it there
+  // has to go back through place() — the same rule the pick path follows.
+  if (revealing) rebuild()
+  else applySelection()
 }
 
 let hood: Neighborhood = neighborhood([], [])
@@ -454,6 +474,7 @@ watchCues((cue) => {
   }
   // Last, so it fires at whatever the camera was just pointed at.
   if (cue.pick) pickAtReticle()
+  if (cue.clear) clearSelection()
   if (typeof cue.search === 'string') {
     // An empty query closes it. A cue that could only open the search would
     // leave whoever is at the keyboard holding a modal they cannot dismiss

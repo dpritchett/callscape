@@ -77,6 +77,12 @@ and a missed chunk match is logged rather than left to be noticed. Rejected: one
 `InstancedMesh` per colour, which is fine for the 12-entry palette and degenerates into
 thousands of draw calls the moment `encoding.color` names a numeric field.
 
+**Clear undoes itself on a second press.** `X` sits next to the keys you fly with and it
+throws away the expensive part — finding the symbol, not selecting it — so hitting it by
+accident cost a search. The second press puts back what the first dropped, and only the
+ids still placed, since a view change in between can filter one out. Rejected: a
+confirmation, which taxes every deliberate clear to protect against the rare one.
+
 **Burn is a sprint that expires, and normal speed is the default.** Fast used to be the
 default with shift toggling it off, which meant arriving somewhere at 250 u/s and having
 to remember to slow down before you could look at anything. Now shift lights the burn and
