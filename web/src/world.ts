@@ -36,7 +36,7 @@ const HOT_EMISSIVE = [0.5, 2.1] as const
  * a purple one. Turn this down if it shouts; the signal is meant to be the
  * breathing rather than the colour.
  */
-const GROUND_LIT = 0.12
+const GROUND_LIT = 0.22
 /** Enough that the sag between two segments stays under half a unit. */
 const WIRE_SEGMENTS = 8
 
@@ -129,6 +129,8 @@ export class World {
     rim: THREE.Object3D
     label: THREE.Sprite
   }[] = []
+  /** Radius of the shell, which sets the scale everything distance-based uses. */
+  private shell = 1
   private edgeShow: ResolvedEdgeShow = 'all'
   private edgeOpacity = 0.7
   /** Ids whose labels show regardless of distance, because they're selected. */
@@ -148,6 +150,7 @@ export class World {
 
   build(p: Placement, opacity = 0.7) {
     this.clear()
+    this.shell = p.shell || 1
     this.edgeShow = p.edgeShow
     this.edgeOpacity = opacity
     this.buildDistricts(p)
@@ -641,7 +644,12 @@ export class World {
       // inside the shell that is the inner one — which is the face a lamp
       // across the interior lights most squarely, and the whole point here.
       const facing = Math.abs(toLight.divideScalar(distance).dot(part.normal))
-      mat.color.copy(part.ground).lerp(color, facing * k * GROUND_LIT)
+      // And it falls off with distance, or every district ends up wearing the
+      // same tint and the picture stops saying which way the source is. Gentle
+      // on purpose: inverse-square across a shell this wide would light three
+      // districts and leave the rest black.
+      const reach = this.shell / (this.shell + distance)
+      mat.color.copy(part.ground).lerp(color, facing * reach * k * GROUND_LIT)
     }
   }
 

@@ -134,6 +134,14 @@ the movement model, so "half a second" is tested without a clock: never early, n
 than one frame late, at 24, 60 and 144fps. Rejected: hold-to-burn, which is a key held
 down for the entire time you are going anywhere.
 
+**Music plays while somebody is flying, and not otherwise.** The two loops run for the
+life of the page like the flight beds, and only their gain moves — a minute of one mood,
+then a minute of the other, crossfaded over three seconds, forever. On means the pointer
+is captured or a remote is holding the wheel; the state it is the opposite of is the page
+sitting there with the cursor free, which is somebody reading a panel or gone for coffee.
+Rejected: keying it to burn or to having a selection, which are both things you do
+briefly and often, and would turn the soundtrack into a stutter.
+
 **The selection pulses, and casts light.** A thing that glows steadily is only findable by
 looking straight at it. Two signals rather than one: the symbol's own emissive breathes at
 0.8Hz, which a glance catches out of the corner of an eye, and a point light stands where

@@ -102,6 +102,12 @@ The beds are one sound at two speeds sharing a noise seed, so their gains are ri
 against each other rather than one being stopped and the other started. Both run for the
 life of the page. `remote-on` and `remote-off` are wired but not yet in the recipe, so
 they are silent.
+
+Two eight-second music loops sit under all of it, one minute each in turn, forever. They
+only play while somebody has the controls — pointer captured, or a remote holding the
+wheel — because a page sitting idle with the cursor free does not want a soundtrack. They
+come from a different recipe, `music-lab.json`, which bakes four candidates; `make sounds`
+copies out the two this uses.
 They are baked by [beepboop](../beepboop) from `recipes/navigator.json` over there and
 committed here, so a clone runs with sound and without that toolchain. `make sounds`
 rebakes; the recipe is the source of truth and the output is deterministic, so an

@@ -55,9 +55,15 @@ dump:
 # deterministic, so an unchanged recipe rebakes to an empty diff.
 BEEPBOOP ?= ../beepboop
 BEEPBOOP_VOICE_MODEL ?= $(HOME)/.local/share/piper/voices/en_US-lessac-medium.onnx
+MUSIC_TMP := /tmp/lspvue-music
 sounds:
 	cd $(BEEPBOOP) && BEEPBOOP_VOICE_MODEL=$(BEEPBOOP_VOICE_MODEL) \
 		go run ./cmd/beepboop bake recipes/navigator.json $(CURDIR)/web/public/sounds
+# The music recipe is a lab: it bakes four candidates and we use two of them.
+# Baked aside and copied, so the two we chose are named here rather than by
+# whatever else the lab happens to be trying out.
+	cd $(BEEPBOOP) && go run ./cmd/beepboop bake recipes/music-lab.json $(MUSIC_TMP)
+	cp $(MUSIC_TMP)/music-4-sparse.wav $(MUSIC_TMP)/music-3-both.wav web/public/sounds/
 
 hooks:
 	lefthook install

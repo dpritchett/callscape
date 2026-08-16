@@ -234,7 +234,18 @@ document.addEventListener('pointerlockchange', () => {
   const captured = Boolean(document.pointerLockElement)
   if (captured) closeSearch()
   voice.play(captured ? 'capture' : 'release')
+  flying()
 })
+
+/**
+ * Music plays while the sim is being flown, which means somebody has the
+ * controls: you with the pointer captured, or a remote holding the wheel. The
+ * state it is the opposite of is the page sitting there with the cursor free,
+ * which is not a moment that wants a soundtrack.
+ */
+function flying() {
+  voice.setPlaying(Boolean(document.pointerLockElement) || held)
+}
 
 // No callout for the speed change: the bed is two tiers of airflow and it is
 // already saying which one you are in, continuously, for as long as it is true.
@@ -304,6 +315,7 @@ function takeWheel() {
   renderHold()
   devlog('hold', { on: true, seconds: HOLD_SECONDS })
   voice.play('remote-on')
+  flying()
 }
 
 function giveWheel(why: string) {
@@ -315,6 +327,7 @@ function giveWheel(why: string) {
   renderHold()
   devlog('hold', { on: false, why })
   voice.play('remote-off')
+  flying()
 }
 
 renderHold()
