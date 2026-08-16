@@ -25,6 +25,8 @@ export interface GraphEdge {
 
 export interface Graph {
   module: string
+  /** The analysed module's directory, which `file` paths are relative to. */
+  root?: string
   nodes: GraphNode[]
   edges: GraphEdge[]
 }

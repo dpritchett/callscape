@@ -1,5 +1,6 @@
-import { appendFile, mkdir, writeFile } from 'node:fs/promises'
+import { appendFile, mkdir, readFile, writeFile } from 'node:fs/promises'
 import { defineConfig, type Plugin } from 'vite'
+import { resolveWithinRoot } from './src/srcpath'
 
 const LOG_FILE = 'dev-log.jsonl'
 const SHOT_DIR = 'shots'
@@ -99,6 +100,47 @@ function devLogSink(): Plugin {
   }
 }
 
+/**
+ * Serves source out of the analysed module, so a selected symbol can be read
+ * rather than only counted. The graph names its own root; the request names a
+ * file relative to it, which is exactly the shape of a traversal bug, so the
+ * containment check is a tested function rather than an inline string compare.
+ */
+function sourceReader(): Plugin {
+  return {
+    name: 'lspvue-source',
+    configureServer(server) {
+      server.middlewares.use('/__src', (req, res) => {
+        const url = new URL(req.url ?? '/', 'http://localhost')
+        const send = (code: number, body: unknown) => {
+          res.statusCode = code
+          res.setHeader('content-type', 'application/json')
+          res.end(JSON.stringify(body))
+        }
+
+        void (async () => {
+          try {
+            const graph = JSON.parse(await readFile('public/graph.json', 'utf8')) as {
+              root?: string
+            }
+            const file = url.searchParams.get('file') ?? ''
+            const full = resolveWithinRoot(graph.root ?? '', file)
+            if (!full) return send(400, { error: `refused: ${file}` })
+
+            const from = Number(url.searchParams.get('from') ?? 1)
+            const to = Number(url.searchParams.get('to') ?? from + 40)
+            const text = await readFile(full, 'utf8')
+            const lines = text.split('\n').slice(Math.max(0, from - 1), to)
+            send(200, { file, from, to, lines })
+          } catch (err) {
+            send(404, { error: String(err) })
+          }
+        })()
+      })
+    },
+  }
+}
+
 export interface Cue {
   seq: number
   focus?: string | null
@@ -147,7 +189,7 @@ function remoteCue(): Plugin {
 }
 
 export default defineConfig({
-  plugins: [devLogSink(), remoteShutter(), remoteCue()],
+  plugins: [devLogSink(), remoteShutter(), remoteCue(), sourceReader()],
   server: {
     // graph.json and view.json live in public/ and are polled by the client.
     // Without this, Vite full-reloads the page whenever they change, which

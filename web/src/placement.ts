@@ -25,6 +25,8 @@ export interface PlacedNode {
    * six callers is not a simplification, it is a wrong answer. */
   fanIn: number
   fanOut: number
+  /** Distinct calling packages: what the panel should lead with. */
+  fanInPkgs: number
 }
 
 export interface PlacedDistrict extends District {
@@ -114,6 +116,7 @@ export function place(graph: Graph, view: ViewSpec, reveal: Iterable<string> = [
       color: colorOf(n),
       fanIn: n.fanIn,
       fanOut: n.fanOut,
+      fanInPkgs: n.fanInPkgs,
     }
   })
 

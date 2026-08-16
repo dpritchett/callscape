@@ -48,8 +48,11 @@ type Edge struct {
 
 type Graph struct {
 	Module string `json:"module"`
-	Nodes  []Node `json:"nodes"`
-	Edges  []Edge `json:"edges"`
+	// Root is the module's directory on this machine. Node.File is relative to
+	// it, so anything that wants to show the actual source needs both.
+	Root  string `json:"root"`
+	Nodes []Node `json:"nodes"`
+	Edges []Edge `json:"edges"`
 }
 
 func main() {
@@ -222,7 +225,7 @@ func dump(dir string) (*Graph, error) {
 	}
 	sort.Slice(out, func(i, j int) bool { return out[i].ID < out[j].ID })
 
-	return &Graph{Module: modPath, Nodes: out, Edges: edges}, nil
+	return &Graph{Module: modPath, Root: modDir, Nodes: out, Edges: edges}, nil
 }
 
 // moduleOf returns the module path and root directory for the loaded packages.

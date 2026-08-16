@@ -8,6 +8,7 @@ import { devlog, installDevLog } from './devlog'
 import { Shutter } from './shutter'
 import { watchCues } from './cue'
 import { makeStarfield } from './sky'
+import { MFD } from './mfd'
 import type { Graph, ViewSpec } from './types'
 
 installDevLog()
@@ -71,8 +72,16 @@ const selBox = document.getElementById('sel')!
 const raycaster = new THREE.Raycaster()
 const CENTRE = new THREE.Vector2(0, 0) // the reticle, since the pointer is locked
 
+const mfd = new MFD(selBox)
+/** file/line/lines live on the raw graph, not on the placed node. */
+const sources = new Map<string, { file: string; line: number; lines: number }>()
+
 addEventListener('keydown', (e) => {
   if (e.code === 'KeyF') frameFocus()
+  if (e.code === 'Tab') {
+    e.preventDefault() // tab moves focus otherwise, and there is nowhere to go
+    mfd.cycle()
+  }
 })
 
 function pickAtReticle() {
@@ -115,21 +124,18 @@ function applySelection() {
   const n = neighborhood(placement.edges, selected)
   world.applySelection(n)
 
-  if (n.empty) {
-    selBox.style.display = 'none'
-    return
-  }
-  const lines = [...selected].map((id) => {
-    const node = world.nodeById(id)
-    if (!node) return id
+  mfd.render({
+    selected: [...selected],
+    nodeById: (id) => world.nodeById(id),
+    fileOf: (id) => sources.get(id),
     // Visible edges out of total, because the occupant filter hides callers and
     // "in 0" for something with six of them is a wrong answer, not a summary.
-    const ins = placement!.edges.filter((e) => e.to === id).length
-    const outs = placement!.edges.filter((e) => e.from === id).length
-    return `${node.name}\n  ${node.pkg}\n  in ${ins}/${node.fanIn} · out ${outs}/${node.fanOut}`
+    drawn: (id) => ({
+      ins: placement!.edges.filter((e) => e.to === id).length,
+      outs: placement!.edges.filter((e) => e.from === id).length,
+    }),
+    hood: n,
   })
-  selBox.textContent = `${lines.join('\n\n')}\n\n${n.callers.size} callers · ${n.callees.size} callees`
-  selBox.style.display = 'block'
 }
 
 flyControls.onPick = pickAtReticle
@@ -232,6 +238,8 @@ function watch(url: string, onChange: (raw: unknown) => void) {
 
 watch('/graph.json', (raw) => {
   graph = raw as Graph
+  sources.clear()
+  for (const n of graph.nodes) sources.set(n.id, { file: n.file, line: n.line, lines: n.lines })
   rebuild()
 })
 
