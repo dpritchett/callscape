@@ -26,6 +26,17 @@ const WIRE_LIFT = 3
  */
 const PULSE_HZ = 0.8
 const HOT_EMISSIVE = [0.5, 2.1] as const
+/**
+ * How far a floor facing the selection head-on is tinted towards it, at the top
+ * of the beat.
+ *
+ * Lower than it looks like it should be. The lerp happens in linear space and
+ * the picture is sRGB, so on ground this dark a small step lands as a large
+ * one on screen — at 0.3 the far wall stopped being its own district and became
+ * a purple one. Turn this down if it shouts; the signal is meant to be the
+ * breathing rather than the colour.
+ */
+const GROUND_LIT = 0.12
 /** Enough that the sag between two segments stays under half a unit. */
 const WIRE_SEGMENTS = 8
 
@@ -110,7 +121,11 @@ export class World {
   private districtParts: {
     pkg: string
     centre: THREE.Vector3
-    floor: THREE.Object3D
+    /** Which way this district's ground faces, for lighting it by hand. */
+    normal: THREE.Vector3
+    floor: THREE.Mesh
+    /** Its unlit colour, to tint away from and back to. */
+    ground: THREE.Color
     rim: THREE.Object3D
     label: THREE.Sprite
   }[] = []
@@ -287,7 +302,9 @@ export class World {
       this.districtParts.push({
         pkg: d.pkg,
         centre: new THREE.Vector3(d.centre.x, d.centre.y, d.centre.z),
+        normal: normal.clone(),
         floor,
+        ground: mat.color.clone(),
         rim,
         label,
       })
@@ -589,13 +606,43 @@ export class World {
    * point: after flying somewhere else you should be able to tell the selection
    * is still there, and roughly where, without hunting for it.
    */
-  pulse(seconds: number): number {
+  pulse(seconds: number, beaconAt?: THREE.Vector3, beaconColor?: THREE.Color): number {
     const k = 0.5 + 0.5 * Math.sin(seconds * PULSE_HZ * Math.PI * 2)
     const [lo, hi] = HOT_EMISSIVE
     for (const mesh of this.hotMeshes) {
       ;(mesh.material as THREE.MeshLambertMaterial).emissiveIntensity = lo + (hi - lo) * k
     }
+    this.lightTheGround(k, beaconAt, beaconColor)
     return k
+  }
+
+  /**
+   * Lights the district floors by hand.
+   *
+   * They are `MeshBasicMaterial` — opaque, unlit, and deliberately so, since
+   * that is what stopped them wobbling. But from anywhere inside the shell the
+   * far wall is nearly all floor, so a light at the selection had nothing to
+   * fall on and a selection behind you was undetectable. This is the same
+   * arithmetic a light does, done to the one surface that ignores lights: how
+   * squarely a district faces the selection, times how bright it is beating.
+   */
+  private lightTheGround(k: number, at?: THREE.Vector3, color?: THREE.Color) {
+    const toLight = this.scratchB
+    for (const part of this.districtParts) {
+      const mat = part.floor.material as THREE.MeshBasicMaterial
+      if (!at || !color) {
+        mat.color.copy(part.ground)
+        continue
+      }
+      toLight.copy(at).sub(part.centre)
+      const distance = toLight.length() || 1
+      // Absolute, because a cap is double-sided and unlit and so has no front.
+      // The face that matters is whichever one you are looking at, and from
+      // inside the shell that is the inner one — which is the face a lamp
+      // across the interior lights most squarely, and the whole point here.
+      const facing = Math.abs(toLight.divideScalar(distance).dot(part.normal))
+      mat.color.copy(part.ground).lerp(color, facing * k * GROUND_LIT)
+    }
   }
 
   /** What the labels are actually doing, for the log. */

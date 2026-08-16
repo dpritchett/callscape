@@ -56,6 +56,24 @@ const BEACON_INTENSITY = [120, 900] as const
 const beacon = new THREE.PointLight(0xffffff, 0, BEACON_RANGE, 2)
 scene.add(beacon)
 
+/**
+ * The same selection, as a sun.
+ *
+ * Inverse-square falloff cannot be both bright at twenty units and visible at
+ * eight hundred: whatever reaches the far wall of the shell blows out
+ * everything standing next to it. A sun does not fall off — it is only a
+ * direction — so this one has no decay and no cutoff, and carries across the
+ * whole scene at an intensity that is nearly nothing.
+ *
+ * What it buys is the thing lighting is for: from anywhere inside the shell,
+ * the faces turned towards the selection are lit and the faces turned away are
+ * not, and the difference breathes. That is how you know there is something
+ * behind you without looking at it.
+ */
+const SUN_INTENSITY = [0.06, 0.34] as const
+const beaconSun = new THREE.PointLight(0xffffff, 0, 0, 0)
+scene.add(beaconSun)
+
 const world = new World()
 scene.add(world.group)
 
@@ -395,18 +413,27 @@ function frameFocus() {
 
 /** Puts the beacon on the selection, in phase with the symbol's own pulse. */
 function updateBeacon(seconds: number) {
-  const k = world.pulse(seconds)
   const id = lastSelected()
   const at = id ? world.positionOf(id) : undefined
   if (!id || !at) {
+    world.pulse(seconds)
     beacon.intensity = 0
+    beaconSun.intensity = 0
     return
   }
-  beacon.position.copy(at)
+  // Colour first: the ground is tinted towards it in the same call.
   const node = world.nodeById(id)
-  if (node) beacon.color.setHex(node.color)
+  if (node) {
+    beacon.color.setHex(node.color)
+    beaconSun.color.setHex(node.color)
+  }
+  const k = world.pulse(seconds, at, beaconSun.color)
+  beacon.position.copy(at)
+  beaconSun.position.copy(at)
   const [lo, hi] = BEACON_INTENSITY
   beacon.intensity = lo + (hi - lo) * k
+  const [sunLo, sunHi] = SUN_INTENSITY
+  beaconSun.intensity = sunLo + (sunHi - sunLo) * k
 }
 
 /** The most recent pick, which is the one the panel is describing. */
@@ -541,9 +568,7 @@ const shutter = new Shutter(renderer.domElement, () => {
   // the only cost measurement available when nobody is watching the page.
   const t0 = performance.now()
   world.updateLabels(camera, renderer.domElement.clientHeight)
-  // Same phase the loop left it at: a hidden tab is not animating, and a
-  // screenshot of a heartbeat has to catch it somewhere.
-  updateBeacon(elapsed)
+  updateBeacon(beat())
   const t1 = performance.now()
   renderer.render(scene, camera)
   devlog('renderMs', {
@@ -598,14 +623,18 @@ watchCues((cue) => {
 })
 
 const clock = new THREE.Clock()
-/** Wall time the scene has actually been animated for, which drives the pulse. */
-let elapsed = 0
+/**
+ * Wall time, not accumulated frame time. The heartbeat is cosmetic and it is
+ * the only thing here that reads a clock, so taking it from the wall means a
+ * screenshot of a backgrounded tab catches it somewhere alive rather than
+ * frozen wherever the animation loop stopped.
+ */
+const beat = () => performance.now() / 1000
 renderer.setAnimationLoop(() => {
   const dt = Math.min(clock.getDelta(), 0.1)
-  elapsed += dt
   controls.update(dt)
   world.updateLabels(camera, renderer.domElement.clientHeight)
-  updateBeacon(elapsed)
+  updateBeacon(beat())
   renderer.render(scene, camera)
 
   frames++
