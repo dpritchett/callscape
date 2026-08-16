@@ -1,7 +1,7 @@
 {
-  "focus": "github.com/coder/coder/v2/cli.RootCmd.InitClient",
+  "focus": "github.com/coder/coder/v2/coderd/database/dbtime.Now",
   "select": [],
-  "distance": 300,
-  "yaw": 0,
-  "pitch": 25
+  "distance": 1600,
+  "yaw": 30,
+  "pitch": 20
 }

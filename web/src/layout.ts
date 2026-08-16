@@ -89,15 +89,13 @@ export function layout(nodes: GraphNode[], rank: (n: GraphNode) => number = () =
   })
 
   const radii = discs.map((d) => d.radius)
-  const shell = shellRadius(radii)
-  const seats = packOnShell(radii, shell) ?? radii.map(() => ({ phi: Math.PI / 2, psi: 0 }))
+  const { shell, dirs } = spreadOnShell(radii)
 
   const districts: District[] = []
   const pos = new Map<string, Vec3>()
 
   discs.forEach((d, i) => {
-    const { phi, psi } = seats[i]
-    const normal = onSphere(phi, psi)
+    const normal = dirs[i]
     const centre = scale(normal, shell)
     const { u, v } = basis(normal)
 
@@ -305,14 +303,6 @@ function hash01(s: string): number {
   return ((h >>> 0) % 100000) / 100000
 }
 
-function onSphere(phi: number, psi: number): Vec3 {
-  return {
-    x: Math.sin(phi) * Math.cos(psi),
-    y: Math.cos(phi),
-    z: Math.sin(phi) * Math.sin(psi),
-  }
-}
-
 function scale(v: Vec3, k: number): Vec3 {
   return { x: v.x * k, y: v.y * k, z: v.z * k }
 }
@@ -342,115 +332,82 @@ function normalise(v: Vec3): Vec3 {
 }
 
 /**
- * Packs discs onto a sphere in latitude bands, the way the ring version packed
- * them around a circle. Bands handle wildly different district sizes, which a
- * uniform lattice does not: helm has a 213-symbol package next to a 2-symbol
- * one, and spacing everything for the biggest wastes the whole shell.
+ * Spreads districts over a sphere: Fibonacci lattice for even coverage, then
+ * relaxation to open up whatever overlaps, growing the shell if relaxation
+ * cannot resolve it.
  *
- * Returns null when they do not fit at this radius.
+ * Latitude bands were the previous approach and they showed: near a pole the
+ * circumference is almost nothing, so a band holds one or two districts and
+ * trails off into a chain, while the equator carries the mass — the whole thing
+ * reads as a barbell rather than a globe. A lattice has no poles and no rows.
  */
-function packOnShell(radii: number[], shell: number): { phi: number; psi: number }[] | null {
-  if (radii.length === 0) return []
-  if (radii.length === 1) return [{ phi: Math.PI / 2, psi: 0 }]
+function spreadOnShell(radii: number[]): { shell: number; dirs: Vec3[] } {
+  if (radii.length === 0) return { shell: 0, dirs: [] }
+  if (radii.length === 1) return { shell: 0, dirs: [{ x: 1, y: 0, z: 0 }] }
 
-  const angular = (r: number) => Math.asin(Math.min(1, (r + PAD / 2) / shell))
-  const seats: { phi: number; psi: number }[] = []
+  // Enough surface for the caps plus room between them, as a starting guess.
+  const area = radii.reduce((s, r) => s + Math.PI * (r + PAD / 2) ** 2, 0)
+  let shell = Math.max(Math.max(...radii) + PAD, Math.sqrt(area / (4 * Math.PI)) * 1.15)
 
-  /** Which discs fit in one band at this latitude, and how wide each sits. */
-  const fill = (start: number, phi: number) => {
-    const band: { alpha: number; half: number }[] = []
-    let used = 0
-    let max = 0
-    for (let j = start; j < radii.length; j++) {
-      const alpha = angular(radii[j])
-      // Azimuthal half-width at this latitude: a disc near the pole eats more
-      // longitude than the same disc at the equator.
-      const half = Math.asin(Math.min(1, Math.sin(alpha) / Math.max(1e-6, Math.sin(phi))))
-      if (band.length && used + 2 * half > 2 * Math.PI) break
-      band.push({ alpha, half })
-      used += 2 * half
-      max = Math.max(max, alpha)
-    }
-    return { band, used, max }
+  for (let attempt = 0; attempt < 40; attempt++) {
+    const dirs = fibonacciSphere(radii.length)
+    if (relax(dirs, radii, shell)) return { shell, dirs }
+    shell *= 1.08
   }
+  return { shell, dirs: fibonacciSphere(radii.length) }
+}
 
-  let i = 0
-  let phi = 0
-  let previousBandMax = 0
-
-  while (i < radii.length) {
-    // The band's latitude depends on its tallest disc, and which discs fit
-    // depends on the latitude. Settle it by iterating rather than by guessing
-    // from the first disc, which is how bands used to collide with the one
-    // above whenever a big package sat late in the row.
-    let candidate = phi === 0 ? angular(radii[i]) : phi + previousBandMax + angular(radii[i])
-    let filled = fill(i, candidate)
-    for (let pass = 0; pass < 4; pass++) {
-      const settled = phi === 0 ? filled.max : phi + previousBandMax + filled.max
-      if (Math.abs(settled - candidate) < 1e-9) break
-      candidate = settled
-      filled = fill(i, candidate)
-    }
-    if (candidate >= Math.PI) return null
-
-    // Share the slack out unevenly and let each district drift off its band's
-    // latitude, so the shell reads as scattered rather than as rows. The
-    // amounts are hashed from position, and the caller still verifies that
-    // nothing ends up overlapping.
-    const slack = Math.max(0, 2 * Math.PI - filled.used)
-    let walked = 0
-    filled.band.forEach((b, at) => {
-      const nudge = (hash01(`band#${i}#${at}`) - 0.5) * slack * 0.55
-      const drift = (hash01(`lat#${i}#${at}`) - 0.5) * Math.max(0, filled.max - b.alpha) * 1.2
-      seats.push({
-        phi: Math.min(Math.PI - 1e-6, Math.max(1e-6, candidate + drift)),
-        psi: ((walked + b.half) / filled.used) * 2 * Math.PI + nudge,
-      })
-      walked += 2 * b.half
-    })
-    i += filled.band.length
-    phi = candidate
-    previousBandMax = filled.max
+/** Evenly spaced directions, no clustering at the poles. */
+function fibonacciSphere(n: number): Vec3[] {
+  const out: Vec3[] = []
+  for (let i = 0; i < n; i++) {
+    const y = 1 - (2 * (i + 0.5)) / n
+    const r = Math.sqrt(Math.max(0, 1 - y * y))
+    const t = i * GOLDEN_ANGLE
+    out.push({ x: r * Math.cos(t), y, z: r * Math.sin(t) })
   }
-
-  return phi + previousBandMax <= Math.PI ? seats : null
+  return out
 }
 
 /**
- * The greedy packing proposes; this disposes. Checking the actual chord
- * distance between every pair is the only feasibility test worth trusting —
- * the angular arithmetic that produced the seats is exactly what would be
- * wrong if they overlapped.
+ * Pushes overlapping districts apart along the sphere until none overlap.
+ * Returns whether it succeeded — the caller grows the shell if it did not.
  */
-function noOverlaps(seats: { phi: number; psi: number }[], radii: number[], shell: number): boolean {
-  const points = seats.map((s) => scale(onSphere(s.phi, s.psi), shell))
-  for (let a = 0; a < points.length; a++) {
-    for (let b = a + 1; b < points.length; b++) {
-      const dx = points[a].x - points[b].x
-      const dy = points[a].y - points[b].y
-      const dz = points[a].z - points[b].z
-      if (Math.hypot(dx, dy, dz) < radii[a] + radii[b]) return false
+function relax(dirs: Vec3[], radii: number[], shell: number): boolean {
+  for (let pass = 0; pass < 60; pass++) {
+    let worst = 0
+    for (let a = 0; a < dirs.length; a++) {
+      for (let b = a + 1; b < dirs.length; b++) {
+        const need = radii[a] + radii[b] + PAD
+        const dx = (dirs[a].x - dirs[b].x) * shell
+        const dy = (dirs[a].y - dirs[b].y) * shell
+        const dz = (dirs[a].z - dirs[b].z) * shell
+        const gap = Math.hypot(dx, dy, dz)
+        if (gap >= need) continue
+        worst = Math.max(worst, need - gap)
+
+        // Move each away from the other by half the shortfall, then put them
+        // back on the sphere. Two points on top of each other get nudged by
+        // their index instead, since they have no direction to separate along.
+        const push = (need - gap) / (2 * shell)
+        const ux = gap > 1e-9 ? dx / gap : Math.cos(a)
+        const uy = gap > 1e-9 ? dy / gap : Math.sin(a)
+        const uz = gap > 1e-9 ? dz / gap : Math.cos(b)
+        dirs[a] = normalise({
+          x: dirs[a].x + ux * push,
+          y: dirs[a].y + uy * push,
+          z: dirs[a].z + uz * push,
+        })
+        dirs[b] = normalise({
+          x: dirs[b].x - ux * push,
+          y: dirs[b].y - uy * push,
+          z: dirs[b].z - uz * push,
+        })
+      }
     }
+    if (worst === 0) return true
   }
-  return true
-}
-
-/**
- * Smallest shell the districts actually fit on, found by growing until the
- * packing verifies. Grown rather than bisected: which discs land in which band
- * changes with the radius, so feasibility is not perfectly monotonic and a
- * bisection can converge onto a radius that does not work.
- */
-function shellRadius(radii: number[]): number {
-  if (radii.length <= 1) return 0
-
-  let shell = Math.max(...radii) + PAD
-  for (let step = 0; step < 200; step++) {
-    const seats = packOnShell(radii, shell)
-    if (seats && noOverlaps(seats, radii, shell)) return shell
-    shell *= 1.06
-  }
-  return shell
+  return false
 }
 
 /** `github.com/x/y/internal/gitlab` -> `internal/gitlab`. */
