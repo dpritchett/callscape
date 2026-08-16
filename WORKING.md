@@ -36,12 +36,19 @@ bugs in this repo were found by looking at these rather than by reasoning.
 ```sh
 make logs    # tail web/dev-log.jsonl: console, errors, input, rebuilds, frame timings
 make shot    # the page screenshots itself to web/shots/latest.png
-make cue     # push web/cue.json to the page: focus, select, distance, yaw, pitch
+make cue     # push web/cue.json to the page: focus, select, distance, yaw, pitch, pick
 make look    # cue then shot
 ```
 
 `make cue` reads `web/cue.json` rather than taking an inline argument, so the command
 line never varies. Edit that file to change what you are looking at.
+
+`"pick": true` in a cue pulls the trigger: it runs the click handler on whatever the
+reticle is on once the rest of the cue has been applied, and the result lands in the log
+as a `pick` event with the id it hit and whether the ray hit exactly. That is the only
+way to exercise picking without a mouse — `select` names an id and skips the code that
+decides it. The camera still has to be settled first, which is why `pickAtReticle` calls
+`updateMatrixWorld` itself rather than trusting the last frame.
 
 Screenshots capture on demand even when the tab is backgrounded, because the shutter
 renders its own frame — `requestAnimationFrame` stops in a hidden tab, so the first

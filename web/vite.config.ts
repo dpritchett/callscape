@@ -147,6 +147,9 @@ export interface Cue {
   select?: string[]
   reveal?: boolean
   distance?: number
+  yaw?: number
+  pitch?: number
+  pick?: boolean
 }
 
 /**

@@ -88,6 +88,11 @@ addEventListener('keydown', (e) => {
 })
 
 function pickAtReticle() {
+  // A cue can fly the camera and pull the trigger in the same breath, before
+  // anything has rendered, and setFromCamera reads matrixWorld rather than
+  // computing it. For a real click this is already up to date and costs one
+  // matrix; without it a remote pick aims where the camera used to be.
+  camera.updateMatrixWorld()
   raycaster.setFromCamera(CENTRE, camera)
   const hit = world.pickTolerant(camera, raycaster, 45, { w: innerWidth, h: innerHeight })
   devlog('pick', { ...hit, selected: selected.size })
@@ -305,6 +310,8 @@ watchCues((cue) => {
     if (target) controls.frame(target, cue.distance ?? view?.camera.distance ?? 120, true, from)
     else devlog('cue.miss', { focus: cue.focus })
   }
+  // Last, so it fires at whatever the camera was just pointed at.
+  if (cue.pick) pickAtReticle()
 })
 
 const clock = new THREE.Clock()

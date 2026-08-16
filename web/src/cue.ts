@@ -8,6 +8,13 @@ export interface Cue {
    * bug be reproduced from a terminal instead of described. */
   yaw?: number
   pitch?: number
+  /**
+   * Pull the trigger: run what a click runs, on whatever the reticle is on
+   * after the rest of this cue has been applied. `select` says what is
+   * selected; this exercises the picking that decides it, which is otherwise
+   * the one path nobody without a mouse can reach.
+   */
+  pick?: boolean
 }
 
 /**

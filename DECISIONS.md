@@ -77,6 +77,12 @@ and a missed chunk match is logged rather than left to be noticed. Rejected: one
 `InstancedMesh` per colour, which is fine for the 12-entry palette and degenerates into
 thousands of draw calls the moment `encoding.color` names a numeric field.
 
+**The remote trigger calls the click handler, not a synthetic click.** `"pick": true` in
+a cue invokes the same function the mouse, the space bar and the gamepad already invoke,
+so there is one path and the remote cannot drift from it. Rejected: dispatching a
+`MouseEvent` at the canvas, which needs pointer lock the page can only enter from a real
+user gesture, and would test the event plumbing rather than the picking.
+
 **A hidden instance keeps its position and loses its basis.** `InstancedMesh` has no
 per-instance visibility; zeroing the three basis columns collapses the box to a point,
 which draws nothing and cannot be hit by a ray. Rejected: a zero matrix, whose `w` is 0.
