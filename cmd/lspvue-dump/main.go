@@ -57,11 +57,24 @@ type Graph struct {
 
 func main() {
 	stats := flag.Bool("stats", false, "print a plain-text summary to stdout instead of JSON")
+	lex := flag.String("lex", "", "print token spans for one Go file as JSON, instead of a graph")
 	flag.Usage = func() {
 		fmt.Fprintf(os.Stderr, "usage: lspvue-dump [--stats] <module-dir>\n")
+		fmt.Fprintf(os.Stderr, "       lspvue-dump --lex <file.go>\n")
 		flag.PrintDefaults()
 	}
 	flag.Parse()
+
+	// Lexing is one file and no package loading, so it answers in milliseconds
+	// and the page can ask per source panel. It lives here rather than in its
+	// own command because it is the same toolchain doing the same job.
+	if *lex != "" {
+		if err := lexMain(*lex, os.Stdout); err != nil {
+			fmt.Fprintf(os.Stderr, "lspvue-dump: %v\n", err)
+			os.Exit(1)
+		}
+		return
+	}
 
 	dir := "."
 	if flag.NArg() > 0 {

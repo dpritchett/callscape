@@ -30,6 +30,15 @@
         white-space: pre; pointer-events: none; display: none;
         overflow: hidden;
       }
+      /* Source listing. Classes are the token classes lex.go emits; anything
+         it did not cover — whitespace, mostly — inherits the panel colour. */
+      #sel .ln { color: #3f4757; }        /* line numbers, out of the way */
+      #sel .t1 { color: #8b95a7; }        /* punctuation and operators */
+      #sel .t2 { color: #bb9af7; }        /* keywords */
+      #sel .t3 { color: #dbe4f3; }        /* identifiers */
+      #sel .t4 { color: #9ece6a; }        /* strings and runes */
+      #sel .t5 { color: #ff9e64; }        /* numbers */
+      #sel .t6 { color: #5c6a82; font-style: italic; }  /* comments */
       #reticle {
         position: fixed; left: 50%; top: 50%; width: 5px; height: 5px;
         margin: -3px 0 0 -3px; border-radius: 50%;

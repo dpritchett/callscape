@@ -80,6 +80,7 @@ vite log for the reload, before trusting a capture.
 | `motion.ts` | the flight model |
 | `labels.ts` | how big a label has to be to read at N pixels |
 | `srcpath.ts` | path containment for the source reader |
+| `spans.ts` | Go token spans into coloured runs, cut on bytes not characters |
 
 **Rendering and wiring** — no arithmetic that could live on the other side:
 `world.ts` (three.js objects), `main.ts` (wiring, polling, HUD), `controls.ts` (camera and
@@ -94,8 +95,12 @@ unchanged recipe rebakes to an empty diff. Never hand-edit a WAV. Wording, level
 grit are all recipe changes — ask beepboop in plain language. `view.json` carries
 `sound.enabled` and `sound.volume`.
 
-**Go**: `cmd/lspvue-dump` — one file, loads a module with `go/packages`, emits nodes and
-statically resolved call edges.
+**Go**: `cmd/lspvue-dump` — loads a module with `go/packages`, emits nodes and statically
+resolved call edges. `--lex <file.go>` is a second mode: token spans for one file from
+`go/scanner`, no package loading, fast enough for the dev server to call per source
+panel. Run `make build` and the plugin uses the binary; otherwise it falls back to
+`go run`, and if neither works the panel is uncoloured rather than broken. A stale
+binary is a stale lexer — rebuild after touching `lex.go`.
 
 ## Working agreements
 

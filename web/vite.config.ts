@@ -1,6 +1,13 @@
+import { execFile } from 'node:child_process'
+import { existsSync } from 'node:fs'
 import { appendFile, mkdir, readFile, writeFile } from 'node:fs/promises'
+import { join, resolve } from 'node:path'
+import { promisify } from 'node:util'
 import { defineConfig, type Plugin } from 'vite'
 import { resolveWithinRoot } from './src/srcpath'
+import { runsForLines, type Span } from './src/spans'
+
+const execFileAsync = promisify(execFile)
 
 const LOG_FILE = 'dev-log.jsonl'
 const SHOT_DIR = 'shots'
@@ -101,6 +108,33 @@ function devLogSink(): Plugin {
 }
 
 /**
+ * Token spans for one file, from the Go scanner that compiles it.
+ *
+ * A highlighter written in the browser guesses at a grammar this project
+ * already has a lexer for — `lspvue-dump --lex` is one file and no package
+ * loading, so it answers fast enough to ask per panel. The built binary if
+ * `make build` has been run, otherwise the toolchain; neither is required, and
+ * a failure here costs colour rather than the source.
+ */
+async function lex(file: string): Promise<Span[] | null> {
+  const root = resolve('..') // vite runs in web/; the Go module is the repo
+  const binary = join(root, 'lspvue-dump')
+  const [cmd, args] = existsSync(binary)
+    ? [binary, ['--lex', file]]
+    : ['go', ['run', './cmd/lspvue-dump', '--lex', file]]
+  try {
+    const { stdout } = await execFileAsync(cmd, args, {
+      cwd: root,
+      maxBuffer: 32 * 1024 * 1024, // a big generated file is a lot of tokens
+      timeout: 20_000,
+    })
+    return (JSON.parse(stdout) as { spans: Span[] }).spans
+  } catch {
+    return null
+  }
+}
+
+/**
  * Serves source out of the analysed module, so a selected symbol can be read
  * rather than only counted. The graph names its own root; the request names a
  * file relative to it, which is exactly the shape of a traversal bug, so the
@@ -129,9 +163,14 @@ function sourceReader(): Plugin {
 
             const from = Number(url.searchParams.get('from') ?? 1)
             const to = Number(url.searchParams.get('to') ?? from + 40)
-            const text = await readFile(full, 'utf8')
+            const raw = await readFile(full)
+            const text = raw.toString('utf8')
             const lines = text.split('\n').slice(Math.max(0, from - 1), to)
-            send(200, { file, from, to, lines })
+            // Colour is a bonus: if the toolchain is not there, the panel still
+            // reads. `lines` is what it falls back to.
+            const spans = await lex(full)
+            const runs = spans ? runsForLines(raw, spans, from, to) : undefined
+            send(200, { file, from, to, lines, runs })
           } catch (err) {
             send(404, { error: String(err) })
           }

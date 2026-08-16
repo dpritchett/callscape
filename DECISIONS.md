@@ -77,6 +77,31 @@ and a missed chunk match is logged rather than left to be noticed. Rejected: one
 `InstancedMesh` per colour, which is fine for the 12-entry palette and degenerates into
 thousands of draw calls the moment `encoding.color` names a numeric field.
 
+**The source panel is coloured by `go/scanner`, not by a highlighter.** A browser
+highlighter guesses at a grammar this project already ships a lexer for, and the lexer is
+the one the compiler uses. `--lex` is one file with no package loading, so the dev server
+can ask per panel. Rejected: Prism or Shiki, which is a dependency to approximate
+something already on disk; and lexing in TypeScript, which is the same guessing written
+by hand.
+
+**Spans are cut on the bytes, in Node, not in the browser.** `go/scanner` reports byte
+offsets and JavaScript string indices are UTF-16 code units, so one `é` in a comment puts
+every later colour on the wrong character. The dev server has the file as a Buffer, so it
+does the cutting and hands the page runs of text — which also means the page never needs
+to know an offset. `runsForLines` is pure and tested, including a case with a multi-byte
+rune ahead of a keyword. Rejected: sending offsets and slicing in the browser, which is
+correct only for ASCII.
+
+**The listing is built from DOM nodes, not from an HTML string.** It renders arbitrary
+source off somebody's disk; as markup that needs escaping to be right, and `textContent`
+cannot be broken by what a file happens to contain. Rejected: `innerHTML` with an escape
+function, which is one forgotten call away from executing the file it is displaying.
+
+**Semantic classification is not in this.** Telling a type from a variable needs
+`types.Info`, which means a full `go/packages` load — the slow thing `make dump` does —
+and doing that per panel open would cost seconds. It belongs at dump time if it is ever
+worth the size, and the lexical classes are most of the readability for none of that.
+
 **Clear undoes itself on a second press.** `X` sits next to the keys you fly with and it
 throws away the expensive part — finding the symbol, not selecting it — so hitting it by
 accident cost a search. The second press puts back what the first dropped, and only the
