@@ -53,6 +53,9 @@ const WHEEL_IMPULSE = 0.22 // velocity per wheel unit, along the view direction
 const FOCUS_SECONDS = 0.55
 /** Long enough to see the world go past, short enough to feel like a flick. */
 const SPIN_SECONDS = 0.2
+/** The camera's own axes: its wings, and the line it is looking along. */
+const PITCH_AXIS = new THREE.Vector3(1, 0, 0)
+const ROLL_AXIS = new THREE.Vector3(0, 0, 1)
 
 export class FlyController implements Controller {
   private keys = new Set<string>()
@@ -106,6 +109,7 @@ export class FlyController implements Controller {
     t: number
   } | null = null
 
+  private spinQuat = new THREE.Quaternion()
   private dir = new THREE.Vector3()
   private right = new THREE.Vector3()
   private input = new THREE.Vector3()
@@ -290,11 +294,15 @@ export class FlyController implements Controller {
       // it away and you dive. Left and right roll rather than yaw, so turning
       // is banking and pulling back, the way an aeroplane does it. The mouse
       // keeps its own convention, which is a mouse's.
-      this.euler.x += look.y * this.padLook * dt
-      this.euler.x = Math.max(-Math.PI / 2 + 0.01, Math.min(Math.PI / 2 - 0.01, this.euler.x))
-      // Negative z banks right, checked against three rather than guessed at.
-      this.euler.z -= look.x * this.padRoll * dt
-      this.camera.quaternion.setFromEuler(this.euler)
+      //
+      // Both happen in the camera's own frame rather than the world's, so up
+      // is the top of the viewport and not true north. Written as euler
+      // components this was wrong the moment you banked: pitch there turns
+      // about a horizontal axis whatever the wings are doing, so pulling back
+      // while rolled took the nose towards the sky instead of towards the top
+      // of the screen. A local rotation has no opinion about which way is up.
+      this.turn(PITCH_AXIS, look.y * this.padLook * dt)
+      this.turn(ROLL_AXIS, -look.x * this.padRoll * dt) // negative banks right
       this.tween = null
     }
 
@@ -413,6 +421,22 @@ export class FlyController implements Controller {
     this.wasMoving = moving
     this.wasFast = this.fast
     this.onMotion?.(moving, this.fast)
+  }
+
+  /**
+   * Rotates the camera about one of its own axes.
+   *
+   * Right-multiplying the quaternion applies the turn in the camera's frame,
+   * which is what makes the stick relative: no clamp is needed and none is
+   * wanted, since a quaternion has no gimbal to lock and an aeroplane can loop.
+   * The euler is resynced afterwards because the mouse still steers with it,
+   * and the two have to agree about where the camera is pointing.
+   */
+  private turn(axis: THREE.Vector3, radians: number) {
+    if (!radians) return
+    this.spinQuat.setFromAxisAngle(axis, radians)
+    this.camera.quaternion.multiply(this.spinQuat)
+    this.euler.setFromQuaternion(this.camera.quaternion)
   }
 
   /** The one place the burn changes, so every route through it says so. */

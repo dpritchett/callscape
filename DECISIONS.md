@@ -174,12 +174,20 @@ edges on top of everything, which shows you wires from the far side of the globe
 push to dive, left and right roll rather than yaw — so a turn is banking and pulling back,
 the way an aeroplane does it, instead of sliding the horizon sideways. The inversion is
 only on the stick: a mouse that climbed when you pushed it away would be wrong, and the
-two devices are allowed to disagree because people already expect them to. Which sign of
-`euler.z` banks right was checked against three rather than reasoned about. Strafing now
-uses the camera's own right rather than the horizon's, which is identical while the wings
-are level and correct once they are not. Pitch stays clamped just short of vertical:
-looping would need a different rotation order, and this camera has a horizon. `F` levels
-the wings, since framing rebuilds the orientation from a `lookAt`.
+two devices are allowed to disagree because people already expect them to.
+
+Both turns happen in the camera's own frame, by right-multiplying its quaternion, rather
+than by moving euler components. As eulers it was wrong the moment you banked: pitch there
+turns about a horizontal axis whatever the wings are doing, so pulling back while rolled
+took the nose towards the sky instead of towards the top of the screen. A local rotation
+has no opinion about which way is up. Measured at four bank angles including inverted, the
+nose moves towards viewport-up by 0.99 every time; banked ninety degrees a pull gives zero
+climb and a third of a radian of turn, which is what banking and pulling back is for.
+
+No pitch clamp on the stick — a quaternion has no gimbal to lock and an aeroplane can loop
+— while the mouse keeps its clamp, because a mouse cannot. Strafing uses the camera's own
+right rather than the horizon's, identical while the wings are level and correct once they
+are not. `F` levels the wings, since framing rebuilds the orientation from a `lookAt`.
 
 **The tail camera turns rather than cuts, and it is a fifth of a second.** A hard swap
 reads as two separate places; watching the world go past reads as one place with
