@@ -134,6 +134,13 @@ the movement model, so "half a second" is tested without a clock: never early, n
 than one frame late, at 24, 60 and 144fps. Rejected: hold-to-burn, which is a key held
 down for the entire time you are going anywhere.
 
+**A continuous sound beats a callout for a continuous state.** "burn" and "coasting" were
+spoken once at the moment the speed changed; the flight bed says which gear you are in
+for as long as it is true, so the lines were dropped rather than kept as a second, worse
+copy of the same fact. The same reasoning is why the control banner is always on screen
+instead of appearing when something takes the wheel: a state you can see is better than
+an event you had to catch.
+
 **A remote hold locks the local controls, and has two ways out.** An agent taking
 screenshots and a person flying by hand were fighting over the same camera, and neither
 could tell which of them had moved it. `"hold": true` in a cue ignores every local input

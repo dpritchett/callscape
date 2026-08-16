@@ -22,8 +22,9 @@ export const CUES = [
   'search-empty',
   'panel-info',
   'panel-source',
-  'fast-on',
-  'fast-off',
+  // No fast-on/fast-off. The flight bed is two tiers of airflow and it says
+  // which one you are in continuously, for as long as it is true, which is
+  // strictly more than a callout said once. The recipe can drop those two.
   'capture',
   'release',
   'view-error',

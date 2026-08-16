@@ -77,7 +77,6 @@ export class FlyController implements Controller {
   private fast = false
   /** Seconds spent at rest, which is what expires the burn. */
   private still = 0
-  onSpeedChange: ((fast: boolean) => void) | null = null
   /** Whether the camera is moving, and in which gear. Fires only on a change. */
   onMotion: ((moving: boolean, fast: boolean) => void) | null = null
   private wasMoving = false
@@ -341,7 +340,8 @@ export class FlyController implements Controller {
     this.fast = on
     this.still = 0
     devlog('speed', { fast: on, why })
-    this.onSpeedChange?.(on)
+    // No callback of its own: the gear reaches the world through onMotion,
+    // which the flight bed is listening to anyway.
   }
 
   setLocked(on: boolean) {

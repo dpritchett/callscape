@@ -7,7 +7,8 @@
       html, body { margin: 0; height: 100%; background: #0b0e14; overflow: hidden; }
       canvas { display: block; }
       #hud {
-        position: fixed; top: 10px; left: 12px;
+        /* clear of the control banner, which is always at the very top */
+        position: fixed; top: 40px; left: 12px;
         font: 12px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace;
         color: #8b95a7; pointer-events: none; white-space: pre; text-shadow: 0 1px 2px #000;
       }
@@ -23,7 +24,7 @@
         color: #5b6474; pointer-events: none;
       }
       #sel {
-        position: fixed; top: 10px; right: 12px; max-width: 46vw; max-height: 82vh;
+        position: fixed; top: 40px; right: 12px; max-width: 46vw; max-height: 78vh;
         font: 12px/1.45 ui-monospace, SFMono-Regular, Menlo, monospace;
         color: #dbe4f3; background: rgba(10,13,20,0.86);
         border: 1px solid #2b3348; border-radius: 6px; padding: 8px 10px;
@@ -39,14 +40,18 @@
       #sel .t4 { color: #9ece6a; }        /* strings and runes */
       #sel .t5 { color: #ff9e64; }        /* numbers */
       #sel .t6 { color: #5c6a82; font-style: italic; }  /* comments */
-      /* Remote control. Loud on purpose: input going nowhere reads as a broken
-         page unless something says otherwise. */
+      /* Who has the controls, always on screen. A banner that only appears when
+         something is wrong has to be read to be understood; one that is always
+         there is understood by having changed. Quiet when the wheel is yours,
+         loud when it is not. */
       #hold {
         position: fixed; top: 0; left: 0; right: 0;
         font: 600 13px/2.2 ui-monospace, SFMono-Regular, Menlo, monospace;
-        color: #0b0e14; background: #ffc978; text-align: center;
-        letter-spacing: 0.08em; pointer-events: none; display: none;
+        text-align: center; letter-spacing: 0.08em; pointer-events: none;
+        transition: background-color 180ms, color 180ms;
       }
+      #hold.mine { color: #566072; background: #10141c; }
+      #hold.remote { color: #0b0e14; background: #ffc978; }
       #reticle {
         position: fixed; left: 50%; top: 50%; width: 5px; height: 5px;
         margin: -3px 0 0 -3px; border-radius: 50%;

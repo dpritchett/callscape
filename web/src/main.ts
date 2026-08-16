@@ -202,7 +202,8 @@ document.addEventListener('pointerlockchange', () => {
   voice.play(captured ? 'capture' : 'release')
 })
 
-flyControls.onSpeedChange = (fast) => voice.play(fast ? 'fast-on' : 'fast-off')
+// No callout for the speed change: the bed is two tiers of airflow and it is
+// already saying which one you are in, continuously, for as long as it is true.
 flyControls.onMotion = (moving, fast) => voice.bed(moving, fast)
 
 function pickAtReticle() {
@@ -248,6 +249,16 @@ const holdBar = document.getElementById('hold')!
 let held = false
 let holdTimer: ReturnType<typeof setTimeout> | null = null
 
+/**
+ * The banner is on whether or not anything is holding the wheel. One that only
+ * appears when something is wrong has to be read to be understood; one that is
+ * always there is understood by having changed colour.
+ */
+function renderHold() {
+  holdBar.className = held ? 'remote' : 'mine'
+  holdBar.textContent = held ? 'REMOTE HAS THE WHEEL · esc to take it back' : 'YOU HAVE CONTROL'
+}
+
 function takeWheel() {
   if (holdTimer) clearTimeout(holdTimer)
   holdTimer = setTimeout(() => giveWheel('expired'), HOLD_SECONDS * 1000)
@@ -256,8 +267,7 @@ function takeWheel() {
   controls.setLocked(true)
   closeSearch()
   document.exitPointerLock()
-  holdBar.textContent = 'REMOTE HAS THE WHEEL · esc to take it back'
-  holdBar.style.display = 'block'
+  renderHold()
   devlog('hold', { on: true, seconds: HOLD_SECONDS })
   voice.play('remote-on')
 }
@@ -268,10 +278,12 @@ function giveWheel(why: string) {
   if (!held) return
   held = false
   controls.setLocked(false)
-  holdBar.style.display = 'none'
+  renderHold()
   devlog('hold', { on: false, why })
   voice.play('remote-off')
 }
+
+renderHold()
 
 /** A miss has to look different from a broken button. */
 function flashMiss() {
