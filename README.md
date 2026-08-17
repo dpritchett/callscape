@@ -37,7 +37,9 @@ project.
 (it drops back a half second after you stop), `F` to fly to whatever is selected, `C` to
 look behind you, `/` to search for a symbol, tab to swap the panel, escape to release.
 On a gamepad the right stick is a control column — pull back to climb, left and right to
-roll — and the triggers are the rudder.
+roll — the triggers are the rudder, and view/menu hands the controls over and takes them
+back. A pad otherwise takes control by being moved and loses it by going quiet, which
+leaves no way to say you are finished; that button is the sentence.
 
 ## Fly to a symbol, and read it
 

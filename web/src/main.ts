@@ -494,6 +494,14 @@ flyControls.onPadPresence = () => flying()
 // through the controller's own flip, so hanging the sound there covers all
 // three without any of them knowing about it.
 flyControls.onFlip = () => voice.play('flip')
+// The pad's own take-and-release. Same two callouts the pointer uses, because
+// it is the same statement — somebody has the controls, or nobody does — and
+// hearing a different thing depending on which hand you said it with would be
+// two vocabularies for one idea.
+flyControls.onPadRelease = (released) => {
+  voice.play(released ? 'release' : 'capture')
+  flying()
+}
 
 /**
  * Fly to whatever the panel is showing. The selection is the thing you are

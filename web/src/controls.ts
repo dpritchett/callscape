@@ -117,6 +117,12 @@ export class FlyController implements Controller {
    * page makes noise.
    */
   onFlip: (() => void) | null = null
+  /**
+   * The pad handed the controls over, or took them back. Same shape as the
+   * other hooks: the controller knows what the button meant, and the page
+   * decides what that sounds like.
+   */
+  onPadRelease: ((released: boolean) => void) | null = null
   private padLook = 2.6 // radians/sec at full stick deflection
   /** Roll is faster than pitch, since a turn starts by banking. */
   private padRoll = 3.2
@@ -130,6 +136,9 @@ export class FlyController implements Controller {
   /** Seconds since the pad last said anything, and whether that is recent. */
   private padIdle = PAD_PRESENCE_SECONDS
   private padLive = false
+  /** Deliberately handed over, as opposed to merely gone quiet. */
+  private padReleased = false
+  private padMetaHeld = false
   private padBoostHeld = false
   private padFlipHeld = false
   /** Shift or a bumper lights the burn; standing still puts it out. */
@@ -344,6 +353,31 @@ export class FlyController implements Controller {
       PAD_PRESENCE_SECONDS,
     )
     this.padIdle = presence.still
+
+    // View or Menu — the two small buttons either side of the Xbox badge —
+    // hands the controls over and takes them back. Both, because the one with
+    // the overlapping squares gets called Start as often as View and neither
+    // has another job here.
+    //
+    // A pad takes control simply by being moved and loses it by going quiet,
+    // which is the right default and gives you no way to *say* you are done:
+    // a thumb resting on a stick is presence, and putting the pad down means
+    // waiting out a timer. This is that sentence.
+    const meta = (pad.buttons[8]?.pressed ?? false) || (pad.buttons[9]?.pressed ?? false)
+    if (meta && !this.padMetaHeld) {
+      this.padReleased = !this.padReleased
+      devlog('pad.released', { released: this.padReleased })
+      if (this.padReleased) this.dropPad()
+      this.onPadRelease?.(this.padReleased)
+    }
+    this.padMetaHeld = meta
+
+    // Handed over: the pad is not flying anything and does not count as having
+    // the controls, so the music and the airflow stop the way they do when a
+    // pointer is let go. Everything below this is skipped — except the button
+    // that gets it back, which is above.
+    if (this.padReleased) return null
+
     this.setPadLive(!presence.expired)
 
     if (!this.spin && (look.x || look.y)) {
