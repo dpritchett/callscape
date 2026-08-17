@@ -23,7 +23,7 @@
     "mode": "all"
   },
   "camera": {
-    "focus": "github.com/dpritchett/callscape/cmd/callscape-dump.dump",
+    "focus": null,
     "distance": 120
   },
   "select": []
