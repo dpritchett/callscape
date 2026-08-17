@@ -21,7 +21,9 @@
    There is deliberately no CI. One committer, one machine, no users — a hosted runner
    would be a second environment to keep green with nobody on the other side of it.
    Revisit the day a stranger might `go install` this or a second machine touches it;
-   that is when a neutral arbiter starts having a constituency.
+   that is when a neutral arbiter starts having a constituency. There is a
+   `.github/workflows/ci.yml` in the history, added early and removed for the reason
+   above — it is gone from the tree on purpose, not by accident.
 7. **Config is a closed struct.** An unknown field in `view.json` is an error, not
    something to ignore. A typo in a config file should be loud.
 8. **Ten-minute rule.** If a decision would take more than ten minutes, take the boring
@@ -74,9 +76,12 @@ about three.js. Anything interesting enough to get wrong belongs on the pure sid
 - **`callscape-dump` runs the Go toolchain against its target.** `go/packages` shells out to
   `go list`, which can fetch dependencies, honour a `toolchain` directive and preprocess
   cgo. Point it only at code you would already run a build on.
-- **The dev server is a dev server, and it binds the LAN** so the page can be flown from a
-  phone. `/__cue` gives anything on the network the wheel and `/__src` reads Go files out
-  of the dumped module. Don't put it on a shared network.
+- **The dev server binds the LAN** so the page can be flown from a phone, and **the
+  endpoints that make that interesting to a stranger are off by default.** `UNSAFE_ENABLE_REMOTE_CONTROL=true`
+  — `make dev-remote` — registers `/__cue`, `/__shot` and `/__src`; without it they are not
+  routes, rather than routes answering 403, so there is nothing to probe. The containment
+  in `srcpath.ts` applies either way: the flag decides who reaches an endpoint, those
+  functions decide what it can do once reached.
 
 ## Scope
 

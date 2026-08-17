@@ -2,7 +2,8 @@ GOLANGCI_LINT_VERSION := v2.11.4
 NPM := npm --prefix web
 
 .PHONY: check build install test vet lint lint-install \
-	web-install web-check web-test dev logs shot cue look dump sample hooks clean sounds music
+	web-install web-check web-test dev dev-remote logs shot cue look dump sample hooks clean \
+	sounds music
 
 # Everything lefthook runs, in one place.
 check: vet test lint web-check web-test
@@ -40,6 +41,13 @@ web-test:
 dev:
 	$(NPM) run dev
 
+# The dev server with its instruments on: `make shot`, `make cue` and `make look`
+# all need this. They are a remote control for the camera and a reader for the
+# analysed module's source, on a server that binds the LAN, so they are off
+# unless you ask — see the comment on REMOTE_ENABLED in web/vite.config.ts.
+dev-remote:
+	$(NPM) run dev:unsafe
+
 # What the browser saw. The dev server appends events from the page here.
 logs:
 	@tail -f web/dev-log.jsonl | jq -c '"\(.t[11:19]) \(.event) \(.data // "")"'
@@ -66,6 +74,8 @@ sample:
 
 # The navigator's voice. The WAVs are committed, so a clone runs with sound and
 # without beepboop; this is how to rebake them after a wording or level change.
+# Needs a beepboop checkout next door and a piper voice model, so it is not on
+# any normal path — nothing a reader of this repo has to run.
 # The recipe is the source of truth — never hand-edit a WAV. Output is
 # deterministic, so an unchanged recipe rebakes to an empty diff.
 BEEPBOOP ?= ../beepboop
@@ -82,6 +92,7 @@ sounds:
 #
 # FLAC, not the WAV next to it: same samples at a fifth the size, and sample
 # exact, so the loop comes round without the seam an MP3's padding would add.
+# Like `sounds`, this wants a checkout next door and is not on any normal path.
 BEATSHOP ?= ../beatshop
 MUSIC ?= apollo-v1
 music:
@@ -97,6 +108,9 @@ clean:
 #
 # Through scripts/page rather than curl, so the dev server's address is written
 # down once and every ad-hoc poke goes through something that can only reach it.
+#
+# Needs `make dev-remote`, not `make dev`: the endpoint this posts to is not
+# registered unless the instruments were asked for.
 shot:
 	@./scripts/page post /__shot/request > /dev/null
 	@sleep 3
@@ -110,6 +124,8 @@ shot:
 # The file is scratch — where you happened to be looking, rewritten a dozen
 # times a session — so it is not tracked, and a clone that has never cued has
 # to be given one rather than being met with a curl error about a missing path.
+#
+# Needs `make dev-remote`, like `make shot`.
 web/cue.json:
 	@printf '{\n  "select": [],\n  "distance": 110,\n  "yaw": 40,\n  "pitch": 35\n}\n' > $@
 	@echo "wrote a starting $@"

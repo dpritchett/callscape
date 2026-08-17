@@ -259,13 +259,55 @@ function remoteCue(): Plugin {
   }
 }
 
+/**
+ * The instruments — `/__cue`, `/__shot`, `/__src` — are off unless asked for.
+ *
+ * They are what makes this page workable without a browser, and they are also a
+ * remote control for the camera and a reader for the analysed module's source,
+ * on a server that binds the LAN. That trade is a fine one to make on your own
+ * machine and not one to make on somebody's behalf, so a fresh clone starts
+ * without them and turning them on is a sentence you have to type.
+ *
+ * Named for what it is. Nobody sets a variable with UNSAFE in it by accident,
+ * and nobody who does can say they were not told.
+ */
+const REMOTE_ENABLED = process.env.UNSAFE_ENABLE_REMOTE_CONTROL === 'true'
+
+/**
+ * Says so at startup, once.
+ *
+ * A capability that is on and silent is one nobody remembers is on. This is the
+ * only line the dev server prints that is about exposure rather than about the
+ * build, which is the point.
+ */
+function remoteWarning(): Plugin {
+  return {
+    name: 'callscape-remote-warning',
+    configureServer(server) {
+      server.httpServer?.once('listening', () => {
+        server.config.logger.warn(
+          '  ⚠  remote control ON: /__cue, /__shot and /__src are answering on every ' +
+            'interface this server binds. Unset UNSAFE_ENABLE_REMOTE_CONTROL to turn them off.',
+        )
+      })
+    },
+  }
+}
+
 export default defineConfig({
-  plugins: [devLogSink(), remoteShutter(), remoteCue(), sourceReader()],
+  // Off means the middleware was never registered, rather than registered and
+  // answering 403. There is nothing to probe and nothing to get wrong later:
+  // the endpoint does not exist.
+  plugins: [
+    devLogSink(), // local file, no reach — unconditional
+    ...(REMOTE_ENABLED ? [remoteWarning(), remoteShutter(), remoteCue(), sourceReader()] : []),
+  ],
   server: {
     // Listen on the LAN as well as on loopback, so the page can be flown from a
-    // phone. This is a dev server and it means it: `/__src` reads files out of
-    // whatever module was dumped, and `/__cue` lets anything on the network take
-    // the wheel. Fine on a home network, not something to run on a shared one.
+    // phone. Safe by default because the endpoints that would make that
+    // interesting to a stranger are not registered unless asked for; with
+    // UNSAFE_ENABLE_REMOTE_CONTROL set, this is a machine on your network
+    // offering the camera and the dumped module's source to anything that asks.
     host: true,
     // Pinned, and pinned loudly. `make shot` and `make cue` post to 5178, and
     // Vite's default is to take the next free port when 5173 is busy — so this

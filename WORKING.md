@@ -25,8 +25,15 @@ question is whether something scales.
 ```sh
 make dump TARGET=/path/to/module   # writes web/public/graph.json
 make dev                           # vite on :5178
+make dev-remote                    # the same, with the instruments below switched on
 make check                         # vet, test, golangci-lint, tsc, vitest — what lefthook runs
 ```
+
+**Use `make dev-remote` while working on this.** `make dev` serves the page and nothing
+else; the endpoints the instruments talk to are not registered without
+`UNSAFE_ENABLE_REMOTE_CONTROL=true`, because they are a remote camera and a source reader
+on a server that binds the LAN, and a fresh clone should not be offering those to its
+network on somebody's behalf. It prints a warning line when they are on.
 
 With no `make dump` behind you the page flies `graph.default.json` instead: this repo,
 dumped by itself, tracked so a clone has something to fly. `make sample` rebakes it and
@@ -149,20 +156,29 @@ input), `mfd.ts` (the panel), `sound.ts` (the voice), `sky.ts`, `shutter.ts`, `c
 two flight beds, `flight-slow` and `flight-fast`, which loop while the camera is moving.
 The beds are one sound at two speeds sharing a noise seed, so their gains are ridden
 against each other rather than one being stopped and the other started. Both run for the
-life of the page. `remote-on` and `remote-off` are wired but not yet in the recipe, so
-they are silent.
+life of the page. `remote-on` and `remote-off` are tones rather than speech — falling when
+the remote takes the wheel, rising when it gives it back — because the wheel changing
+hands is a state change and a state change wants an earcon. `flip` is wired and silent
+until beepboop grows a swept-noise one-shot to bake it from.
+
+**A recipe change and a playback trim are different things.** The recipe decides what a
+line says, how it is voiced and how hot it was baked; that lives in beepboop and changing
+it means a rebake. `VOICE_LEVEL` in `sound.ts` is a fader on top, for the whole voice
+sitting too far forward against the beds and the music. Reach for the fader first — it is
+a mix decision, it needs no other repo, and it is one number.
 
 One written track sits under all of it, `apollo-v1.flac`, looping. It only plays while
 somebody has the controls — pointer captured, or a remote holding the wheel — because a
 page sitting idle with the cursor free does not want a soundtrack. It comes from
-[beatshop](../beatshop), not from a recipe: `make music` copies it out of that project's
+beatshop, not from a recipe: `make music` copies it out of that project's
 `out/archive`, and `make sounds` deliberately no longer touches it. FLAC rather than the
 WAV beside it, at a fifth the size and sample-exact, so the loop has no seam.
 
 It replaced two eight-second loops that took a minute each in turn. That handover existed
 to make eight seconds of material last; 111 seconds of written music does not need it, so
 the second gain and the minute timer went with them.
-They are baked by [beepboop](../beepboop) from `recipes/navigator.json` over there and
+They are baked by [beepboop](https://github.com/dpritchett/beepboop) from
+`recipes/navigator.json` over there and
 committed here, so a clone runs with sound and without that toolchain. `make sounds`
 rebakes; the recipe is the source of truth and the output is deterministic, so an
 unchanged recipe rebakes to an empty diff. Never hand-edit a WAV. Wording, levels and

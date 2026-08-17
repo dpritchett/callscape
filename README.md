@@ -133,10 +133,12 @@ dumping a module runs `go list` against it — which can fetch dependencies, hon
 build on that code, and the same reason not to do it to a repo you just cloned from a
 stranger.
 
-**The dev server is a dev server, and it binds the LAN.** That is deliberate — the page is
-worth flying from a phone — but it means anything on the network can drive the camera
-through `/__cue` and read Go files out of the dumped module through `/__src`. Fine on a
-home network, not something to run on a shared one.
+**The remote surface is off unless you turn it on.** `make dev` serves the page and
+nothing else. `make dev-remote` also registers `/__cue`, `/__shot` and `/__src`, which are
+what let this thing be driven and photographed from a terminal — and which are, on a
+server that binds the LAN, a camera anything on the network can steer and a reader for the
+analysed module's source. Fine on a home network, not something to run on a shared one,
+and not something a fresh clone should do without being asked.
 
 ## Checks
 

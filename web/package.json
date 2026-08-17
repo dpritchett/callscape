@@ -5,6 +5,7 @@
   "scripts": {
     "test": "vitest run",
     "dev": "vite",
+    "dev:unsafe": "UNSAFE_ENABLE_REMOTE_CONTROL=true vite",
     "build": "tsc --noEmit && vite build",
     "check": "tsc --noEmit"
   },
