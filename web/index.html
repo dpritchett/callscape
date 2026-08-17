@@ -52,7 +52,23 @@
         transition: background-color 180ms, color 180ms;
       }
       #hold.mine { color: #566072; background: #10141c; }
-      #hold.remote { color: #0b0e14; background: #ffc978; }
+      /* Held by something else, and breathing. A banner that is merely a
+         different colour is read once and then stops being seen; one that is
+         still moving a minute later cannot be forgotten about, which is the
+         whole job of this strip. Slow and shallow, so it is not a strobe. */
+      #hold.remote {
+        color: #0b0e14; background: #ffc978;
+        animation: wheel-held 1.8s ease-in-out infinite;
+      }
+      @keyframes wheel-held {
+        0%, 100% { background: #ffc978; }
+        50% { background: #ffe2b0; }
+      }
+      /* Somebody who has asked for less motion still needs to know who is
+         driving; the colour already says it. */
+      @media (prefers-reduced-motion: reduce) {
+        #hold.remote { animation: none; }
+      }
       /* The label ribbon: which names are on, always on screen, and the only
          piece of HUD you can click. Bottom right, clear of the hint block. */
       #ribbon {
