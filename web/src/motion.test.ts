@@ -2,6 +2,7 @@ import { describe, expect, test } from 'vitest'
 import {
   BURN_SECONDS,
   DEFAULT_TUNING,
+  columnFromKeys,
   deadzone,
   deadzone1,
   ease,
@@ -160,5 +161,36 @@ describe('stepBurn', () => {
   test('a touch of throttle resets the clock', () => {
     const almost = rest(BURN_SECONDS - 0.05)
     expect(stepBurn(almost.still, true, 1 / 60).still).toBe(0)
+  })
+})
+
+describe('the arrows as a control column', () => {
+  const held = (...codes: string[]) => columnFromKeys(new Set(codes))
+
+  test('pulling back climbs, the way the stick does', () => {
+    // the sign that matters: positive pitch is nose up, and it is Down that
+    // produces it, because the arrows are a column and not a scrollbar
+    expect(held('ArrowDown').pitch).toBe(1)
+    expect(held('ArrowUp').pitch).toBe(-1)
+  })
+
+  test('right rolls right', () => {
+    // positive roll is stick-right; the controller negates it to bank that way,
+    // which is the same line the gamepad takes
+    expect(held('ArrowRight').roll).toBe(1)
+    expect(held('ArrowLeft').roll).toBe(-1)
+  })
+
+  test('opposite keys cancel instead of fighting', () => {
+    expect(held('ArrowUp', 'ArrowDown').pitch).toBe(0)
+    expect(held('ArrowLeft', 'ArrowRight').roll).toBe(0)
+  })
+
+  test('the two axes are independent, so a diagonal is a banked climb', () => {
+    expect(held('ArrowDown', 'ArrowLeft')).toEqual({ pitch: 1, roll: -1 })
+  })
+
+  test('hands off every other key', () => {
+    expect(held('KeyW', 'KeyA', 'Space', 'ShiftLeft')).toEqual({ pitch: 0, roll: 0 })
   })
 })

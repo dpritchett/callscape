@@ -1,6 +1,7 @@
 import * as THREE from 'three'
 import {
   DEFAULT_TUNING,
+  columnFromKeys,
   deadzone,
   deadzone1,
   ease,
@@ -56,6 +57,12 @@ const SPIN_SECONDS = 0.2
 const PITCH_AXIS = new THREE.Vector3(1, 0, 0)
 const YAW_AXIS = new THREE.Vector3(0, 1, 0)
 const ROLL_AXIS = new THREE.Vector3(0, 0, 1)
+/**
+ * How far over a held arrow counts as pushing the stick. A key has no travel,
+ * so it would otherwise be full deflection from the instant it goes down, and
+ * full deflection is 150 degrees a second — more than anyone wants from a tap.
+ */
+const KEY_DEFLECTION = 0.6
 
 export class FlyController implements Controller {
   private keys = new Set<string>()
@@ -185,6 +192,17 @@ export class FlyController implements Controller {
       (pad?.forward ?? 0)
     const strafe = (k.has('KeyD') ? 1 : 0) - (k.has('KeyA') ? 1 : 0) + (pad?.strafe ?? 0)
     const rise = (k.has('KeyE') ? 1 : 0) - (k.has('KeyQ') ? 1 : 0)
+
+    // The arrows are the same control column the right stick is, and for the
+    // same reason: mouse look can drag the nose around but it has no answer at
+    // all for roll, so a keyboard could only ever fly the map upright. Down
+    // pulls back and climbs, matching the stick rather than matching a
+    // scrollbar — there is one convention in this cockpit and this is it.
+    const { pitch, roll } = columnFromKeys(k)
+    if (!this.spin && (pitch || roll)) {
+      this.turn(PITCH_AXIS, pitch * this.padLook * KEY_DEFLECTION * dt)
+      this.turn(ROLL_AXIS, -roll * this.padRoll * KEY_DEFLECTION * dt) // negative banks right
+    }
 
     this.input.set(0, 0, 0)
     if (forward) this.input.addScaledVector(this.dir, forward)

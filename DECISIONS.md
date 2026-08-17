@@ -390,6 +390,17 @@ four-way rocker is for. On the keyboard it is `L`, forwards only: shift already 
 burn on its own keydown, so shift-L would light the engines every time you stepped back,
 and a ring of five reaches everything going one way.
 
+**The arrow keys are the control column, and down climbs.** Mouse look can drag the nose
+around but has no answer at all for roll, so a keyboard could only ever fly the map
+upright while a pad could bank through it. The arrows read as the right stick reads:
+`ArrowDown` pulls back and climbs, left and right roll rather than yaw. Inverted against
+what a scrollbar would do, deliberately — there is one convention in this cockpit and the
+pad already set it. A held key counts as six tenths of full deflection, because a key has
+no travel and full stick is 150 degrees a second. The mapping lives in `motion.ts` under
+test rather than inline in the controller, since a sign convention is the thing that
+silently inverts. Rejected: binding roll to a spare letter pair, which leaves the arrows
+unused and the two halves of the column on different parts of the keyboard.
+
 **`aim` walks the name to the reticle rather than waiting to find it.** The district you
 are pointing at is usually the one you are inside, and the widest on coder is 180 units
 across, so its centre is nowhere near the middle of the screen — the usual eight-tenths

@@ -79,6 +79,23 @@ export function deadzone1(v: number, dz = 0.12): number {
   return Math.sign(v) * Math.min(1, (mag - dz) / (1 - dz))
 }
 
+/**
+ * The arrow keys read as a control column, in the same units and the same
+ * directions the right stick produces: `pitch` positive is pulling back and
+ * climbing, `roll` positive is stick-right, which the caller negates to bank
+ * that way.
+ *
+ * Here rather than inline in the controller because a sign convention is the
+ * thing that silently inverts, and this is the only place either axis is
+ * decided — mouse look has no roll at all.
+ */
+export function columnFromKeys(held: Set<string>): { pitch: number; roll: number } {
+  return {
+    pitch: (held.has('ArrowDown') ? 1 : 0) - (held.has('ArrowUp') ? 1 : 0),
+    roll: (held.has('ArrowRight') ? 1 : 0) - (held.has('ArrowLeft') ? 1 : 0),
+  }
+}
+
 /** Seconds at rest before a burn puts itself out. */
 export const BURN_SECONDS = 0.5
 
