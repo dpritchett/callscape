@@ -654,7 +654,7 @@ function drawRibbon() {
  * build and stays open, so editing view.json still applies within a second,
  * which is the loop the whole project is built around.
  */
-const GHOST_HOLD_MS = 2800
+const GHOST_HOLD_MS = 2000
 const ghostShownAt = performance.now()
 let firstBuildDone = false
 // Not `holdTimer` — that one is the wheel lease, and clearing it here would

@@ -198,6 +198,15 @@ const GHOST_BAND = {
    *  the legend comes round once, whole. Tuned by looking: 0.55 and 0.83 both
    *  read as half a sentence, and 4.2 — where this started — was a blur. */
   spin: 2.0,
+  /** Seconds until the legend is square to the camera.
+   *
+   *  The canvas centres the text and a cylinder's u=0.5 is the *far* side, so
+   *  with no offset the words start behind the globe and the hold has to be
+   *  long enough to bring them round — which is how 2.8s ended with them back
+   *  where they started. Phasing the start instead means the legend sweeps up
+   *  over the limb, sits square at this moment, and is still going when the
+   *  city arrives. */
+  lead: 1.0,
 } as const
 
 export class World {
@@ -1280,9 +1289,11 @@ export class World {
   private ghostTilt: THREE.Group | null = null
   private ghostSpin: THREE.Group | null = null
   private ghostBandMat: THREE.MeshBasicMaterial | null = null
+  private ghostBornAt = 0
 
   showGhost(camera: THREE.PerspectiveCamera, fill = 0.45) {
     if (this.ghostTilt) return
+    this.ghostBornAt = performance.now() / 1000
     // A sphere of radius r seen from distance d has angular radius asin(r/d).
     // Solve it backwards for the fraction of the vertical view we want it to
     // cover, so this lands in the right place from wherever the camera starts.
@@ -1378,9 +1389,17 @@ export class World {
    */
   pulseGhost(t: number) {
     if (!this.ghostSpin || !this.ghostBandMat) return
+    // Elapsed since the sphere appeared, not since the page did. The clock
+    // handed in is wall time, and this module starts a few hundred milliseconds
+    // into the page — long enough to throw the lead off by a visible angle, and
+    // by a different one on every load.
+    const e = t - this.ghostBornAt
     // Shallow: neon that goes dark is a fault light. This only breathes.
-    this.ghostBandMat.opacity = 0.78 + 0.22 * (0.5 + 0.5 * Math.sin(t * 2.0))
-    this.ghostSpin.rotation.y = t * GHOST_BAND.spin
+    this.ghostBandMat.opacity = 0.78 + 0.22 * (0.5 + 0.5 * Math.sin(e * 2.0))
+    // Wind the start back by half a turn (the text's own offset on the band)
+    // plus whatever the lead asks for, so e = lead puts the words face-on.
+    this.ghostSpin.rotation.y =
+      -Math.PI - GHOST_BAND.spin * GHOST_BAND.lead + e * GHOST_BAND.spin
   }
 
   hideGhost() {
