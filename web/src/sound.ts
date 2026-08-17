@@ -81,6 +81,21 @@ function fileOf(name: Cue | Bed | Track): string {
   return name === TRACK ? `${name}.flac` : `${name}.wav`
 }
 
+/**
+ * Playback trim, per cue, against the level the recipe baked.
+ *
+ * The recipe normalises every line to one peak, which is right for a set of
+ * callouts that all matter equally — and these two do not. `capture` and
+ * `release` fire on every click and every escape, dozens of times a session,
+ * and the banner across the top already says who has the wheel continuously,
+ * which is more than a line said once. This is a mix decision about how often
+ * something happens, so it lives at the call rather than in the recording.
+ */
+const TRIM: Partial<Record<Cue, number>> = {
+  capture: 0.45,
+  release: 0.45,
+}
+
 /** Long enough not to click, short enough not to be a crossfade. */
 const CUT_SECONDS = 0.015
 /** How long the bed takes to come up, go away, or change gear. */
@@ -287,13 +302,14 @@ export class Voice {
     const src = this.ctx.createBufferSource()
     const gain = this.ctx.createGain()
     src.buffer = buffer
+    gain.gain.value = TRIM[cue] ?? 1
     src.connect(gain).connect(this.master)
     src.onended = () => {
       if (this.now?.src === src) this.now = null
     }
     src.start()
     this.now = { src, gain }
-    devlog('voice', { cue })
+    devlog('voice', { cue, gain: gain.gain.value })
   }
 
   /** End whatever is talking, without the click of stopping it dead. */
