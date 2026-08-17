@@ -213,6 +213,11 @@ function searchKey(e: KeyboardEvent) {
 }
 
 addEventListener('keydown', (e) => {
+  // A shortcut here is one key, so anything with a modifier on it belongs to
+  // the browser. Without this, Ctrl+R announced "neighbours", revealed the
+  // hidden ones and rebuilt the entire scene on its way to reloading the page —
+  // and Ctrl+F, Ctrl+S and Cmd+L all had a key here too.
+  if (e.ctrlKey || e.metaKey || e.altKey) return
   // Escape outranks the remote, and is the only key that does.
   if (held) {
     if (e.key === 'Escape') giveWheel('local')
