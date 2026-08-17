@@ -1,4 +1,7 @@
 # build artifact from `go build ./...`
 /callscape-dump
 
+# where `make dump` found the module it dumped: a path on this machine only
+/web/.source-root
+
 .claude/settings.local.json

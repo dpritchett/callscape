@@ -45,9 +45,15 @@ logs:
 	@tail -f web/dev-log.jsonl | jq -c '"\(.t[11:19]) \(.event) \(.data // "")"'
 
 # make dump TARGET=/path/to/a/go/module
+#
+# The graph says which module it is, never where that module sits on this
+# machine — an absolute home directory path has no business in a file that gets
+# committed and screenshotted. The dev server needs it to serve source, so it
+# goes in a local untracked pin instead.
 dump:
 	@test -n "$(TARGET)" || { echo "usage: make dump TARGET=/path/to/a/go/module"; exit 1; }
 	go run ./cmd/callscape-dump $(TARGET) > web/public/graph.json
+	@echo "$(abspath $(TARGET))" > web/.source-root
 
 # The navigator's voice. The WAVs are committed, so a clone runs with sound and
 # without beepboop; this is how to rebake them after a wording or level change.

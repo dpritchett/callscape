@@ -142,10 +142,30 @@ async function lex(file: string): Promise<Span[] | null> {
 }
 
 /**
+ * Where the analysed module lives on this machine.
+ *
+ * It used to be a field in graph.json, which meant every dump published the
+ * home directory of whoever ran it. It is a local fact, so it lives in a local
+ * untracked file that `make dump` writes; with no such file the answer is this
+ * repo, which is exactly right for the sample graph a fresh clone starts on.
+ */
+const SOURCE_ROOT_FILE = '.source-root'
+
+async function sourceRoot(): Promise<string> {
+  try {
+    const pinned = (await readFile(SOURCE_ROOT_FILE, 'utf8')).trim()
+    if (pinned) return pinned
+  } catch {
+    /* no dump on this machine yet */
+  }
+  return resolve('..') // nothing pinned: the sample graph is this repo
+}
+
+/**
  * Serves source out of the analysed module, so a selected symbol can be read
- * rather than only counted. The graph names its own root; the request names a
- * file relative to it, which is exactly the shape of a traversal bug, so the
- * containment check is a tested function rather than an inline string compare.
+ * rather than only counted. The request names a file relative to that module's
+ * root, which is exactly the shape of a traversal bug, so the containment check
+ * is a tested function rather than an inline string compare.
  */
 function sourceReader(): Plugin {
   return {
@@ -161,11 +181,8 @@ function sourceReader(): Plugin {
 
         void (async () => {
           try {
-            const graph = JSON.parse(await readFile('public/graph.json', 'utf8')) as {
-              root?: string
-            }
             const file = url.searchParams.get('file') ?? ''
-            const full = resolveWithinRoot(graph.root ?? '', file)
+            const full = resolveWithinRoot(await sourceRoot(), file)
             if (!full) return send(400, { error: `refused: ${file}` })
 
             const from = Number(url.searchParams.get('from') ?? 1)

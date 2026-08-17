@@ -46,13 +46,16 @@ type Edge struct {
 	To   string `json:"to"`
 }
 
+// Graph is the whole output file. Node.File is relative to the analysed
+// module's directory, which is deliberately not in here: it is a path on
+// whichever machine ran the dump, and the graph is a document that gets
+// committed, screenshotted and read by other people. Whatever wants to open
+// the real source is responsible for knowing where the module lives — see
+// `make dump` and the dev server's source reader.
 type Graph struct {
 	Module string `json:"module"`
-	// Root is the module's directory on this machine. Node.File is relative to
-	// it, so anything that wants to show the actual source needs both.
-	Root  string `json:"root"`
-	Nodes []Node `json:"nodes"`
-	Edges []Edge `json:"edges"`
+	Nodes  []Node `json:"nodes"`
+	Edges  []Edge `json:"edges"`
 }
 
 func main() {
@@ -238,7 +241,7 @@ func dump(dir string) (*Graph, error) {
 	}
 	sort.Slice(out, func(i, j int) bool { return out[i].ID < out[j].ID })
 
-	return &Graph{Module: modPath, Root: modDir, Nodes: out, Edges: edges}, nil
+	return &Graph{Module: modPath, Nodes: out, Edges: edges}, nil
 }
 
 // moduleOf returns the module path and root directory for the loaded packages.
