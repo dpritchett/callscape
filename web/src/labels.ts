@@ -113,6 +113,31 @@ export function setLabelHeight(sprite: THREE.Sprite, height: number) {
 }
 
 /**
+ * The same image with the corners cut off, as a round medallion.
+ *
+ * An avatar is a square with an opaque background, which is invisible against
+ * space and an obvious sticker against anything else. On the face of a disc it
+ * has to be a disc.
+ */
+export function roundTexture(image: HTMLImageElement): THREE.CanvasTexture {
+  const size = Math.max(image.naturalWidth, image.naturalHeight) || 256
+  const canvas = document.createElement('canvas')
+  canvas.width = size
+  canvas.height = size
+  const ctx = canvas.getContext('2d')!
+  ctx.beginPath()
+  ctx.arc(size / 2, size / 2, size / 2, 0, Math.PI * 2)
+  ctx.clip()
+  ctx.drawImage(image, 0, 0, size, size)
+
+  const tex = new THREE.CanvasTexture(canvas)
+  tex.colorSpace = THREE.SRGBColorSpace
+  tex.minFilter = THREE.LinearFilter
+  tex.generateMipmaps = false
+  return tex
+}
+
+/**
  * The repo's name under its mark, in neon.
  *
  * A flat panel rather than a sprite, because it hangs on the sky next to the

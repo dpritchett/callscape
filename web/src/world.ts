@@ -10,6 +10,7 @@ import {
   labelWorldHeight,
   makeLabel,
   makeNeonPanel,
+  roundTexture,
   setLabelHeight,
 } from './labels'
 import { aimedOnly, namesDistricts, namesSymbols, type LabelMode } from './labelmode'
@@ -26,10 +27,14 @@ import type { ResolvedEdgeShow } from './types'
 // happened one altitude higher: the district under the reticle was too far to
 // have any names while the one under the nose had all of them.
 const LABEL_RANGE = 900
-// The repo's name under its mark: how tall the type is, and how far below the
-// mark it sits, both as fractions of the mark itself.
+// The discus each mark is printed on, and the name floating in front of it.
+// Thickness and the icon are fractions of the disc; the name's drop and float
+// are fractions of its radius.
+const DISCUS_FLATNESS = 0.16
+const ICON_FRACTION = 0.62
 const NAME_HEIGHT = 0.12
-const NAME_GAP = 0.12
+const NAME_DROP = 0.72
+const NAME_FLOAT = 0.55
 const DISTRICT_PX = 26 // on-screen label heights
 const SYMBOL_PX = 17
 // How many names compete for the screen. These are the *candidates*, not the
@@ -242,42 +247,57 @@ export class World {
     if (!p.badge) return
     const { path, label, at, size } = p.badge
 
-    // Flat panels rather than sprites, because a sprite always faces you and
-    // would follow you round the sky like a decal on the inside of a helmet.
-    // These are stuck to the sphere: turned to face the middle of the world, so
-    // one off to the side is seen at an angle and reads as being *out there*.
-    const geometry = new THREE.PlaneGeometry(size, size)
-    // One geometry and one material behind all six, so this is a texture and a
-    // quad rather than six of each.
-    const material = new THREE.MeshBasicMaterial({
-      transparent: true,
+    const radius = size / 2
+
+    // A discus, not a decal: a sphere squashed along one axis, so it has an
+    // edge and two faces and the key light finds the curve of it. Flattened in
+    // the geometry rather than by scaling the mesh, so all six share it and
+    // nothing has to think about normals under a non-uniform scale.
+    const discus = new THREE.SphereGeometry(radius, 48, 24)
+    discus.scale(1, 1, DISCUS_FLATNESS)
+    const discusMaterial = new THREE.MeshLambertMaterial({
+      color: 0x2b1b4f,
+      // The far side of one of these faces nothing, and an unlit purple disc in
+      // deep space is a hole. The glow is what keeps it an object.
+      emissive: 0x35134a,
       // A landmark at the back of the world is no use dissolved into the fog,
       // and the fog ends long before the sky does.
       fog: false,
+    })
+
+    // The mark itself, printed on the face rather than hanging in front of it.
+    const face = new THREE.PlaneGeometry(size * ICON_FRACTION, size * ICON_FRACTION)
+    const faceMaterial = new THREE.MeshBasicMaterial({
+      transparent: true,
+      fog: false,
       depthWrite: false,
-      // Visible from behind too, for anyone who flies out past the sky.
-      side: THREE.DoubleSide,
     })
 
     const panels = at.map((point) => {
-      const panel = new THREE.Mesh(geometry, material)
+      const panel = new THREE.Mesh(discus, discusMaterial)
       panel.position.set(point.x, point.y, point.z)
-      // A plane's face looks down its own +Z, so pointing that at the origin
-      // pastes it flat against the sphere it sits on. No orientation is stored
-      // in the placement: where it is decides which way it faces.
+      // Pointing local +Z at the origin turns the discus face towards the
+      // middle of the world, which is the only place anyone looks at it from.
+      // No orientation is stored in the placement: where it is decides which
+      // way it faces, and everything below rides in that frame.
       panel.lookAt(0, 0, 0)
-      // Nothing is drawn until the texture lands, so a miss leaves empty panels
-      // rather than white squares hanging over the world. The miss is a decode
+      // Nothing is drawn until the texture lands, so a miss leaves nothing
+      // rather than six blank discs hanging in the sky. The miss is a decode
       // failure rather than a 404: Vite answers 200 with index.html for
       // anything missing under public/, and an <img> fed HTML errors out.
       panel.visible = false
       this.group.add(panel)
 
-      // The name rides as a child, so it inherits the panel's facing rather
-      // than working out the same orientation a second time. Local -Y is down
-      // the sphere from the mark.
+      // Just clear of the face it sits on, or it stitches through the curve.
+      const icon = new THREE.Mesh(face, faceMaterial)
+      icon.position.set(0, 0, radius * DISCUS_FLATNESS + radius * 0.02)
+      panel.add(icon)
+
+      // In front of the disc rather than beside it: nearer the viewer by a
+      // fraction of the radius, which is what makes it read as floating there
+      // instead of being painted on.
       const name = makeNeonPanel(label, size * NAME_HEIGHT)
-      name.position.set(0, -size * (0.5 + NAME_GAP), 0)
+      name.position.set(0, -radius * NAME_DROP, radius * NAME_FLOAT)
       panel.add(name)
 
       return panel
@@ -286,9 +306,9 @@ export class World {
     new THREE.TextureLoader().load(
       `/${path}`,
       (tex) => {
-        tex.colorSpace = THREE.SRGBColorSpace
-        material.map = tex
-        material.needsUpdate = true
+        faceMaterial.map = roundTexture(tex.image as HTMLImageElement)
+        faceMaterial.needsUpdate = true
+        tex.dispose() // the square original; the round copy is what gets drawn
         for (const p of panels) p.visible = true
         devlog('badge', { path, at: panels.length, size: +size.toFixed(0) })
       },
@@ -298,9 +318,10 @@ export class World {
 
     this.disposables.push(() => {
       for (const p of panels) {
-        // Each name is its own canvas texture, so unlike the marks these do
-        // not share anything and each one has to go.
+        // Each name is its own canvas texture. The icon is not — it shares one
+        // geometry and one material with the other five, disposed once below.
         for (const child of p.children as THREE.Mesh[]) {
+          if (child.geometry === face) continue
           child.geometry.dispose()
           const m = child.material as THREE.MeshBasicMaterial
           m.map?.dispose()
@@ -308,9 +329,11 @@ export class World {
         }
         this.group.remove(p)
       }
-      geometry.dispose()
-      material.map?.dispose()
-      material.dispose()
+      discus.dispose()
+      discusMaterial.dispose()
+      face.dispose()
+      faceMaterial.map?.dispose()
+      faceMaterial.dispose()
     })
   }
 
