@@ -5,6 +5,7 @@ import {
   deadzone,
   deadzone1,
   ease,
+  padTouched,
   speedScale,
   stepBurn,
   stepVelocity,
@@ -63,6 +64,14 @@ const ROLL_AXIS = new THREE.Vector3(0, 0, 1)
  * full deflection is 150 degrees a second — more than anyone wants from a tap.
  */
 const KEY_DEFLECTION = 0.6
+/**
+ * How long a pad keeps the controls after its last real input.
+ *
+ * A pointer holds them until Escape, so a pad should not lose them the moment
+ * you stop to look at something. Generous for that reason. Stick drift cannot
+ * hold them open, because the deadzone has already turned drift into zero.
+ */
+const PAD_PRESENCE_SECONDS = 15
 
 export class FlyController implements Controller {
   private keys = new Set<string>()
@@ -86,6 +95,12 @@ export class FlyController implements Controller {
   onToggleReveal: (() => void) | null = null
   /** Step the label ribbon, -1 or 1. */
   onCycleLabels: ((step: number) => void) | null = null
+  /**
+   * The pad has picked up the controls, or put them down. A pointer captures
+   * and releases with an event the page can hear; a pad is polled, so nothing
+   * announces it and this has to.
+   */
+  onPadPresence: ((live: boolean) => void) | null = null
   private padLook = 2.6 // radians/sec at full stick deflection
   /** Roll is faster than pitch, since a turn starts by banking. */
   private padRoll = 3.2
@@ -96,6 +111,9 @@ export class FlyController implements Controller {
   private padClearHeld = false
   private padRevealHeld = false
   private padRibbonHeld = 0
+  /** Seconds since the pad last said anything, and whether that is recent. */
+  private padIdle = PAD_PRESENCE_SECONDS
+  private padLive = false
   private padBoostHeld = false
   private padFlipHeld = false
   /** Shift or a bumper lights the burn; standing still puts it out. */
@@ -275,7 +293,10 @@ export class FlyController implements Controller {
    * input vector, not a mouse accessory.
    */
   private readGamepad(dt: number) {
-    if (this.remote) return null // a pad is polled, so it has to be asked to stop
+    if (this.remote) {
+      this.dropPad() // a pad is polled, so it has to be asked to stop
+      return null
+    }
     const pads = navigator.getGamepads?.() ?? []
     let pad: Gamepad | null = null
     for (const p of pads) {
@@ -284,10 +305,27 @@ export class FlyController implements Controller {
         break
       }
     }
-    if (!pad) return null
+    if (!pad) {
+      this.dropPad()
+      return null
+    }
 
     const move = deadzone(pad.axes[0] ?? 0, pad.axes[1] ?? 0)
     const look = deadzone(pad.axes[2] ?? 0, pad.axes[3] ?? 0)
+
+    // Somebody is at the controls if the pad says anything at all — past the
+    // deadzone, so a resting stick is not an answer. Flying with a pad never
+    // captures the pointer, which is what "in control" used to mean, so the sim
+    // could be flown across the whole map in silence: no music, no airflow, and
+    // the voice still talking. Same idle-timer arithmetic the burn uses.
+    const presence = stepBurn(
+      this.padIdle,
+      padTouched(pad.axes, pad.buttons),
+      dt,
+      PAD_PRESENCE_SECONDS,
+    )
+    this.padIdle = presence.still
+    this.setPadLive(!presence.expired)
 
     if (!this.spin && (look.x || look.y)) {
       // A stick, not a mouse. Pull it towards you and the nose comes up; push
@@ -442,6 +480,30 @@ export class FlyController implements Controller {
    * changed gear. Only on a change: the flight bed is a loop that is ridden
    * with a gain, not something to retrigger sixty times a second.
    */
+  /**
+   * Whether a pad is flying this thing right now.
+   *
+   * Responding to the stick *is* having the controls, whether or not anybody
+   * clicked to capture a pointer they are not using. The page asks this the way
+   * it asks for `document.pointerLockElement`.
+   */
+  padHasControls(): boolean {
+    return this.padLive
+  }
+
+  private setPadLive(live: boolean) {
+    if (live === this.padLive) return
+    this.padLive = live
+    devlog('pad', { live })
+    this.onPadPresence?.(live)
+  }
+
+  /** No pad, or somebody else has the wheel: it is holding nothing. */
+  private dropPad() {
+    this.padIdle = PAD_PRESENCE_SECONDS
+    this.setPadLive(false)
+  }
+
   private reportMotion(moving: boolean) {
     if (moving === this.wasMoving && this.fast === this.wasFast) return
     this.wasMoving = moving

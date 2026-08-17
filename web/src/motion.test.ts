@@ -6,6 +6,7 @@ import {
   deadzone,
   deadzone1,
   ease,
+  padTouched,
   speedScale,
   stepBurn,
   stepVelocity,
@@ -161,6 +162,36 @@ describe('stepBurn', () => {
   test('a touch of throttle resets the clock', () => {
     const almost = rest(BURN_SECONDS - 0.05)
     expect(stepBurn(almost.still, true, 1 / 60).still).toBe(0)
+  })
+})
+
+describe('is anybody holding the pad', () => {
+  const btn = (pressed = false, value = 0) => ({ pressed, value })
+  const rest = [btn(), btn(), btn()]
+
+  test('a pad nobody is touching is not holding the controls', () => {
+    expect(padTouched([0, 0, 0, 0], rest)).toBe(false)
+  })
+
+  test('stick drift is not a hand on the stick', () => {
+    // the whole reason this has a deadzone: otherwise a resting pad holds the
+    // controls forever and plays a soundtrack to an empty room
+    expect(padTouched([0.05, -0.08, 0.11, 0], rest)).toBe(false)
+  })
+
+  test('an actual push counts, on any axis', () => {
+    expect(padTouched([0.4, 0, 0, 0], rest)).toBe(true)
+    expect(padTouched([0, 0, 0, -0.9], rest)).toBe(true)
+  })
+
+  test('so does a button, and a trigger held halfway', () => {
+    expect(padTouched([0, 0, 0, 0], [btn(true, 1)])).toBe(true)
+    expect(padTouched([0, 0, 0, 0], [btn(false, 0.5)])).toBe(true)
+    expect(padTouched([0, 0, 0, 0], [btn(false, 0.05)])).toBe(false)
+  })
+
+  test('a pad with no axes and no buttons answers no rather than throwing', () => {
+    expect(padTouched([], [])).toBe(false)
   })
 })
 

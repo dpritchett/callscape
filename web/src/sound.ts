@@ -181,6 +181,18 @@ export class Voice {
     // airflow changing gear rather than as one sound replacing another.
     this.rampTo(this.beds!['flight-slow'].gain, on && !fast ? 1 : 0)
     this.rampTo(this.beds!['flight-fast'].gain, on && fast ? 1 : 0)
+    // What the gains actually are, not what they were asked for, plus a clock
+    // that only advances while the context is really running. A bed that is
+    // wired, unmuted and still inaudible is one of those two lying.
+    devlog('voice.bed', {
+      on,
+      fast,
+      slow: +this.beds!['flight-slow'].gain.value.toFixed(3),
+      quick: +this.beds!['flight-fast'].gain.value.toFixed(3),
+      music: this.music ? +this.music.gain.value.toFixed(3) : null,
+      state: this.ctx.state,
+      time: +this.ctx.currentTime.toFixed(2),
+    })
   }
 
   /**

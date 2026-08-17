@@ -247,12 +247,20 @@ document.addEventListener('pointerlockchange', () => {
  * which is not a moment that wants a soundtrack.
  */
 /**
- * Whether anybody is flying this thing: you with the pointer captured, a remote
- * holding the wheel, or a query open — typing is still driving the sim, even
- * though it hands the pointer back to do it.
+ * Whether anybody is flying this thing: you with the pointer captured, a hand
+ * on the gamepad, a remote holding the wheel, or a query open — typing is still
+ * driving the sim, even though it hands the pointer back to do it.
+ *
+ * The pad belongs here because it never captures anything. It flies the sim
+ * without a pointer lock by design, which meant the whole map could be crossed
+ * in silence — no music, no airflow — while the voice carried on talking,
+ * because only the voice was ungated. If the sim is answering the stick, the
+ * controls are being held.
  */
 function inControl() {
-  return Boolean(document.pointerLockElement) || held || search.active
+  return (
+    Boolean(document.pointerLockElement) || flyControls.padHasControls() || held || search.active
+  )
 }
 
 /** Last reported by the controller, so control changes can re-decide the bed. */
@@ -465,6 +473,9 @@ flyControls.onPick = pickAtReticle
 flyControls.onClearSelection = clearSelection
 flyControls.onToggleReveal = toggleReveal
 flyControls.onCycleLabels = (step) => setLabelMode(cycleMode(labelMode, step))
+// A pointer announces capture and release with an event; a pad is polled, so
+// picking it up has to say so or nothing re-decides who is flying.
+flyControls.onPadPresence = () => flying()
 
 /**
  * Fly to whatever the panel is showing. The selection is the thing you are

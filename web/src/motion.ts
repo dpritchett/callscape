@@ -96,6 +96,27 @@ export function columnFromKeys(held: Set<string>): { pitch: number; roll: number
   }
 }
 
+/**
+ * Whether a pad is being touched at all: any axis past the deadzone, or any
+ * button down. This is what decides that somebody is at the controls, since a
+ * pad flies without ever capturing a pointer.
+ *
+ * The deadzone is the whole point. A stick resting a hair off centre would
+ * otherwise hold the controls open forever, which is a soundtrack playing to an
+ * empty room — the same trap the airflow bed already has a comment about.
+ * Triggers are checked by value as well as `pressed`, because a rudder held
+ * halfway is somebody flying.
+ */
+export function padTouched(
+  axes: readonly number[],
+  buttons: readonly { pressed: boolean; value: number }[],
+  dz = 0.12,
+): boolean {
+  for (const a of axes) if (Math.abs(a) > dz) return true
+  for (const b of buttons) if (b.pressed || b.value > dz) return true
+  return false
+}
+
 /** Seconds at rest before a burn puts itself out. */
 export const BURN_SECONDS = 0.5
 
