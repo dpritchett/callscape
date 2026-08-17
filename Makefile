@@ -76,6 +76,11 @@ sample:
 # without beepboop; this is how to rebake them after a wording or level change.
 # Needs a beepboop checkout next door and a piper voice model, so it is not on
 # any normal path — nothing a reader of this repo has to run.
+#
+# This bakes beepboop's recipe and only that. `flip` is not in it and will not
+# be: the whoosh needs a filter that travels over its duration, which beatshop
+# has and beepboop does not, so it arrives the way the music does — copied in by
+# hand, not rebaked. Do not go looking here for why the file is missing.
 # The recipe is the source of truth — never hand-edit a WAV. Output is
 # deterministic, so an unchanged recipe rebakes to an empty diff.
 BEEPBOOP ?= ../beepboop

@@ -159,7 +159,9 @@ against each other rather than one being stopped and the other started. Both run
 life of the page. `remote-on` and `remote-off` are tones rather than speech — falling when
 the remote takes the wheel, rising when it gives it back — because the wheel changing
 hands is a state change and a state change wants an earcon. `flip` is wired and silent
-until beepboop grows a swept-noise one-shot to bake it from.
+until its whoosh arrives — **from beatshop, not beepboop**, because it needs a filter that
+travels over its duration and only beatshop has one. It will land the way the music does,
+copied in by hand; `make sounds` will never produce it.
 
 **A recipe change and a playback trim are different things.** The recipe decides what a
 line says, how it is voiced and how hot it was baked; that lives in beepboop and changing
