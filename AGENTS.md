@@ -32,9 +32,10 @@ make dump TARGET=/path/to/a/go/module   # writes web/public/graph.json
 make dev-remote                         # vite dev server, instruments on
 ```
 
-`make dev-remote`, not `make dev`: `/__cue`, `/__shot` and `/__src` are not registered
-without `UNSAFE_ENABLE_REMOTE_CONTROL=true`, and those are how you see the page at all
-from here. A plain `make dev` is the safe default a stranger gets.
+`make dev-remote`, not `make dev`: `/__cue` and `/__shot` are not registered without
+`UNSAFE_ENABLE_REMOTE_CONTROL=true`, and those are how you cue and photograph the page from
+here. A plain `make dev` binds loopback with neither, which is the safe default a stranger
+gets.
 
 Then edit `web/public/view.json` while the page is open. That loop — edit the view spec,
 see the scene change within a second without a reload and without the camera moving — is

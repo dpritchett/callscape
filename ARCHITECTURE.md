@@ -75,12 +75,15 @@ about three.js. Anything interesting enough to get wrong belongs on the pure sid
 - **`callscape-dump` runs the Go toolchain against its target.** `go/packages` shells out to
   `go list`, which can fetch dependencies, honour a `toolchain` directive and preprocess
   cgo. Point it only at code you would already run a build on.
-- **The dev server binds the LAN** so the page can be flown from a phone, and **the
-  endpoints that make that interesting to a stranger are off by default.** `UNSAFE_ENABLE_REMOTE_CONTROL=true`
-  — `make dev-remote` — registers `/__cue`, `/__shot` and `/__src`; without it they are not
-  routes, rather than routes answering 403, so there is nothing to probe. The containment
-  in `srcpath.ts` applies either way: the flag decides who reaches an endpoint, those
-  functions decide what it can do once reached.
+- **The dev server binds loopback by default.** `UNSAFE_ENABLE_REMOTE_CONTROL=true` —
+  `make dev-remote` — puts it on every interface so the page can be flown from a phone, and
+  registers `/__cue` and `/__shot`; without it those are not routes at all, rather than
+  routes answering 403, so there is nothing to probe. The exposure was always the network
+  binding rather than the endpoints: on loopback, a local page reading local files is a
+  local process reading files it could already read. `/__src` is therefore *not* gated — it
+  is what the Tab panel calls, and gating it turned a headline feature into a parse error
+  for everybody who cloned the repo. The containment in `srcpath.ts` applies regardless:
+  the flag decides who can reach the server, those functions decide what a request can do.
 
 ## Scope
 

@@ -29,11 +29,14 @@ make dev-remote                    # the same, with the instruments below switch
 make check                         # vet, test, golangci-lint, tsc, vitest — what lefthook runs
 ```
 
-**Use `make dev-remote` while working on this.** `make dev` serves the page and nothing
-else; the endpoints the instruments talk to are not registered without
-`UNSAFE_ENABLE_REMOTE_CONTROL=true`, because they are a remote camera and a source reader
-on a server that binds the LAN, and a fresh clone should not be offering those to its
-network on somebody's behalf. It prints a warning line when they are on.
+**Use `make dev-remote` while working on this.** `make dev` binds loopback and registers
+neither `/__cue` nor `/__shot`, so `make cue`, `make shot` and `make look` do nothing
+useful against it. `UNSAFE_ENABLE_REMOTE_CONTROL=true` puts the server on every interface
+and turns those on, with a warning line at startup. `scripts/page lan` tells you which one
+is running.
+
+The source panel's `/__src` is not part of that and never turns off — it is the Tab panel's
+own endpoint, and gating it once broke the source view for every default clone.
 
 Nothing is committed to fly. `make sample` shallow-clones cli/cli into
 `~/.cache/callscape` and dumps it — about ten seconds from nothing, 3,501 symbols across
@@ -69,6 +72,7 @@ scripts/page get /view.json
 scripts/page head /badges/github.com/cli.png
 scripts/page post /__cue web/cue.json
 scripts/page post /__shot/request
+scripts/page lan                        # is this server reachable off loopback?
 ```
 
 That is the whole point of it. Working here means checking what the server is answering

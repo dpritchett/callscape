@@ -260,13 +260,20 @@ function remoteCue(): Plugin {
 }
 
 /**
- * The instruments — `/__cue`, `/__shot`, `/__src` — are off unless asked for.
+ * Binding the LAN, and the two endpoints that make that interesting, are off
+ * unless asked for.
  *
- * They are what makes this page workable without a browser, and they are also a
- * remote control for the camera and a reader for the analysed module's source,
- * on a server that binds the LAN. That trade is a fine one to make on your own
- * machine and not one to make on somebody's behalf, so a fresh clone starts
- * without them and turning them on is a sentence you have to type.
+ * The exposure was never that these endpoints exist — it is `host: true`. On
+ * loopback, a local page reading local files is a local process reading files
+ * it could already read. Put the same server on the network and `/__cue` hands
+ * the wheel to anything that asks and `/__shot` writes files on request, which
+ * is a different proposition entirely.
+ *
+ * So this gates the network binding and those two. `/__src` is not in the list:
+ * it is what the Tab panel calls to show you a function's source, which is a
+ * feature this project advertises on its front page, and gating it turned that
+ * into a parse error for everybody who cloned the repo. What keeps it honest is
+ * `resolveWithinRoot`, which is a tested function and applies regardless.
  *
  * Named for what it is. Nobody sets a variable with UNSAFE in it by accident,
  * and nobody who does can say they were not told.
@@ -286,8 +293,10 @@ function remoteWarning(): Plugin {
     configureServer(server) {
       server.httpServer?.once('listening', () => {
         server.config.logger.warn(
-          '  ⚠  remote control ON: /__cue, /__shot and /__src are answering on every ' +
-            'interface this server binds. Unset UNSAFE_ENABLE_REMOTE_CONTROL to turn them off.',
+          '  ⚠  remote control ON: listening on every interface, and /__cue and /__shot ' +
+            'are answering. Anything on this network can steer the camera, write a file, ' +
+            'and read the dumped module. Unset UNSAFE_ENABLE_REMOTE_CONTROL to go back to ' +
+            'loopback.',
         )
       })
     },
@@ -300,15 +309,19 @@ export default defineConfig({
   // the endpoint does not exist.
   plugins: [
     devLogSink(), // local file, no reach — unconditional
-    ...(REMOTE_ENABLED ? [remoteWarning(), remoteShutter(), remoteCue(), sourceReader()] : []),
+    sourceReader(), // the Tab panel's own endpoint; contained by resolveWithinRoot
+    ...(REMOTE_ENABLED ? [remoteWarning(), remoteShutter(), remoteCue()] : []),
   ],
   server: {
-    // Listen on the LAN as well as on loopback, so the page can be flown from a
-    // phone. Safe by default because the endpoints that would make that
-    // interesting to a stranger are not registered unless asked for; with
-    // UNSAFE_ENABLE_REMOTE_CONTROL set, this is a machine on your network
-    // offering the camera and the dumped module's source to anything that asks.
-    host: true,
+    // Loopback unless asked otherwise. With the flag, this listens on every
+    // interface so the page can be flown from a phone — and is then a machine
+    // on your network offering the camera, a file writer, and the dumped
+    // module's source to anything that asks.
+    //
+    // Note for anything behind a port forward — a Codespace, an SSH tunnel —
+    // where loopback is reachable from elsewhere and this default protects
+    // less than it looks like it does. See issue #16.
+    host: REMOTE_ENABLED,
     // Pinned, and pinned loudly. `make shot` and `make cue` post to 5178, and
     // Vite's default is to take the next free port when 5173 is busy — so this
     // server was on 5178 by coincidence, and the instruments would have been

@@ -18,10 +18,12 @@ readonly ORIGIN="http://127.0.0.1:5178"
 usage() {
   cat >&2 <<'EOF'
 usage: scripts/page <verb> <path> [body-file]
+       scripts/page lan
 
   get  /path            print the response body
   head /path            print the status line and headers
   post /path [file]     POST, with the file as a JSON body if given
+  lan                   is this server reachable off loopback?
 
 Paths only — the host is always the local dev server on :5178.
 
@@ -29,9 +31,27 @@ Paths only — the host is always the local dev server on :5178.
   scripts/page head /badges/github.com/cli.png
   scripts/page post /__cue web/cue.json
   scripts/page post /__shot/request
+  scripts/page lan
 EOF
   exit 2
 }
+
+# The one question this wrapper cannot ask as a path, and the one worth asking
+# most: the dev server binds loopback unless UNSAFE_ENABLE_REMOTE_CONTROL says
+# otherwise, and "is that actually true" means addressing a host that is by
+# definition not 127.0.0.1. Still this machine, still this port — it is the
+# binding being tested, not somewhere else.
+if [ "${1-}" = "lan" ]; then
+  addr=$(hostname -I 2>/dev/null | tr ' ' '\n' | grep -v '^127\.' | head -1)
+  [ -n "$addr" ] || { echo "page: no non-loopback address on this host" >&2; exit 1; }
+  code=$(curl -sS -o /dev/null -w '%{http_code}' --max-time 4 "http://$addr:5178/" 2>/dev/null || true)
+  if [ "$code" = "000" ] || [ -z "$code" ]; then
+    echo "loopback only — $addr:5178 refused the connection"
+  else
+    echo "REACHABLE on $addr:5178 (HTTP $code) — the LAN can see this server"
+  fi
+  exit 0
+fi
 
 [ $# -ge 2 ] || usage
 verb=$1

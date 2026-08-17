@@ -86,9 +86,20 @@ export function movesTheView(cue: Cue): boolean {
 export function watchCues(onCue: (cue: Cue) => void, pollMs = 400) {
   if (!import.meta.env.DEV) return
   let seen = -1
+  // The endpoint is not registered unless the remote control was asked for, and
+  // that answer never changes while the page is open. Vite replies to an
+  // unknown path with index.html and a 200, so the content type is the check
+  // and the status is not — and without this, every default clone makes a
+  // request and a half a second at a route that will never exist, which is
+  // invisible until somebody opens devtools and then looks like a bug.
+  let registered = true
   const tick = async () => {
     try {
       const res = await fetch('/__cue', { cache: 'no-store' })
+      if (!(res.headers.get('content-type') ?? '').includes('json')) {
+        registered = false
+        return
+      }
       const cue = (await res.json()) as Cue
       if (seen === -1) seen = cue.seq
       else if (cue.seq !== seen) {
@@ -98,7 +109,7 @@ export function watchCues(onCue: (cue: Cue) => void, pollMs = 400) {
     } catch {
       /* the remote must never break the app */
     } finally {
-      setTimeout(tick, pollMs)
+      if (registered) setTimeout(tick, pollMs)
     }
   }
   void tick()

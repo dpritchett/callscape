@@ -27,9 +27,19 @@ export class Shutter {
 
   start() {
     if (!import.meta.env.DEV) return
+    // Registered only when the remote control was asked for, and that does not
+    // change while the page is open — so a default clone should ask once and
+    // stop, not twice a second forever. Vite answers an unknown path with
+    // index.html and a 200, which is why this reads the content type rather
+    // than the status.
+    let registered = true
     const tick = async () => {
       try {
         const res = await fetch('/__shot/pending', { cache: 'no-store' })
+        if (!(res.headers.get('content-type') ?? '').includes('json')) {
+          registered = false
+          return
+        }
         const { seq } = (await res.json()) as { seq: number }
         if (this.seq === -1) this.seq = seq // ignore requests made before we loaded
         else if (seq !== this.seq) {
@@ -39,7 +49,7 @@ export class Shutter {
       } catch {
         /* the shutter must never break the app */
       } finally {
-        setTimeout(tick, this.pollMs)
+        if (registered) setTimeout(tick, this.pollMs)
       }
     }
     void tick()
