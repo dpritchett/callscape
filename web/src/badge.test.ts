@@ -1,5 +1,61 @@
 import { describe, expect, test } from 'vitest'
-import { badgePath, placeBadge, repoLabel } from './badge'
+import { badgePath, bearingToBadge, placeBadge, repoLabel } from './badge'
+import type { Vec3 } from './layout'
+
+describe('bearingToBadge', () => {
+  const badge = placeBadge('github.com/cli/cli/v2', 3200)!
+  const origin = { x: 0, y: 0, z: 0 }
+
+  /** Where the chosen mark ends up relative to the bearing, in degrees. */
+  const offAxis = (dir: Vec3, target: Vec3) => {
+    const angles = badge.at.map((p) => {
+      const to = { x: p.x - target.x, y: p.y - target.y, z: p.z - target.z }
+      const len = Math.hypot(to.x, to.y, to.z)
+      const dot = (to.x * dir.x + to.y * dir.y + to.z * dir.z) / len
+      return (Math.acos(Math.min(1, Math.max(-1, dot))) * 180) / Math.PI
+    })
+    return Math.min(...angles)
+  }
+
+  test('puts a mark beside the view rather than dead ahead of it', () => {
+    // Dead ahead means behind whatever you are looking at, and the graph then
+    // hides it. Off to the side means both are in frame.
+    for (const prefer of [
+      { x: 0, y: 0, z: -1 },
+      { x: 0.9, y: 0.1, z: 0 },
+      { x: -0.55, y: -0.42, z: -0.72 },
+    ]) {
+      const angle = offAxis(bearingToBadge(badge, origin, prefer), origin)
+      expect(angle).toBeGreaterThan(25)
+      expect(angle).toBeLessThan(40)
+    }
+  })
+
+  test('turns away from the mark nearest the bearing it was going to use', () => {
+    // Still recognisably the bearing that was asked for: the mark it chose is
+    // the one that was closest, so the camera has not swung to the far side.
+    const prefer = { x: 0.9, y: 0.1, z: 0 }
+    const dir = bearingToBadge(badge, origin, prefer)
+    expect(dir.x).toBeGreaterThan(0.5)
+  })
+
+  test('the answer is a direction, whatever the target', () => {
+    const dir = bearingToBadge(badge, { x: 200, y: -50, z: 90 }, { x: -0.55, y: -0.42, z: -0.72 })
+    expect(Math.hypot(dir.x, dir.y, dir.z)).toBeCloseTo(1)
+  })
+
+  test('the opening shot is the same shot every time', () => {
+    const prefer = { x: -0.55, y: -0.42, z: -0.72 }
+    const target = { x: 120, y: 60, z: -200 }
+    expect(bearingToBadge(badge, target, prefer)).toEqual(bearingToBadge(badge, target, prefer))
+  })
+
+  test('a target sitting on a mark does not divide by zero', () => {
+    const on = badge.at[0]
+    const dir = bearingToBadge(badge, on, { x: 1, y: 0, z: 0 })
+    expect(Number.isFinite(dir.x + dir.y + dir.z)).toBe(true)
+  })
+})
 
 describe('repoLabel', () => {
   test('drops the Go major-version suffix, which is not part of the repo', () => {

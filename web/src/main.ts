@@ -1,5 +1,5 @@
 import * as THREE from 'three'
-import { FlyController, type Controller } from './controls'
+import { DEFAULT_OFFSET, FlyController, type Controller } from './controls'
 import { parseView } from './view'
 import { World } from './world'
 import { place, skyRadius, STAR_RADIUS, type PlacedNode, type Placement } from './placement'
@@ -7,6 +7,7 @@ import { neighborhood, toggle, type Neighborhood } from './selection'
 import { rank, SEARCH_LIMIT } from './search'
 import { devlog, installDevLog } from './devlog'
 import { Shutter } from './shutter'
+import { bearingToBadge } from './badge'
 import { movesTheView, watchCues } from './cue'
 import { makeStarfield } from './sky'
 import { MFD, MODES } from './mfd'
@@ -495,12 +496,56 @@ flyControls.onPadPresence = () => flying()
  * fallback for that — a point in the middle of a shell, which is nowhere in
  * particular and was where this always went.
  */
-function frameFocus() {
+function frameFocus(opening = false) {
   if (!view) return
   const id = lastSelected() ?? view.camera.focus
-  const target = (id && world.positionOf(id)) || new THREE.Vector3(0, 0, 0)
-  devlog('focus', { id, found: Boolean(id && world.positionOf(id)) })
-  controls.frame(target, view.camera.distance)
+  const at = id ? world.positionOf(id) : undefined
+  const target = at ?? new THREE.Vector3(0, 0, 0)
+  // Where it put the camera, not just what it was aiming at. Every question
+  // about the opening shot so far has been "is it where I think it is", and
+  // that is not answerable from a screenshot of the middle of a sphere.
+  devlog('focus', {
+    id,
+    found: Boolean(at),
+    target: [target.x, target.y, target.z].map((n) => +n.toFixed(0)),
+    opening,
+  })
+  // Nothing to fly to means the middle of the shell, and `camera.distance` is a
+  // distance for standing next to a symbol — a hundred-odd units from the
+  // centre of a graph is inside it, looking at the far wall from within. Frame
+  // the whole thing instead, which is what "no particular symbol" should mean.
+  const distance = at ? view.camera.distance : Math.max(view.camera.distance, wholeGraphDistance())
+  // The opening arrives rather than gliding. A glide is a nice touch when
+  // somebody is watching, but it is stepped by the animation loop, and a
+  // backgrounded tab has no animation loop — so the one thing that decided
+  // where the page *starts* depended on whether anyone was looking at it.
+  controls.frame(target, distance, opening, opening ? openingBearing(target) : undefined)
+}
+
+/** Far enough out for the crust to be an object rather than a wall. */
+function wholeGraphDistance(): number {
+  return (placement?.extent ?? 0) * 2.4
+}
+
+/**
+ * Where to stand for the very first look: near enough to the usual bearing to
+ * be the same shot, turned so one of the marks is behind what you are looking
+ * at. Otherwise the opening view is the one direction in the sky with no
+ * landmark in it, which is a strange thing to greet somebody with.
+ *
+ * Only the opening. `F` keeps the plain approach, because flying to a symbol is
+ * about the symbol and swinging round to collect a badge on the way would be a
+ * camera with opinions.
+ */
+function openingBearing(target: THREE.Vector3): { yaw: number; pitch: number } | undefined {
+  if (!placement?.badge) return undefined
+  // Where you would have looked: the opposite of where `frame` would stand.
+  const prefer = { x: -DEFAULT_OFFSET.x, y: -DEFAULT_OFFSET.y, z: -DEFAULT_OFFSET.z }
+  const dir = bearingToBadge(placement.badge, target, prefer)
+  // frame() wants where to stand, which is the opposite of where to look, and
+  // as the two angles it builds that offset from.
+  const offset = { x: -dir.x, y: -dir.y, z: -dir.z }
+  return { yaw: Math.atan2(offset.x, offset.z), pitch: Math.asin(offset.y) }
 }
 
 /** Puts the beacon on the selection, in phase with the symbol's own pulse. */
@@ -611,7 +656,7 @@ function rebuild() {
   hud.textContent = status
   if (!framed) {
     framed = true
-    frameFocus()
+    frameFocus(true)
   }
 }
 

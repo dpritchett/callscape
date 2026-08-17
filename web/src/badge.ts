@@ -115,3 +115,80 @@ export function placeBadge(module: string, radius: number): PlacedBadge | null {
     size: reach * SIZE,
   }
 }
+
+/**
+ * Which way to look from `target` to have a mark in frame, staying as near as
+ * possible to the bearing you would have used anyway.
+ *
+ * The opening shot approaches on a fixed vector that knows nothing about where
+ * the marks are, so the first thing anyone sees reliably has none of them in
+ * it: six landmarks in the sky, and the camera pointed at the one direction
+ * with no landmark in it. Looking from the far side of the focus puts a mark
+ * behind it — the city in front, its repo hanging over it.
+ *
+ * `prefer` is the direction you would have looked. Taking the mark closest to
+ * it keeps the opening bearing recognisably the one it always was rather than
+ * snapping the camera onto an axis.
+ */
+export function bearingToBadge(badge: PlacedBadge, target: Vec3, prefer: Vec3): Vec3 {
+  const wanted = unit(prefer)
+  let best = badge.at[0]
+  let bestDot = -Infinity
+  for (const point of badge.at) {
+    const dir = unit(minus(point, target))
+    const dot = dir.x * wanted.x + dir.y * wanted.y + dir.z * wanted.z
+    // Strictly greater, so a tie goes to the earlier cardinal and the opening
+    // shot is the same shot every time.
+    if (dot > bestDot) {
+      bestDot = dot
+      best = point
+    }
+  }
+
+  // Look *past* the mark rather than straight at it. Aiming at it exactly puts
+  // it directly behind whatever you are looking at, which for an opening shot
+  // of a whole graph means the crust sits in front of it and hides it — the
+  // first version of this did exactly that. Turned a third of a right angle
+  // away, it clears the silhouette and sits beside the sphere with both in
+  // frame at once.
+  const toBadge = unit(minus(best, target))
+  const axis = cross(toBadge, wanted)
+  const len = Math.hypot(axis.x, axis.y, axis.z)
+  // Nothing to turn about when the two are already in line; any perpendicular
+  // will do, and a fixed one keeps the shot repeatable.
+  const about = len > 1e-6 ? unit(axis) : unit(cross(toBadge, { x: 0, y: 1, z: 0.001 }))
+  return rotateAbout(toBadge, about, OFF_AXIS)
+}
+
+/** Far enough off the view axis to clear the graph, near enough to stay framed. */
+const OFF_AXIS = (32 * Math.PI) / 180
+
+function cross(a: Vec3, b: Vec3): Vec3 {
+  return {
+    x: a.y * b.z - a.z * b.y,
+    y: a.z * b.x - a.x * b.z,
+    z: a.x * b.y - a.y * b.x,
+  }
+}
+
+/** Rodrigues: turn `v` about the unit `k` by `angle`. */
+function rotateAbout(v: Vec3, k: Vec3, angle: number): Vec3 {
+  const c = Math.cos(angle)
+  const s = Math.sin(angle)
+  const kv = k.x * v.x + k.y * v.y + k.z * v.z
+  const kxv = cross(k, v)
+  return unit({
+    x: v.x * c + kxv.x * s + k.x * kv * (1 - c),
+    y: v.y * c + kxv.y * s + k.y * kv * (1 - c),
+    z: v.z * c + kxv.z * s + k.z * kv * (1 - c),
+  })
+}
+
+function minus(a: Vec3, b: Vec3): Vec3 {
+  return { x: a.x - b.x, y: a.y - b.y, z: a.z - b.z }
+}
+
+function unit(v: Vec3): Vec3 {
+  const len = Math.hypot(v.x, v.y, v.z) || 1
+  return { x: v.x / len, y: v.y / len, z: v.z / len }
+}

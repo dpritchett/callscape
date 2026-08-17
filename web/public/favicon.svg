@@ -1,25 +1,32 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="callscape">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" role="img" aria-label="callscape">
   <!--
     The thing itself, from outside: a crust of districts on a dark sphere.
 
-    Drawn as five lit caps rather than as anything more faithful, because at
-    16px a favicon is four or five shapes and the rest is mud. The colours are
-    the first entries of the scene's own palette, so the tab and the page agree
-    about what this looks like.
+    Sized for 16 pixels, which is the only size that matters and is unforgiving.
+    The first version drew five districts, a wire and a limb highlight, all of
+    which came out around two pixels across and added up to a smudge. This is
+    four shapes: the sphere, and three districts big enough to still be shapes.
+
+    The bright rim does the real work. A dark circle on a dark background is a
+    hole; a dark circle with a lit edge is an object, and it survives a light
+    tab strip as well as a dark one, which no fill alone does.
   -->
-  <rect width="64" height="64" fill="#0b0e14"/>
-  <circle cx="32" cy="32" r="24" fill="#111726" stroke="#2b3348" stroke-width="1.5"/>
+  <defs>
+    <clipPath id="globe">
+      <circle cx="16" cy="16" r="14"/>
+    </clipPath>
+  </defs>
 
-  <!-- Districts. Ellipses, foreshortened towards the limb the way the real
-       caps are, biggest near the middle where the sphere faces you. -->
-  <ellipse cx="27" cy="25" rx="9" ry="7.5" fill="#7aa2f7" opacity="0.95" transform="rotate(-18 27 25)"/>
-  <ellipse cx="43" cy="34" rx="6" ry="4" fill="#9ece6a" opacity="0.9" transform="rotate(28 43 34)"/>
-  <ellipse cx="24" cy="43" rx="7" ry="4.5" fill="#e0af68" opacity="0.9" transform="rotate(12 24 43)"/>
-  <ellipse cx="38" cy="48" rx="4.5" ry="2.6" fill="#f7768e" opacity="0.85" transform="rotate(-14 38 48)"/>
-  <ellipse cx="15" cy="33" rx="3.4" ry="5" fill="#bb9af7" opacity="0.8" transform="rotate(6 15 33)"/>
+  <circle cx="16" cy="16" r="14" fill="#0d1220"/>
 
-  <!-- One wire crossing the crust, and the light coming from up and left, which
-       is where the scene's key light is. -->
-  <path d="M27 25 Q36 30 43 34" stroke="#c0caf5" stroke-width="1.1" fill="none" opacity="0.5"/>
-  <path d="M14 22 A24 24 0 0 1 33 8" stroke="#7dcfff" stroke-width="1.6" fill="none" opacity="0.75" stroke-linecap="round"/>
+  <!-- Districts, clipped to the sphere so they read as being on it rather than
+       floating past the edge. Foreshortened towards the limb, as the real caps
+       are, and taking up most of the face — at this size, subtle is invisible. -->
+  <g clip-path="url(#globe)">
+    <ellipse cx="12" cy="10.5" rx="8" ry="6" fill="#7aa2f7" transform="rotate(-20 12 10.5)"/>
+    <ellipse cx="22" cy="19" rx="6.5" ry="4.6" fill="#9ece6a" transform="rotate(28 22 19)"/>
+    <ellipse cx="12.5" cy="23" rx="5.6" ry="3.6" fill="#e0af68" transform="rotate(12 12.5 23)"/>
+  </g>
+
+  <circle cx="16" cy="16" r="14" fill="none" stroke="#c0caf5" stroke-width="2.5"/>
 </svg>

@@ -50,6 +50,15 @@ export interface Controller {
   flip(instant?: boolean): void
 }
 
+/**
+ * Where `frame` stands when nobody names a bearing: off to the side and a
+ * little above, because looking straight down at a flat district tells you
+ * nothing. Exported so that anything wanting to stay near this bearing while
+ * adjusting it — the opening shot, which also wants a badge in the frame — is
+ * working from the same vector rather than a second copy of it.
+ */
+export const DEFAULT_OFFSET = new THREE.Vector3(0.55, 0.42, 0.72).normalize()
+
 const WHEEL_IMPULSE = 0.22 // velocity per wheel unit, along the view direction
 const FOCUS_SECONDS = 0.55
 /** Long enough to see the world go past, short enough to feel like a flick. */
@@ -262,7 +271,7 @@ export class FlyController implements Controller {
           Math.sin(from.pitch),
           Math.cos(from.pitch) * Math.cos(from.yaw),
         ).multiplyScalar(distance)
-      : new THREE.Vector3(0.55, 0.42, 0.72).normalize().multiplyScalar(distance)
+      : DEFAULT_OFFSET.clone().multiplyScalar(distance)
     this.vel.set(0, 0, 0)
     this.spin = null // the flight decides where you are looking
     this.tween = {
