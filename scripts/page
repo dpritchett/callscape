@@ -1,0 +1,69 @@
+#!/usr/bin/env bash
+#
+# Talk to the open dev page, and nothing else.
+#
+# This exists to be pre-approved. Working on this project means poking the dev
+# server constantly — is the badge being served, what does /__src answer, did
+# the cue land — and the alternative is allowing `curl` in general, which is a
+# much bigger thing to hand over than "may reach my own dev server".
+#
+# So it takes a path, never a URL, and a fixed set of verbs rather than a
+# passthrough of curl's flags. A wrapper that forwards arbitrary arguments to
+# curl is just curl with extra steps, and cannot promise anything about where
+# the request goes.
+set -euo pipefail
+
+readonly ORIGIN="http://127.0.0.1:5178"
+
+usage() {
+  cat >&2 <<'EOF'
+usage: scripts/page <verb> <path> [body-file]
+
+  get  /path            print the response body
+  head /path            print the status line and headers
+  post /path [file]     POST, with the file as a JSON body if given
+
+Paths only — the host is always the local dev server on :5178.
+
+  scripts/page get /view.json
+  scripts/page head /badges/github.com/cli.png
+  scripts/page post /__cue web/cue.json
+  scripts/page post /__shot/request
+EOF
+  exit 2
+}
+
+[ $# -ge 2 ] || usage
+verb=$1
+path=$2
+body=${3-}
+
+# A path, not a URL: no scheme, no host, no protocol-relative "//host/x".
+case "$path" in
+  /*) ;;
+  *) echo "page: paths start with / — got '$path'" >&2; exit 2 ;;
+esac
+case "$path" in
+  //*) echo "page: '//' would name another host" >&2; exit 2 ;;
+esac
+
+case "$verb" in
+  get)
+    exec curl -sS "$ORIGIN$path"
+    ;;
+  head)
+    exec curl -sS -I "$ORIGIN$path"
+    ;;
+  post)
+    if [ -n "$body" ]; then
+      [ -f "$body" ] || { echo "page: no such body file: $body" >&2; exit 2; }
+      exec curl -sS -X POST -H 'content-type: application/json' \
+        --data-binary "@$body" "$ORIGIN$path"
+    fi
+    exec curl -sS -X POST "$ORIGIN$path"
+    ;;
+  *)
+    echo "page: unknown verb '$verb'" >&2
+    usage
+    ;;
+esac

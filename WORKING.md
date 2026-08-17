@@ -48,6 +48,22 @@ make cue     # push web/cue.json to the page: focus, select, distance, yaw, pitc
 make look    # cue then shot
 ```
 
+**Poke the dev server with `scripts/page`, never with `curl`.** Same requests, except it
+takes a path rather than a URL and has four verbs rather than all of curl's flags, so it
+can only ever reach `:5178`:
+
+```sh
+scripts/page get /view.json
+scripts/page head /badges/github.com/cli.png
+scripts/page post /__cue web/cue.json
+scripts/page post /__shot/request
+```
+
+That is the whole point of it. Working here means checking what the server is answering
+several times an hour, and the alternative is somebody allowing `curl` in general — which
+is a much bigger thing to hand over than "may reach my own dev server". `make shot` and
+`make cue` go through it too, so the address is written down once.
+
 `make cue` reads `web/cue.json` rather than taking an inline argument, so the command
 line never varies. Edit that file to change what you are looking at. It is untracked
 scratch — where you happened to be pointing — and `make cue` writes a starting one if

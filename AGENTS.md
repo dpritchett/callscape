@@ -40,7 +40,12 @@ it improves.
 You can see the page without a browser: `make cue` puts it where you want it and
 `make shot` photographs it. A cue locks the local controls for a few seconds on its own,
 so you are never steering against whoever is flying — **send `"hold": false` when you are
-done** to hand the wheel straight back. `WORKING.md` has the rest of the instruments.
+done** to hand the wheel straight back.
+
+**To ask the dev server anything else, use `scripts/page`, not `curl`.** It takes a path
+and has four verbs — `get`, `head`, `post`, and post-with-a-body-file — so it can only
+reach `:5178`, which is why it can be pre-approved and `curl` cannot. `WORKING.md` has the
+rest of the instruments.
 
 ## Where to put code
 

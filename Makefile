@@ -94,8 +94,11 @@ clean:
 	rm -f callscape-dump
 
 # Ask the open page to screenshot itself. Writes web/shots/latest.png.
+#
+# Through scripts/page rather than curl, so the dev server's address is written
+# down once and every ad-hoc poke goes through something that can only reach it.
 shot:
-	@curl -sS -X POST http://localhost:5178/__shot/request > /dev/null
+	@./scripts/page post /__shot/request > /dev/null
 	@sleep 3
 	@ls -l web/shots/latest.png
 
@@ -112,8 +115,7 @@ web/cue.json:
 	@echo "wrote a starting $@"
 
 cue: web/cue.json
-	@curl -sS -X POST -H 'content-type: application/json' --data-binary @web/cue.json \
-		http://localhost:5178/__cue > /dev/null
+	@./scripts/page post /__cue web/cue.json > /dev/null
 	@echo "cued $$(tr -d '\n ' < web/cue.json)"
 
 # Cue that state and screenshot it.
