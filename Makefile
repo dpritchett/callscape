@@ -2,7 +2,7 @@ GOLANGCI_LINT_VERSION := v2.11.4
 NPM := npm --prefix web
 
 .PHONY: check build install test vet lint lint-install \
-	web-install web-check web-test dev logs shot cue look dump hooks clean sounds
+	web-install web-check web-test dev logs shot cue look dump hooks clean sounds music
 
 # Everything lefthook runs, in one place.
 check: vet test lint web-check web-test
@@ -55,15 +55,22 @@ dump:
 # deterministic, so an unchanged recipe rebakes to an empty diff.
 BEEPBOOP ?= ../beepboop
 BEEPBOOP_VOICE_MODEL ?= $(HOME)/.local/share/piper/voices/en_US-lessac-medium.onnx
-MUSIC_TMP := /tmp/lspvue-music
 sounds:
 	cd $(BEEPBOOP) && BEEPBOOP_VOICE_MODEL=$(BEEPBOOP_VOICE_MODEL) \
 		go run ./cmd/beepboop bake recipes/navigator.json $(CURDIR)/web/public/sounds
-# The music recipe is a lab: it bakes four candidates and we use two of them.
-# Baked aside and copied, so the two we chose are named here rather than by
-# whatever else the lab happens to be trying out.
-	cd $(BEEPBOOP) && go run ./cmd/beepboop bake recipes/music-lab.json $(MUSIC_TMP)
-	cp $(MUSIC_TMP)/music-4-sparse.wav $(MUSIC_TMP)/music-3-both.wav web/public/sounds/
+
+# The music is written, not baked, so it comes from beatshop rather than from a
+# recipe — and `sounds` must not touch it. It used to bake a lab of four
+# candidates and copy two out; the pair of eight-second loops that produced is
+# what `apollo-v1` replaced, and leaving that in would have overwritten a
+# written track with a generated one on the next rebake.
+#
+# FLAC, not the WAV next to it: same samples at a fifth the size, and sample
+# exact, so the loop comes round without the seam an MP3's padding would add.
+BEATSHOP ?= ../beatshop
+MUSIC ?= apollo-v1
+music:
+	cp $(BEATSHOP)/out/archive/$(MUSIC).flac web/public/sounds/
 
 hooks:
 	lefthook install

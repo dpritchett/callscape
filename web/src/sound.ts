@@ -49,18 +49,21 @@ const BEDS = ['flight-slow', 'flight-fast'] as const
 type Bed = (typeof BEDS)[number]
 
 /**
- * Background music. Two eight-second loops that are two moods rather than two
- * takes, played one after the other for a minute each, forever.
+ * Background music: one written track, looping, from beatshop rather than from
+ * the sound recipe.
  *
- * The names are the lab's, not ours: they are baked from a recipe that is
- * trying out four candidates, and renaming them here would put a lookup table
- * between the file and the thing that asks for it.
+ * It replaced a pair of eight-second loops that took a minute each in turn —
+ * two moods handing over, which was a way of making eight seconds of material
+ * last. A hundred and eleven seconds of actual music does not need the trick,
+ * so the handover, the second gain and the minute timer are gone with it.
+ *
+ * FLAC rather than WAV: the same samples at a fifth of the size, and unlike an
+ * MP3 it is sample-exact, so the loop comes round without the seam an encoder's
+ * padding would put there. Every browser this page runs in decodes it.
  */
-const TRACKS = ['music-4-sparse', 'music-3-both'] as const
-type Track = (typeof TRACKS)[number]
-/** How long each mood holds before handing over. */
-const TRACK_SECONDS = 60
-/** Long enough that the handover is a change of weather, not an edit. */
+const TRACK = 'apollo-v1'
+type Track = typeof TRACK
+/** Long enough that arriving reads as weather changing, not as a play button. */
 const TRACK_FADE = 3
 /**
  * Stopping is not a handover. Letting go of the controls should leave you in
@@ -68,6 +71,15 @@ const TRACK_FADE = 3
  * to read as the sim powering down rather than as the music trailing off.
  */
 const TRACK_STOP = 0.8
+
+/**
+ * The voice and the beds are WAVs baked by beepboop; the music is a FLAC
+ * written elsewhere. One line rather than a manifest, because the exception is
+ * one file and a lookup table would be longer than the thing it replaced.
+ */
+function fileOf(name: Cue | Bed | Track): string {
+  return name === TRACK ? `${name}.flac` : `${name}.wav`
+}
 
 /** Long enough not to click, short enough not to be a crossfade. */
 const CUT_SECONDS = 0.015
@@ -94,12 +106,10 @@ export class Voice {
   private master = this.ctx.createGain()
   private buffers = new Map<Cue | Bed | Track, AudioBuffer>()
   private beds: Record<Bed, GainNode> | null = null
-  private music: Record<Track, GainNode> | null = null
+  private music: GainNode | null = null
   /** What the app asked for; `playing` is what is actually sounding. */
   private wanted = false
   private playing = false
-  private track = 0
-  private handover: ReturnType<typeof setInterval> | null = null
   private now: { src: AudioBufferSourceNode; gain: GainNode } | null = null
   private enabled = true
 
@@ -115,11 +125,13 @@ export class Voice {
    * problem this class exists to avoid.
    */
   private async preload() {
-    const wanted = [...CUES, ...BEDS, ...TRACKS]
+    // Annotated: a bare element in an array literal widens to `string`, which
+    // the spreads alone did not.
+    const wanted: (Cue | Bed | Track)[] = [...CUES, ...BEDS, TRACK]
     await Promise.all(
       wanted.map(async (cue) => {
         try {
-          const res = await fetch(`/sounds/${cue}.wav`)
+          const res = await fetch(`/sounds/${fileOf(cue)}`)
           if (!res.ok) throw new Error(`${res.status} ${res.statusText}`)
           this.buffers.set(cue, await this.ctx.decodeAudioData(await res.arrayBuffer()))
         } catch (err) {
@@ -185,50 +197,27 @@ export class Voice {
     if (!this.startMusic()) return
     this.playing = want
 
-    if (!want) {
-      for (const name of TRACKS) this.rampTo(this.music![name].gain, 0, TRACK_STOP)
-      if (this.handover) clearInterval(this.handover)
-      this.handover = null
-      devlog('music', { playing: false })
-      return
-    }
-
-    this.raise()
-    // Each mood holds for a minute and then hands over, forever. The loops
-    // themselves never stop; only which one you can hear changes.
-    this.handover = setInterval(() => {
-      this.track = (this.track + 1) % TRACKS.length
-      this.raise()
-    }, TRACK_SECONDS * 1000)
+    // The loop itself never stops once started; only whether you can hear it
+    // changes. Leaving takes under a second, arriving takes three.
+    this.rampTo(this.music!.gain, want ? 1 : 0, want ? TRACK_FADE : TRACK_STOP)
+    devlog('music', { playing: want, track: TRACK })
   }
 
-  /** Brings the current track up and the others down, over one fade. */
-  private raise() {
-    if (!this.music) return
-    TRACKS.forEach((name, i) => {
-      this.rampTo(this.music![name].gain, i === this.track ? 1 : 0, TRACK_FADE)
-    })
-    devlog('music', { playing: true, track: TRACKS[this.track] })
-  }
-
-  /** Starts every music loop at zero, once. */
+  /** Starts the loop at zero, once. */
   private startMusic(): boolean {
     if (this.music) return true
-    if (!TRACKS.every((t) => this.buffers.has(t))) return false
+    const buffer = this.buffers.get(TRACK)
+    if (!buffer) return false
     if (this.ctx.state === 'suspended') void this.ctx.resume()
 
-    const made = {} as Record<Track, GainNode>
-    for (const name of TRACKS) {
-      const src = this.ctx.createBufferSource()
-      const gain = this.ctx.createGain()
-      src.buffer = this.buffers.get(name)!
-      src.loop = true
-      gain.gain.value = 0
-      src.connect(gain).connect(this.master)
-      src.start()
-      made[name] = gain
-    }
-    this.music = made
+    const src = this.ctx.createBufferSource()
+    const gain = this.ctx.createGain()
+    src.buffer = buffer
+    src.loop = true
+    gain.gain.value = 0
+    src.connect(gain).connect(this.master)
+    src.start()
+    this.music = gain
     return true
   }
 
