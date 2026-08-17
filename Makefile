@@ -2,7 +2,7 @@ GOLANGCI_LINT_VERSION := v2.11.4
 NPM := npm --prefix web
 
 .PHONY: check build install test vet lint lint-install \
-	web-install web-check web-test dev logs shot cue look dump hooks clean sounds music
+	web-install web-check web-test dev logs shot cue look dump sample hooks clean sounds music
 
 # Everything lefthook runs, in one place.
 check: vet test lint web-check web-test
@@ -54,6 +54,15 @@ dump:
 	@test -n "$(TARGET)" || { echo "usage: make dump TARGET=/path/to/a/go/module"; exit 1; }
 	go run ./cmd/callscape-dump $(TARGET) > web/public/graph.json
 	@echo "$(abspath $(TARGET))" > web/.source-root
+
+# The graph a fresh clone flies before it has dumped anything: this repo,
+# dumped by itself. graph.json is untracked — it is a module-sized blob and
+# every re-dump would otherwise commit another one — so something has to be
+# there on clone. Generated rather than hand-kept, so it cannot drift from what
+# the dumper emits, and deterministic, so an unchanged dumper rebakes to an
+# empty diff.
+sample:
+	go run ./cmd/callscape-dump . > web/public/graph.default.json
 
 # The navigator's voice. The WAVs are committed, so a clone runs with sound and
 # without beepboop; this is how to rebake them after a wording or level change.

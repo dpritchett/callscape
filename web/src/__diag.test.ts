@@ -1,19 +1,25 @@
 import { expect, test } from 'vitest'
-import { readFileSync } from 'node:fs'
+import { existsSync, readFileSync } from 'node:fs'
 import { place } from './placement'
 import { parseView } from './view'
 
+// Whatever is loaded: the local dump when there is one, and otherwise the
+// sample a clone ships with. This is a diagnostic rather than an assertion
+// about a particular graph, and it must not be the one check that fails for
+// someone who has not dumped anything yet.
+const GRAPH = existsSync('public/graph.json') ? 'public/graph.json' : 'public/graph.default.json'
+
 test('shell fill', () => {
-  const G = JSON.parse(readFileSync('public/graph.json', 'utf8'))
+  const G = JSON.parse(readFileSync(GRAPH, 'utf8'))
   const v = parseView(JSON.parse(readFileSync('public/view.json', 'utf8')))
   const t0 = performance.now()
   const p = place(G, v)
   const ms = performance.now() - t0
   const capArea = p.districts.reduce((s, d) => s + Math.PI * d.radius * d.radius, 0)
   const sphere = 4 * Math.PI * p.shell * p.shell
-  console.log(
-    `shell ${p.shell.toFixed(0)}, districts cover ${((100 * capArea) / sphere).toFixed(1)}%, place() ${ms.toFixed(0)}ms`,
-  )
+  // A single district is laid out flat, with no shell to cover a fraction of.
+  const cover = sphere > 0 ? `${((100 * capArea) / sphere).toFixed(1)}%` : 'flat, one district'
+  console.log(`shell ${p.shell.toFixed(0)}, districts cover ${cover}, place() ${ms.toFixed(0)}ms`)
   let worst = Infinity
   for (const a of p.districts)
     for (const b of p.districts)
@@ -44,8 +50,6 @@ test('shell fill', () => {
   // length L. That is how far a wire has to be lifted to stay above its own
   // district's floor, which is what makes it visible from outside the shell.
   const widest = Math.max(...p.districts.map((d) => d.radius))
-  console.log(
-    `widest district ${widest.toFixed(0)}, worst in-district sag ` +
-      `${(((2 * widest) ** 2) / (8 * p.shell)).toFixed(1)}`,
-  )
+  const sag = p.shell > 0 ? (((2 * widest) ** 2) / (8 * p.shell)).toFixed(1) : 'none, flat'
+  console.log(`widest district ${widest.toFixed(0)}, worst in-district sag ${sag}`)
 })

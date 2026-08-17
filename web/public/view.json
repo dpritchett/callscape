@@ -23,7 +23,7 @@
     "mode": "all"
   },
   "camera": {
-    "focus": "github.com/cli/cli/v2/api.NewClientFromHTTP",
+    "focus": "github.com/dpritchett/callscape/cmd/callscape-dump.dump",
     "distance": 120
   },
   "select": []

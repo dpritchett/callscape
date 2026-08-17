@@ -664,11 +664,33 @@ function watch(url: string, onChange: (raw: unknown) => void) {
   tick()
 }
 
-watch('/graph.json', (raw) => {
-  graph = raw as Graph
-  sources.clear()
-  for (const n of graph.nodes) sources.set(n.id, { file: n.file, line: n.line, lines: n.lines })
-  rebuild()
+/**
+ * Whatever `make dump` last wrote, and otherwise the sample this repo ships.
+ * graph.json is untracked, so a fresh clone has only graph.default.json — and
+ * flying that one is a better first run than an error banner telling you to
+ * dump something before the page will do anything at all.
+ *
+ * Chosen once, at startup: a dump landing later is a page reload away, and the
+ * poller must not be checking two URLs forever.
+ */
+async function graphUrl(): Promise<string> {
+  try {
+    const res = await fetch('/graph.json', { method: 'HEAD', cache: 'no-store' })
+    if (res.ok) return '/graph.json'
+  } catch {
+    /* no dev server, or no such file: the sample it is */
+  }
+  return '/graph.default.json'
+}
+
+void graphUrl().then((url) => {
+  devlog('graph', { url })
+  watch(url, (raw) => {
+    graph = raw as Graph
+    sources.clear()
+    for (const n of graph.nodes) sources.set(n.id, { file: n.file, line: n.line, lines: n.lines })
+    rebuild()
+  })
 })
 
 watch('/view.json', (raw) => {

@@ -1,0 +1,313 @@
+{
+  "module": "github.com/dpritchett/callscape",
+  "nodes": [
+    {
+      "id": "github.com/dpritchett/callscape/cmd/callscape-dump.addPkg",
+      "name": "addPkg",
+      "pkg": "github.com/dpritchett/callscape/cmd/callscape-dump",
+      "file": "cmd/callscape-dump/main.go",
+      "line": 266,
+      "lines": 6,
+      "exported": false,
+      "generated": false,
+      "fanIn": 1,
+      "fanOut": 0,
+      "fanInPkgs": 1,
+      "fanOutPkgs": 0
+    },
+    {
+      "id": "github.com/dpritchett/callscape/cmd/callscape-dump.calleeID",
+      "name": "calleeID",
+      "pkg": "github.com/dpritchett/callscape/cmd/callscape-dump",
+      "file": "cmd/callscape-dump/main.go",
+      "line": 332,
+      "lines": 32,
+      "exported": false,
+      "generated": false,
+      "fanIn": 1,
+      "fanOut": 1,
+      "fanInPkgs": 1,
+      "fanOutPkgs": 1
+    },
+    {
+      "id": "github.com/dpritchett/callscape/cmd/callscape-dump.classOf",
+      "name": "classOf",
+      "pkg": "github.com/dpritchett/callscape/cmd/callscape-dump",
+      "file": "cmd/callscape-dump/lex.go",
+      "line": 79,
+      "lines": 16,
+      "exported": false,
+      "generated": false,
+      "fanIn": 1,
+      "fanOut": 0,
+      "fanInPkgs": 1,
+      "fanOutPkgs": 0
+    },
+    {
+      "id": "github.com/dpritchett/callscape/cmd/callscape-dump.dedupe",
+      "name": "dedupe",
+      "pkg": "github.com/dpritchett/callscape/cmd/callscape-dump",
+      "file": "cmd/callscape-dump/main.go",
+      "line": 365,
+      "lines": 18,
+      "exported": false,
+      "generated": false,
+      "fanIn": 1,
+      "fanOut": 0,
+      "fanInPkgs": 1,
+      "fanOutPkgs": 0
+    },
+    {
+      "id": "github.com/dpritchett/callscape/cmd/callscape-dump.dump",
+      "name": "dump",
+      "pkg": "github.com/dpritchett/callscape/cmd/callscape-dump",
+      "file": "cmd/callscape-dump/main.go",
+      "line": 106,
+      "lines": 140,
+      "exported": false,
+      "generated": false,
+      "fanIn": 1,
+      "fanOut": 8,
+      "fanInPkgs": 1,
+      "fanOutPkgs": 1
+    },
+    {
+      "id": "github.com/dpritchett/callscape/cmd/callscape-dump.funcID",
+      "name": "funcID",
+      "pkg": "github.com/dpritchett/callscape/cmd/callscape-dump",
+      "file": "cmd/callscape-dump/main.go",
+      "line": 301,
+      "lines": 15,
+      "exported": false,
+      "generated": false,
+      "fanIn": 2,
+      "fanOut": 1,
+      "fanInPkgs": 1,
+      "fanOutPkgs": 1
+    },
+    {
+      "id": "github.com/dpritchett/callscape/cmd/callscape-dump.inModule",
+      "name": "inModule",
+      "pkg": "github.com/dpritchett/callscape/cmd/callscape-dump",
+      "file": "cmd/callscape-dump/main.go",
+      "line": 291,
+      "lines": 6,
+      "exported": false,
+      "generated": false,
+      "fanIn": 1,
+      "fanOut": 0,
+      "fanInPkgs": 1,
+      "fanOutPkgs": 0
+    },
+    {
+      "id": "github.com/dpritchett/callscape/cmd/callscape-dump.isGenerated",
+      "name": "isGenerated",
+      "pkg": "github.com/dpritchett/callscape/cmd/callscape-dump",
+      "file": "cmd/callscape-dump/main.go",
+      "line": 276,
+      "lines": 14,
+      "exported": false,
+      "generated": false,
+      "fanIn": 1,
+      "fanOut": 0,
+      "fanInPkgs": 1,
+      "fanOutPkgs": 0
+    },
+    {
+      "id": "github.com/dpritchett/callscape/cmd/callscape-dump.lexMain",
+      "name": "lexMain",
+      "pkg": "github.com/dpritchett/callscape/cmd/callscape-dump",
+      "file": "cmd/callscape-dump/lex.go",
+      "line": 96,
+      "lines": 7,
+      "exported": false,
+      "generated": false,
+      "fanIn": 1,
+      "fanOut": 1,
+      "fanInPkgs": 1,
+      "fanOutPkgs": 1
+    },
+    {
+      "id": "github.com/dpritchett/callscape/cmd/callscape-dump.lexSpans",
+      "name": "lexSpans",
+      "pkg": "github.com/dpritchett/callscape/cmd/callscape-dump",
+      "file": "cmd/callscape-dump/lex.go",
+      "line": 37,
+      "lines": 41,
+      "exported": false,
+      "generated": false,
+      "fanIn": 1,
+      "fanOut": 1,
+      "fanInPkgs": 1,
+      "fanOutPkgs": 1
+    },
+    {
+      "id": "github.com/dpritchett/callscape/cmd/callscape-dump.main",
+      "name": "main",
+      "pkg": "github.com/dpritchett/callscape/cmd/callscape-dump",
+      "file": "cmd/callscape-dump/main.go",
+      "line": 61,
+      "lines": 44,
+      "exported": false,
+      "generated": false,
+      "fanIn": 0,
+      "fanOut": 3,
+      "fanInPkgs": 0,
+      "fanOutPkgs": 1
+    },
+    {
+      "id": "github.com/dpritchett/callscape/cmd/callscape-dump.moduleOf",
+      "name": "moduleOf",
+      "pkg": "github.com/dpritchett/callscape/cmd/callscape-dump",
+      "file": "cmd/callscape-dump/main.go",
+      "line": 248,
+      "lines": 17,
+      "exported": false,
+      "generated": false,
+      "fanIn": 1,
+      "fanOut": 0,
+      "fanInPkgs": 1,
+      "fanOutPkgs": 0
+    },
+    {
+      "id": "github.com/dpritchett/callscape/cmd/callscape-dump.printStats",
+      "name": "printStats",
+      "pkg": "github.com/dpritchett/callscape/cmd/callscape-dump",
+      "file": "cmd/callscape-dump/main.go",
+      "line": 390,
+      "lines": 21,
+      "exported": false,
+      "generated": false,
+      "fanIn": 1,
+      "fanOut": 1,
+      "fanInPkgs": 1,
+      "fanOutPkgs": 1
+    },
+    {
+      "id": "github.com/dpritchett/callscape/cmd/callscape-dump.printTop",
+      "name": "printTop",
+      "pkg": "github.com/dpritchett/callscape/cmd/callscape-dump",
+      "file": "cmd/callscape-dump/main.go",
+      "line": 412,
+      "lines": 24,
+      "exported": false,
+      "generated": false,
+      "fanIn": 1,
+      "fanOut": 1,
+      "fanInPkgs": 1,
+      "fanOutPkgs": 1
+    },
+    {
+      "id": "github.com/dpritchett/callscape/cmd/callscape-dump.recvName",
+      "name": "recvName",
+      "pkg": "github.com/dpritchett/callscape/cmd/callscape-dump",
+      "file": "cmd/callscape-dump/main.go",
+      "line": 317,
+      "lines": 12,
+      "exported": false,
+      "generated": false,
+      "fanIn": 1,
+      "fanOut": 0,
+      "fanInPkgs": 1,
+      "fanOutPkgs": 0
+    },
+    {
+      "id": "github.com/dpritchett/callscape/cmd/callscape-dump.shortName",
+      "name": "shortName",
+      "pkg": "github.com/dpritchett/callscape/cmd/callscape-dump",
+      "file": "cmd/callscape-dump/main.go",
+      "line": 386,
+      "lines": 3,
+      "exported": false,
+      "generated": false,
+      "fanIn": 1,
+      "fanOut": 0,
+      "fanInPkgs": 1,
+      "fanOutPkgs": 0
+    },
+    {
+      "id": "github.com/dpritchett/callscape/cmd/callscape-dump.trunc",
+      "name": "trunc",
+      "pkg": "github.com/dpritchett/callscape/cmd/callscape-dump",
+      "file": "cmd/callscape-dump/main.go",
+      "line": 437,
+      "lines": 6,
+      "exported": false,
+      "generated": false,
+      "fanIn": 1,
+      "fanOut": 0,
+      "fanInPkgs": 1,
+      "fanOutPkgs": 0
+    }
+  ],
+  "edges": [
+    {
+      "from": "github.com/dpritchett/callscape/cmd/callscape-dump.calleeID",
+      "to": "github.com/dpritchett/callscape/cmd/callscape-dump.funcID"
+    },
+    {
+      "from": "github.com/dpritchett/callscape/cmd/callscape-dump.dump",
+      "to": "github.com/dpritchett/callscape/cmd/callscape-dump.addPkg"
+    },
+    {
+      "from": "github.com/dpritchett/callscape/cmd/callscape-dump.dump",
+      "to": "github.com/dpritchett/callscape/cmd/callscape-dump.calleeID"
+    },
+    {
+      "from": "github.com/dpritchett/callscape/cmd/callscape-dump.dump",
+      "to": "github.com/dpritchett/callscape/cmd/callscape-dump.dedupe"
+    },
+    {
+      "from": "github.com/dpritchett/callscape/cmd/callscape-dump.dump",
+      "to": "github.com/dpritchett/callscape/cmd/callscape-dump.funcID"
+    },
+    {
+      "from": "github.com/dpritchett/callscape/cmd/callscape-dump.dump",
+      "to": "github.com/dpritchett/callscape/cmd/callscape-dump.inModule"
+    },
+    {
+      "from": "github.com/dpritchett/callscape/cmd/callscape-dump.dump",
+      "to": "github.com/dpritchett/callscape/cmd/callscape-dump.isGenerated"
+    },
+    {
+      "from": "github.com/dpritchett/callscape/cmd/callscape-dump.dump",
+      "to": "github.com/dpritchett/callscape/cmd/callscape-dump.moduleOf"
+    },
+    {
+      "from": "github.com/dpritchett/callscape/cmd/callscape-dump.dump",
+      "to": "github.com/dpritchett/callscape/cmd/callscape-dump.shortName"
+    },
+    {
+      "from": "github.com/dpritchett/callscape/cmd/callscape-dump.funcID",
+      "to": "github.com/dpritchett/callscape/cmd/callscape-dump.recvName"
+    },
+    {
+      "from": "github.com/dpritchett/callscape/cmd/callscape-dump.lexMain",
+      "to": "github.com/dpritchett/callscape/cmd/callscape-dump.lexSpans"
+    },
+    {
+      "from": "github.com/dpritchett/callscape/cmd/callscape-dump.lexSpans",
+      "to": "github.com/dpritchett/callscape/cmd/callscape-dump.classOf"
+    },
+    {
+      "from": "github.com/dpritchett/callscape/cmd/callscape-dump.main",
+      "to": "github.com/dpritchett/callscape/cmd/callscape-dump.dump"
+    },
+    {
+      "from": "github.com/dpritchett/callscape/cmd/callscape-dump.main",
+      "to": "github.com/dpritchett/callscape/cmd/callscape-dump.lexMain"
+    },
+    {
+      "from": "github.com/dpritchett/callscape/cmd/callscape-dump.main",
+      "to": "github.com/dpritchett/callscape/cmd/callscape-dump.printStats"
+    },
+    {
+      "from": "github.com/dpritchett/callscape/cmd/callscape-dump.printStats",
+      "to": "github.com/dpritchett/callscape/cmd/callscape-dump.printTop"
+    },
+    {
+      "from": "github.com/dpritchett/callscape/cmd/callscape-dump.printTop",
+      "to": "github.com/dpritchett/callscape/cmd/callscape-dump.trunc"
+    }
+  ]
+}

@@ -28,6 +28,10 @@ make dev                           # vite on :5178
 make check                         # vet, test, golangci-lint, tsc, vitest — what lefthook runs
 ```
 
+With no `make dump` behind you the page flies `graph.default.json` instead: this repo,
+dumped by itself, tracked so a clone has something to fly. `make sample` rebakes it and
+should be run whenever the dumper's output changes shape.
+
 Then edit `web/public/view.json` while the page is open. It applies within a second,
 without a reload and without moving the camera. That loop is the point of the project;
 anything that breaks it is a regression regardless of what else it improves.

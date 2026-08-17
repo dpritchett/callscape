@@ -11,10 +11,13 @@ long. Above is [coder](https://github.com/coder/coder): 7,941 symbols across 321
 districts, generated code filtered out.
 
 ```sh
-make dump TARGET=/path/to/a/go/module   # writes web/public/graph.json
 make dev                                # dev server; open the printed URL
+make dump TARGET=/path/to/a/go/module   # writes web/public/graph.json
 go run ./cmd/callscape-dump --stats /path/to/a/go/module   # same data, as text
 ```
+
+`make dev` on a fresh clone flies this repo, which is a small town. Point `make dump` at
+something the size of the screenshots above to get a city.
 
 Or install the dumper on its own:
 
