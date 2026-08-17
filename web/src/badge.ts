@@ -47,9 +47,14 @@ export interface PlacedBadge {
   size: number
 }
 
-/** How far out they float, and how big, both as multiples of `extent`. */
-const DISTANCE = 1.9
-const SIZE = 0.3
+/**
+ * How big a mark is, as a fraction of the sphere it is stuck to.
+ *
+ * Angular size, in other words: what it works out to is the same slice of the
+ * sky whatever the graph's size, which is the only measure that matters for a
+ * thing you only ever see from near the middle. 0.14 is about 8 degrees.
+ */
+const SIZE = 0.14
 
 /**
  * The six directions a mark hangs in: up, down, left, right, ahead, behind.
@@ -72,22 +77,27 @@ const CARDINALS: Vec3[] = [
 ]
 
 /**
- * Moons: outside the crust, one at each cardinal point.
+ * Six marks, pasted on the inside of the sky.
  *
- * Outside the shell rather than on it, because a district is a place you fly to
- * and this is a thing you take a bearing from. Fixed directions rather than
- * anything derived from the graph, so the same six points mean the same six
- * things whatever module is loaded — and, being constants, they place
+ * `radius` is the sky's, not the crust's: these belong at the back of the world
+ * with the stars, not floating in the middle distance where they read as
+ * stickers hanging in mid-air between you and the graph. Being that far out is
+ * also what makes them worth having — something at the edge of the world tells
+ * you which way you are facing, and something halfway there just gets in front
+ * of what you were looking at.
+ *
+ * Fixed directions rather than anything derived from the graph, so the same six
+ * points mean the same six things whatever module is loaded, and so they place
  * identically on every run without needing to be hashed to get there.
  */
-export function placeBadge(module: string, extent: number): PlacedBadge | null {
+export function placeBadge(module: string, radius: number): PlacedBadge | null {
   const path = badgePath(module)
   if (!path) return null
 
-  const reach = Math.max(1, extent) * DISTANCE
+  const reach = Math.max(1, radius)
   return {
     path,
     at: CARDINALS.map((d) => ({ x: d.x * reach, y: d.y * reach, z: d.z * reach })),
-    size: Math.max(1, extent) * SIZE,
+    size: reach * SIZE,
   }
 }

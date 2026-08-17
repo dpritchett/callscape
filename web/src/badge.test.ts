@@ -24,12 +24,21 @@ describe('badgePath', () => {
 })
 
 describe('placeBadge', () => {
-  test('one mark at each cardinal point, all outside the crust', () => {
-    const b = placeBadge('github.com/cli/cli/v2', 100)!
+  test('one mark at each cardinal point, all on the sphere it was given', () => {
+    const b = placeBadge('github.com/cli/cli/v2', 3200)!
     expect(b.path).toBe('badges/github.com/cli.png')
     expect(b.at).toHaveLength(6)
-    for (const p of b.at) expect(Math.hypot(p.x, p.y, p.z)).toBeGreaterThan(100)
+    // On the sky, not somewhere in the middle distance: every one of them is
+    // exactly the radius out.
+    for (const p of b.at) expect(Math.hypot(p.x, p.y, p.z)).toBeCloseTo(3200)
     expect(b.size).toBeGreaterThan(0)
+  })
+
+  test('the mark is the same slice of sky whatever the graph size', () => {
+    const near = placeBadge('github.com/cli/cli/v2', 3200)!
+    const far = placeBadge('github.com/cli/cli/v2', 6400)!
+    // Size over distance is the angle it covers, and that is what stays fixed.
+    expect(far.size / 6400).toBeCloseTo(near.size / 3200)
   })
 
   test('the six points are the six axis directions, no two the same', () => {

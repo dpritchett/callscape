@@ -237,27 +237,37 @@ export class World {
     if (!p.badge) return
     const { path, at, size } = p.badge
 
-    // One material for all six: the same image at the same size, so loading it
-    // once and pointing every sprite at it is a texture rather than six.
-    const material = new THREE.SpriteMaterial({
+    // Flat panels rather than sprites, because a sprite always faces you and
+    // would follow you round the sky like a decal on the inside of a helmet.
+    // These are stuck to the sphere: turned to face the middle of the world, so
+    // one off to the side is seen at an angle and reads as being *out there*.
+    const geometry = new THREE.PlaneGeometry(size, size)
+    // One geometry and one material behind all six, so this is a texture and a
+    // quad rather than six of each.
+    const material = new THREE.MeshBasicMaterial({
       transparent: true,
-      // A landmark you take bearings from is no use dissolved into the fog, and
-      // these hang outside the crust where the fog is thickest.
+      // A landmark at the back of the world is no use dissolved into the fog,
+      // and the fog ends long before the sky does.
       fog: false,
       depthWrite: false,
+      // Visible from behind too, for anyone who flies out past the sky.
+      side: THREE.DoubleSide,
     })
 
-    const sprites = at.map((point) => {
-      const sprite = new THREE.Sprite(material)
-      sprite.position.set(point.x, point.y, point.z)
-      sprite.scale.set(size, size, 1)
-      // Nothing is drawn until the texture lands, so a miss leaves empty
-      // sprites rather than white squares hanging over the world. The miss is a
-      // decode failure rather than a 404: Vite answers 200 with index.html for
+    const panels = at.map((point) => {
+      const panel = new THREE.Mesh(geometry, material)
+      panel.position.set(point.x, point.y, point.z)
+      // A plane's face looks down its own +Z, so pointing that at the origin
+      // pastes it flat against the sphere it sits on. No orientation is stored
+      // in the placement: where it is decides which way it faces.
+      panel.lookAt(0, 0, 0)
+      // Nothing is drawn until the texture lands, so a miss leaves empty panels
+      // rather than white squares hanging over the world. The miss is a decode
+      // failure rather than a 404: Vite answers 200 with index.html for
       // anything missing under public/, and an <img> fed HTML errors out.
-      sprite.visible = false
-      this.group.add(sprite)
-      return sprite
+      panel.visible = false
+      this.group.add(panel)
+      return panel
     })
 
     new THREE.TextureLoader().load(
@@ -266,17 +276,18 @@ export class World {
         tex.colorSpace = THREE.SRGBColorSpace
         material.map = tex
         material.needsUpdate = true
-        for (const s of sprites) s.visible = true
-        devlog('badge', { path, at: sprites.length, size: +size.toFixed(1) })
+        for (const p of panels) p.visible = true
+        devlog('badge', { path, at: panels.length, size: +size.toFixed(0) })
       },
       undefined,
       () => devlog('badge.missing', { path }),
     )
 
     this.disposables.push(() => {
-      for (const s of sprites) this.group.remove(s)
-      // One shared material and map, so dispose once rather than per sprite.
-      disposeSprite(sprites[0])
+      for (const p of panels) this.group.remove(p)
+      geometry.dispose()
+      material.map?.dispose()
+      material.dispose()
     })
   }
 

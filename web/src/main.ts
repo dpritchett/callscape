@@ -2,7 +2,7 @@ import * as THREE from 'three'
 import { FlyController, type Controller } from './controls'
 import { parseView } from './view'
 import { World } from './world'
-import { place, type PlacedNode, type Placement } from './placement'
+import { place, skyRadius, STAR_RADIUS, type PlacedNode, type Placement } from './placement'
 import { neighborhood, toggle, type Neighborhood } from './selection'
 import { rank, SEARCH_LIMIT } from './search'
 import { devlog, installDevLog } from './devlog'
@@ -85,8 +85,8 @@ const fog = new THREE.Fog(0x0b0e14, 260, 1100)
 scene.fog = fog
 
 // A sky to fly against, so "which way am I facing" has an answer when nothing
-// else is on screen. Sized once, well beyond anything a graph occupies.
-const STAR_RADIUS = 3200
+// else is on screen. Built at its own radius and scaled to the graph on every
+// rebuild; the badges are pasted on the inside of this same sphere.
 const stars = makeStarfield(STAR_RADIUS)
 scene.add(stars)
 
@@ -578,7 +578,7 @@ function rebuild() {
   // it, which is a confusing way to find out the layout has a bug.
   camera.far = Math.max(4000, p.extent * 6)
   camera.updateProjectionMatrix()
-  stars.scale.setScalar(Math.max(1, (p.extent * 4) / STAR_RADIUS))
+  stars.scale.setScalar(skyRadius(p.extent) / STAR_RADIUS)
   devlog('rebuild', { nodes: p.nodes.length, edges: p.edges.length, districts: p.districts.length })
 
   // A view change can filter out something that was selected; keep only what

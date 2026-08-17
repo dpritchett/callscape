@@ -72,6 +72,21 @@ export interface Placement {
 /** Past this many drawn edges, showing them all is a hairball, not a picture. */
 export const LEGIBLE_EDGES = 200
 
+/** The sky's own radius, before a big graph pushes it outwards. */
+export const STAR_RADIUS = 3200
+
+/**
+ * How far out the sky sits for a graph of this size.
+ *
+ * A floor rather than a plain multiple: a small graph should still be flying
+ * against a distant sky rather than inside a snug little box. Lives here rather
+ * than in `sky.ts` so that the stars, the badges and the camera's far plane are
+ * all reading the same number instead of three copies of a 4.
+ */
+export function skyRadius(extent: number): number {
+  return Math.max(STAR_RADIUS, extent * 4)
+}
+
 export function resolveEdgeShow(show: EdgeShow, drawn: number): ResolvedEdgeShow {
   if (show !== 'auto') return show
   return drawn > LEGIBLE_EDGES ? 'selected' : 'all'
@@ -166,7 +181,7 @@ export function place(graph: Graph, view: ViewSpec, reveal: Iterable<string> = [
     total: graph.nodes.length,
     revealed: extra.length,
     edgeShow: resolveEdgeShow(view.edges.show, edges.length),
-    badge: placeBadge(graph.module, lay.extent),
+    badge: placeBadge(graph.module, skyRadius(lay.extent)),
   }
 }
 
