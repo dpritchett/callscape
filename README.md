@@ -33,13 +33,51 @@ Then edit `web/public/view.json` while the page is open: what's on screen change
 a second, without a reload and without moving the camera. That loop is the point of the
 project.
 
-**Controls:** click to capture the mouse, WASD to fly, Q/E down and up, shift to burn
-(it drops back a half second after you stop), `F` to fly to whatever is selected, `C` to
-look behind you, `/` to search for a symbol, tab to swap the panel, escape to release.
-On a gamepad the right stick is a control column — pull back to climb, left and right to
-roll — the triggers are the rudder, and view/menu hands the controls over and takes them
-back. A pad otherwise takes control by being moved and loses it by going quiet, which
-leaves no way to say you are finished; that button is the sentence.
+## Controls
+
+Click to capture the pointer; escape gives it back.
+
+| Mouse and keyboard | |
+|---|---|
+| move the mouse | look |
+| hold left / right | fly forward / back |
+| `W` `A` `S` `D` | forward, strafe left, back, strafe right |
+| `Q` `E` | down, up |
+| arrows | the control column — down climbs, up dives, left/right roll |
+| shift | burn; drops back half a second after you stop |
+| wheel | dolly along the view direction |
+| middle click, space | select whatever is under the reticle |
+| `X` | clear the selection; again to put it back |
+| `R` | reveal neighbours the occupant filter hid |
+| `C` | look behind you |
+| `F` | fly to the selection, or to `camera.focus` if there is none |
+| `L` | step the label ribbon |
+| `/` | search for a symbol |
+| tab | swap the panel |
+| escape | release the pointer, close the search, or take the wheel back |
+
+| Gamepad | |
+|---|---|
+| left stick | fly |
+| right stick | the control column — pull back to climb, push to dive, left/right roll |
+| triggers | rudder |
+| bumpers | burn |
+| A | fly to the selection |
+| X | select |
+| B | clear |
+| Y | reveal |
+| click either stick | look behind you |
+| d-pad left/right | step the label ribbon |
+| view / menu | hand the controls over, and take them back |
+
+The arrows and the right stick read the same way on purpose: pull back to climb, and
+left/right roll rather than yaw, so turning is banking. It is inverted against what a
+scrollbar would do, deliberately — there is one convention in this cockpit and the pad set
+it.
+
+A pad takes control by being moved and loses it by going quiet, which leaves no way to say
+you are finished. View/menu is that sentence: released, the pad flies nothing and the
+music stops, the same as letting go of a captured pointer.
 
 ## Fly to a symbol, and read it
 
