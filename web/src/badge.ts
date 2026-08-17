@@ -1,4 +1,4 @@
-import { hash01, type Vec3 } from './layout'
+import { type Vec3 } from './layout'
 
 /**
  * The module's own mark, hung outside the shell as a landmark.
@@ -38,45 +38,56 @@ export function badgePath(module: string): string | null {
   return `${BADGE_DIR}/${host}/${owner}.png`
 }
 
-/** A badge, placed. The renderer asks for `path` and draws nothing if it 404s. */
+/** A badge, placed. The renderer asks for `path` and draws nothing if it misses. */
 export interface PlacedBadge {
   path: string
-  /** Centre of the sprite, outside the shell. */
-  at: Vec3
+  /** Every copy of the mark. One texture, one sprite per point. */
+  at: Vec3[]
   /** World height, which for a square mark is also its width. */
   size: number
 }
 
-/** How far out it floats, and how big it is, both as multiples of `extent`. */
+/** How far out they float, and how big, both as multiples of `extent`. */
 const DISTANCE = 1.9
 const SIZE = 0.3
 
 /**
- * A moon: outside the crust, in a direction fixed by the module path.
+ * The six directions a mark hangs in: up, down, left, right, ahead, behind.
  *
- * Deterministic like everything else here — the same module always hangs its
- * mark in the same place, which is what makes it worth navigating by. Outside
- * the shell rather than on it, because a district is a place you fly to and
- * this is a thing you get your bearings from.
+ * One copy in a hashed direction was a landmark you had to already know about
+ * — findable if you went looking, invisible if you did not. Six along the axes
+ * means turning anywhere puts one in or near the frame, which is the difference
+ * between a thing you can navigate by and a thing you have to hunt for.
+ *
+ * The axes rather than a sphere-filling spread, because the axes are the
+ * directions a person actually turns to.
+ */
+const CARDINALS: Vec3[] = [
+  { x: 1, y: 0, z: 0 },
+  { x: -1, y: 0, z: 0 },
+  { x: 0, y: 1, z: 0 },
+  { x: 0, y: -1, z: 0 },
+  { x: 0, y: 0, z: 1 },
+  { x: 0, y: 0, z: -1 },
+]
+
+/**
+ * Moons: outside the crust, one at each cardinal point.
+ *
+ * Outside the shell rather than on it, because a district is a place you fly to
+ * and this is a thing you take a bearing from. Fixed directions rather than
+ * anything derived from the graph, so the same six points mean the same six
+ * things whatever module is loaded — and, being constants, they place
+ * identically on every run without needing to be hashed to get there.
  */
 export function placeBadge(module: string, extent: number): PlacedBadge | null {
   const path = badgePath(module)
   if (!path) return null
 
-  // Two hashes into a direction, with the polar one taken through cos so the
-  // choice is spread evenly over the sphere rather than bunched at the poles.
-  const theta = hash01(module) * Math.PI * 2
-  const cosPhi = hash01(`${module}#badge`) * 2 - 1
-  const sinPhi = Math.sqrt(Math.max(0, 1 - cosPhi * cosPhi))
   const reach = Math.max(1, extent) * DISTANCE
-
   return {
     path,
-    at: {
-      x: reach * sinPhi * Math.cos(theta),
-      y: reach * cosPhi,
-      z: reach * sinPhi * Math.sin(theta),
-    },
+    at: CARDINALS.map((d) => ({ x: d.x * reach, y: d.y * reach, z: d.z * reach })),
     size: Math.max(1, extent) * SIZE,
   }
 }

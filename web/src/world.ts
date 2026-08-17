@@ -237,21 +237,28 @@ export class World {
     if (!p.badge) return
     const { path, at, size } = p.badge
 
+    // One material for all six: the same image at the same size, so loading it
+    // once and pointing every sprite at it is a texture rather than six.
     const material = new THREE.SpriteMaterial({
       transparent: true,
       // A landmark you take bearings from is no use dissolved into the fog, and
-      // it hangs outside the crust where the fog is thickest.
+      // these hang outside the crust where the fog is thickest.
       fog: false,
       depthWrite: false,
     })
-    const sprite = new THREE.Sprite(material)
-    sprite.position.set(at.x, at.y, at.z)
-    sprite.scale.set(size, size, 1)
-    // Nothing is drawn until the texture lands, so a miss leaves an empty
-    // sprite rather than a white square hanging over the world. The miss is a
-    // decode failure rather than a 404: Vite answers 200 with index.html for
-    // anything missing under public/, and an <img> fed HTML errors out.
-    sprite.visible = false
+
+    const sprites = at.map((point) => {
+      const sprite = new THREE.Sprite(material)
+      sprite.position.set(point.x, point.y, point.z)
+      sprite.scale.set(size, size, 1)
+      // Nothing is drawn until the texture lands, so a miss leaves empty
+      // sprites rather than white squares hanging over the world. The miss is a
+      // decode failure rather than a 404: Vite answers 200 with index.html for
+      // anything missing under public/, and an <img> fed HTML errors out.
+      sprite.visible = false
+      this.group.add(sprite)
+      return sprite
+    })
 
     new THREE.TextureLoader().load(
       `/${path}`,
@@ -259,17 +266,17 @@ export class World {
         tex.colorSpace = THREE.SRGBColorSpace
         material.map = tex
         material.needsUpdate = true
-        sprite.visible = true
-        devlog('badge', { path, size: +size.toFixed(1) })
+        for (const s of sprites) s.visible = true
+        devlog('badge', { path, at: sprites.length, size: +size.toFixed(1) })
       },
       undefined,
       () => devlog('badge.missing', { path }),
     )
 
-    this.group.add(sprite)
     this.disposables.push(() => {
-      this.group.remove(sprite)
-      disposeSprite(sprite)
+      for (const s of sprites) this.group.remove(s)
+      // One shared material and map, so dispose once rather than per sprite.
+      disposeSprite(sprites[0])
     })
   }
 

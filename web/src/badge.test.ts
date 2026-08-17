@@ -24,30 +24,34 @@ describe('badgePath', () => {
 })
 
 describe('placeBadge', () => {
-  test('hangs the mark outside the crust', () => {
+  test('one mark at each cardinal point, all outside the crust', () => {
     const b = placeBadge('github.com/cli/cli/v2', 100)!
     expect(b.path).toBe('badges/github.com/cli.png')
-    expect(Math.hypot(b.at.x, b.at.y, b.at.z)).toBeGreaterThan(100)
+    expect(b.at).toHaveLength(6)
+    for (const p of b.at) expect(Math.hypot(p.x, p.y, p.z)).toBeGreaterThan(100)
     expect(b.size).toBeGreaterThan(0)
   })
 
-  test('the same module always hangs it in the same place', () => {
+  test('the six points are the six axis directions, no two the same', () => {
+    const b = placeBadge('github.com/cli/cli/v2', 100)!
+    // Each sits on exactly one axis: two of its three coordinates are zero.
+    for (const p of b.at) {
+      expect([p.x, p.y, p.z].filter((v) => v === 0)).toHaveLength(2)
+    }
+    expect(new Set(b.at.map((p) => `${p.x},${p.y},${p.z}`)).size).toBe(6)
+  })
+
+  test('the same module always hangs them in the same places', () => {
     expect(placeBadge('github.com/cli/cli/v2', 100)).toEqual(
       placeBadge('github.com/cli/cli/v2', 100),
     )
   })
 
-  test('different modules go to different places', () => {
-    const a = placeBadge('github.com/cli/cli/v2', 100)!
-    const b = placeBadge('github.com/dpritchett/callscape', 100)!
-    expect(a.at).not.toEqual(b.at)
-  })
-
-  test('a degenerate graph still puts it somewhere finite', () => {
+  test('a degenerate graph still puts them somewhere finite', () => {
     // One district lays out flat with a shell of 0, which is what a clone
     // flying the sample graph gets.
     const b = placeBadge('github.com/dpritchett/callscape', 0)!
-    expect(Number.isFinite(b.at.x + b.at.y + b.at.z)).toBe(true)
+    for (const p of b.at) expect(Number.isFinite(p.x + p.y + p.z)).toBe(true)
     expect(b.size).toBeGreaterThan(0)
   })
 

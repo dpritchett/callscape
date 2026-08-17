@@ -321,7 +321,7 @@ function rimFallback(r: number, bound: number, index: number): { x: number; y: n
 }
 
 /** Stable hash of a string into [0,1). Deterministic jitter, not randomness. */
-export function hash01(s: string): number {
+function hash01(s: string): number {
   let h = 2166136261
   for (let i = 0; i < s.length; i++) {
     h ^= s.charCodeAt(i)
