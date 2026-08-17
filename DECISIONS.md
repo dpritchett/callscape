@@ -407,3 +407,34 @@ across, so its centre is nowhere near the middle of the screen — the usual eig
 margin left the name off screen entirely, which is the one outcome this mode cannot have.
 It also skips the on-screen test the other names take: the reticle being on it is what
 "on screen" means.
+
+**The project is called callscape.** `lspvue` claimed two things that were never true:
+there is no language server anywhere in it — the dumper reads `go/packages` — and there
+is no Vue. The name would have become load-bearing the moment the repo went public and
+`go install github.com/dpritchett/lspvue/cmd/lspvue-dump@latest` started working, so it
+was changed while nobody had typed it: module path, command, env var, plugin names, npm
+package, page title, and every mention in the prose. Rejected: keeping it and explaining
+the name in the README, which is a paragraph of apology on the front page forever.
+
+**`graph.json` is untracked; `graph.default.json` is the tracked sample.** Tracking the
+dump is what made `make dev` work on clone, and also what would have committed a
+module-sized blob every time the dump target changed — and `.gitignore` cannot stop that
+once a file is tracked. `make sample` bakes the fixture from this repo, so it is small,
+generated (it cannot drift from what the dumper emits), and deterministic (an unchanged
+dumper rebakes to an empty diff). The page and the diagnostic test both take the dump
+when it exists and the sample otherwise, which keeps a stranger's `make check` green.
+Rejected: telling the reader to run `make dump` first, which costs clone-and-run for the
+one thing this project is trying to show; and hand-maintaining a trimmed fixture, which
+rots on the first schema change.
+
+**The graph never says where the module lives.** `root` was an absolute path from the
+machine that ran the dump — a home directory, published in a file meant to be committed
+and screenshotted. The client never read it; only the dev server did. It is a local fact,
+so it lives in a local untracked file that `make dump` writes, and with no pin the answer
+is this repo, which is right for the sample. Rejected: leaving the field and stripping it
+before commit, which is a rule someone has to remember.
+
+**`.claude/settings.json` stays tracked.** It is a Bash allowlist with no secrets in it,
+and it is the same kind of artefact as `lefthook.yml` — a description of how this repo is
+worked on, which is part of what the repo has to say. Rejected: untracking it as a
+reflex about dotfiles, which hides something a reader might actually want.
