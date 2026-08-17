@@ -100,11 +100,17 @@ pointing at.
 
 ## The mark in the sky
 
-A module hosted somewhere with an owner avatar can wear it. Drop a PNG at
+Six discs hang on the sky at the cardinal points, each wearing the module's mark with the
+repo's name floating in front of it, so turning anywhere tells you what you are flying.
+
+A module hosted somewhere with an owner avatar can wear that. Drop a PNG at
 `web/public/badges/<host>/<owner>.png` — `github.com/cli/cli/v2` looks for
-`badges/github.com/cli.png` — and it hangs outside the crust as a landmark, in a direction
-fixed by the module path so it is always in the same place. Nothing is fetched: if the file
-is not there, there is no mark and the dev log says which one it looked for.
+`badges/github.com/cli.png` — and it appears. Nothing is fetched, and nothing is shipped:
+that directory is ignored by git, because those avatars belong to whoever drew them.
+
+With none there, the discs wear callscape's own mark instead. The name is drawn either
+way — which repo you are flying is worth saying whether or not somebody vendored a picture
+for it.
 
 ## What it does
 

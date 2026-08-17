@@ -13,6 +13,12 @@
 # `make cue` writes a starting one when it is missing.
 /web/cue.json
 
+# Owner avatars for the marks in the sky. Somebody else's artwork — the GitHub
+# Octocat among it — so this repo does not redistribute any of it. Drop your
+# own in and they appear; with none, the sky is empty and the log says which
+# file it looked for.
+/web/public/badges/
+
 .claude/settings.local.json
 
 # Editor scratch. Belongs in a global ignore, and is here as well because this

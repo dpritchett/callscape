@@ -35,6 +35,13 @@ const ICON_FRACTION = 0.62
 const NAME_HEIGHT = 0.12
 const NAME_DROP = 0.72
 const NAME_FLOAT = 0.55
+/**
+ * Worn when the module has no vendored avatar: this project's own mark.
+ *
+ * Not the favicon. That one is drawn to survive 16 pixels — four shapes and a
+ * heavy rim — and those choices are what look crude across a 400-unit disc.
+ */
+const FALLBACK_MARK = '/mark.svg'
 const DISTRICT_PX = 28 // on-screen label heights
 const SYMBOL_PX = 20
 // How many names compete for the screen. These are the *candidates*, not the
@@ -281,16 +288,17 @@ export class World {
       // No orientation is stored in the placement: where it is decides which
       // way it faces, and everything below rides in that frame.
       panel.lookAt(0, 0, 0)
-      // Nothing is drawn until the texture lands, so a miss leaves nothing
-      // rather than six blank discs hanging in the sky. The miss is a decode
-      // failure rather than a 404: Vite answers 200 with index.html for
-      // anything missing under public/, and an <img> fed HTML errors out.
-      panel.visible = false
       this.group.add(panel)
 
       // Just clear of the face it sits on, or it stitches through the curve.
+      // This is the only part that waits for an image; the disc and the name
+      // are drawn either way, because which repo you are flying is worth
+      // saying whether or not anybody vendored a picture for it. Hanging the
+      // name off the texture was the first version of this, and losing the
+      // sign along with the logo is not a trade anyone would pick.
       const icon = new THREE.Mesh(face, faceMaterial)
       icon.position.set(0, 0, radius * DISCUS_FLATNESS + radius * 0.02)
+      icon.visible = false
       panel.add(icon)
 
       // In front of the disc rather than beside it: nearer the viewer by a
@@ -303,18 +311,34 @@ export class World {
       return panel
     })
 
-    new THREE.TextureLoader().load(
-      `/${path}`,
-      (tex) => {
-        faceMaterial.map = roundTexture(tex.image as HTMLImageElement)
-        faceMaterial.needsUpdate = true
-        tex.dispose() // the square original; the round copy is what gets drawn
-        for (const p of panels) p.visible = true
-        devlog('badge', { path, at: panels.length, size: +size.toFixed(0) })
-      },
-      undefined,
-      () => devlog('badge.missing', { path }),
-    )
+    // The module's own mark if somebody vendored one, and callscape's otherwise.
+    // Avatars belong to whoever drew them and this repo ships none of them, so
+    // an empty badges/ is the normal case rather than the broken one — and the
+    // fallback is the one image here that is ours to hand out.
+    const loader = new THREE.TextureLoader()
+    const wear = (url: string, mark: string, onFail: () => void) =>
+      loader.load(
+        url,
+        (tex) => {
+          faceMaterial.map = roundTexture(tex.image as HTMLImageElement)
+          faceMaterial.needsUpdate = true
+          tex.dispose() // the square original; the round copy is what gets drawn
+          for (const p of panels) (p.children[0] as THREE.Mesh).visible = true
+          devlog('badge', { mark, at: panels.length, size: +size.toFixed(0) })
+        },
+        undefined,
+        onFail,
+      )
+
+    // A miss is a decode failure rather than a 404: Vite answers 200 with
+    // index.html for anything missing under public/, and an <img> fed HTML
+    // errors out.
+    wear(`/${path}`, path, () => {
+      devlog('badge.missing', { path, falling_back: FALLBACK_MARK })
+      wear(FALLBACK_MARK, FALLBACK_MARK, () =>
+        devlog('badge.missing', { path: FALLBACK_MARK, falling_back: null }),
+      )
+    })
 
     this.disposables.push(() => {
       for (const p of panels) {

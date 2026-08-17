@@ -120,7 +120,12 @@ export function setLabelHeight(sprite: THREE.Sprite, height: number) {
  * has to be a disc.
  */
 export function roundTexture(image: HTMLImageElement): THREE.CanvasTexture {
-  const size = Math.max(image.naturalWidth, image.naturalHeight) || 256
+  // Never below 256. An avatar arrives at whatever size it was saved at, and an
+  // SVG reports the width attribute in its own markup — 32, in the case of the
+  // mark this falls back to — which then gets stretched across a 400-unit disc
+  // and looks exactly as bad as that sounds. Rasterising an SVG larger costs
+  // nothing and is sharp; stretching a small raster is the only lossy path.
+  const size = Math.max(256, image.naturalWidth, image.naturalHeight)
   const canvas = document.createElement('canvas')
   canvas.width = size
   canvas.height = size

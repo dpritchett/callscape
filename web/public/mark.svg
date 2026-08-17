@@ -1,0 +1,50 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256" role="img" aria-label="callscape">
+  <!--
+    The mark worn in the sky by a module with no vendored avatar.
+
+    A separate file from favicon.svg on purpose. That one is four shapes and a
+    heavy rim because it has to survive 16 pixels, and those are exactly the
+    choices that look crude blown up across a 400-unit disc. This one is drawn
+    for size: ten districts rather than three, foreshortened towards the limb
+    the way the real caps are, and a limb light along one edge instead of a ring
+    around the whole thing.
+
+    Colours are the scene's own palette, so the thing in the sky and the thing
+    on the ground agree about what a district looks like.
+  -->
+  <defs>
+    <clipPath id="globe">
+      <circle cx="128" cy="128" r="120"/>
+    </clipPath>
+    <radialGradient id="ground" cx="38%" cy="32%" r="78%">
+      <stop offset="0%" stop-color="#18203150"/>
+      <stop offset="100%" stop-color="#080b12"/>
+    </radialGradient>
+  </defs>
+
+  <circle cx="128" cy="128" r="120" fill="url(#ground)"/>
+
+  <g clip-path="url(#globe)">
+    <!-- Near the middle, where the sphere faces you: round and large. -->
+    <ellipse cx="104" cy="94" rx="44" ry="35" fill="#7aa2f7" opacity="0.95" transform="rotate(-20 104 94)"/>
+    <ellipse cx="160" cy="132" rx="35" ry="27" fill="#9ece6a" opacity="0.92" transform="rotate(26 160 132)"/>
+    <ellipse cx="102" cy="170" rx="33" ry="23" fill="#e0af68" opacity="0.92" transform="rotate(12 102 170)"/>
+
+    <!-- Towards the limb: narrower, and turned to follow the curve. -->
+    <ellipse cx="170" cy="192" rx="24" ry="13" fill="#f7768e" opacity="0.88" transform="rotate(-24 170 192)"/>
+    <ellipse cx="54" cy="132" rx="15" ry="31" fill="#bb9af7" opacity="0.85" transform="rotate(6 54 132)"/>
+    <ellipse cx="198" cy="90" rx="19" ry="12" fill="#7dcfff" opacity="0.85" transform="rotate(46 198 90)"/>
+    <ellipse cx="136" cy="52" rx="27" ry="12" fill="#73daca" opacity="0.85" transform="rotate(-8 136 52)"/>
+    <ellipse cx="72" cy="206" rx="20" ry="9" fill="#ff9e64" opacity="0.8" transform="rotate(24 72 206)"/>
+    <ellipse cx="210" cy="146" rx="11" ry="22" fill="#c0caf5" opacity="0.7" transform="rotate(-8 210 146)"/>
+    <ellipse cx="146" cy="222" rx="17" ry="7" fill="#56b6c2" opacity="0.7" transform="rotate(-12 146 222)"/>
+
+    <!-- Two wires crossing the crust, the way cross-district calls do. -->
+    <path d="M104 94 Q132 110 160 132" stroke="#c0caf5" stroke-width="2.2" fill="none" opacity="0.45"/>
+    <path d="M102 170 Q140 168 170 192" stroke="#c0caf5" stroke-width="1.8" fill="none" opacity="0.32"/>
+
+    <!-- The key light is up and to the left, as it is in the scene. -->
+    <path d="M28 96 A120 120 0 0 1 116 12" stroke="#9dc4ff" stroke-width="5" fill="none"
+          opacity="0.5" stroke-linecap="round"/>
+  </g>
+</svg>
