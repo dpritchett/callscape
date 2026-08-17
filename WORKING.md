@@ -163,10 +163,15 @@ The beds are one sound at two speeds sharing a noise seed, so their gains are ri
 against each other rather than one being stopped and the other started. Both run for the
 life of the page. `remote-on` and `remote-off` are tones rather than speech — falling when
 the remote takes the wheel, rising when it gives it back — because the wheel changing
-hands is a state change and a state change wants an earcon. `flip` is wired and silent
-until its whoosh arrives — **from beatshop, not beepboop**, because it needs a filter that
-travels over its duration and only beatshop has one. It will land the way the music does,
-copied in by hand; `make sounds` will never produce it.
+hands is a state change and a state change wants an earcon. `flip` is a whoosh for looking
+behind you, 0.35s against a 0.2s spin, so it covers the turn and tails off just after it
+lands. It comes **from beatshop, not beepboop** — it needs a filter that travels over its
+duration and only beatshop has one — so it arrived the way the music did, copied in by
+hand. `make sounds` will never produce it.
+
+Levels vary by source: the spoken lines peak around 0.72, the whoosh 0.66, the beepboop
+earcons 0.30. One `VOICE_LEVEL` multiplies all of them, so the earcons sit noticeably
+quieter than the rest. If that ever needs fixing, the fader is the place, not a rebake.
 
 **A recipe change and a playback trim are different things.** The recipe decides what a
 line says, how it is voiced and how hot it was baked; that lives in beepboop and changing
