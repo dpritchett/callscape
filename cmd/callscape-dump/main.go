@@ -1,4 +1,4 @@
-// Command lspvue-dump loads a Go module and writes its call graph as JSON.
+// Command callscape-dump loads a Go module and writes its call graph as JSON.
 //
 // Nodes are top-level funcs and methods declared in the target module.
 // Edges are statically resolved calls between those nodes.
@@ -59,8 +59,8 @@ func main() {
 	stats := flag.Bool("stats", false, "print a plain-text summary to stdout instead of JSON")
 	lex := flag.String("lex", "", "print token spans for one Go file as JSON, instead of a graph")
 	flag.Usage = func() {
-		fmt.Fprintf(os.Stderr, "usage: lspvue-dump [--stats] <module-dir>\n")
-		fmt.Fprintf(os.Stderr, "       lspvue-dump --lex <file.go>\n")
+		fmt.Fprintf(os.Stderr, "usage: callscape-dump [--stats] <module-dir>\n")
+		fmt.Fprintf(os.Stderr, "       callscape-dump --lex <file.go>\n")
 		flag.PrintDefaults()
 	}
 	flag.Parse()
@@ -70,7 +70,7 @@ func main() {
 	// own command because it is the same toolchain doing the same job.
 	if *lex != "" {
 		if err := lexMain(*lex, os.Stdout); err != nil {
-			fmt.Fprintf(os.Stderr, "lspvue-dump: %v\n", err)
+			fmt.Fprintf(os.Stderr, "callscape-dump: %v\n", err)
 			os.Exit(1)
 		}
 		return
@@ -83,7 +83,7 @@ func main() {
 
 	g, err := dump(dir)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "lspvue-dump: %v\n", err)
+		fmt.Fprintf(os.Stderr, "callscape-dump: %v\n", err)
 		os.Exit(1)
 	}
 
@@ -95,7 +95,7 @@ func main() {
 	enc := json.NewEncoder(os.Stdout)
 	enc.SetIndent("", "  ")
 	if err := enc.Encode(g); err != nil {
-		fmt.Fprintf(os.Stderr, "lspvue-dump: %v\n", err)
+		fmt.Fprintf(os.Stderr, "callscape-dump: %v\n", err)
 		os.Exit(1)
 	}
 }
@@ -127,13 +127,13 @@ func dump(dir string) (*Graph, error) {
 	packages.Visit(pkgs, nil, func(p *packages.Package) {
 		for _, e := range p.Errors {
 			if nerr < 10 {
-				fmt.Fprintf(os.Stderr, "lspvue-dump: %v\n", e)
+				fmt.Fprintf(os.Stderr, "callscape-dump: %v\n", e)
 			}
 			nerr++
 		}
 	})
 	if nerr > 10 {
-		fmt.Fprintf(os.Stderr, "lspvue-dump: ... and %d more load errors\n", nerr-10)
+		fmt.Fprintf(os.Stderr, "callscape-dump: ... and %d more load errors\n", nerr-10)
 	}
 
 	modPath, modDir := moduleOf(pkgs, abs)

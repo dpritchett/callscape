@@ -1,4 +1,4 @@
-module github.com/dpritchett/lspvue
+module github.com/dpritchett/callscape
 
 go 1.26.6
 

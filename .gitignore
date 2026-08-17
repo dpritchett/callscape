@@ -1,4 +1,4 @@
 # build artifact from `go build ./...`
-/lspvue-dump
+/callscape-dump
 
 .claude/settings.local.json

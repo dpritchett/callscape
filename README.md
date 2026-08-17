@@ -1,4 +1,4 @@
-# lspvue
+# callscape
 
 A Go module's call graph, as districts you fly through.
 
@@ -13,13 +13,13 @@ districts, generated code filtered out.
 ```sh
 make dump TARGET=/path/to/a/go/module   # writes web/public/graph.json
 make dev                                # dev server; open the printed URL
-go run ./cmd/lspvue-dump --stats /path/to/a/go/module   # same data, as text
+go run ./cmd/callscape-dump --stats /path/to/a/go/module   # same data, as text
 ```
 
 Or install the dumper on its own:
 
 ```sh
-go install github.com/dpritchett/lspvue/cmd/lspvue-dump@latest
+go install github.com/dpritchett/callscape/cmd/callscape-dump@latest
 ```
 
 Then edit `web/public/view.json` while the page is open: what's on screen changes within
@@ -53,7 +53,7 @@ pointing at.
 
 ## What it does
 
-`cmd/lspvue-dump` loads a module with `go/packages` and emits one node per top-level func
+`cmd/callscape-dump` loads a module with `go/packages` and emits one node per top-level func
 or method declared in that module, plus an edge for every statically resolved call
 between them. `web/` lays each package out as a disc on a sphere — deterministic
 positions, so two runs are comparable — and encodes `size`, `color` and `height` from

@@ -1,7 +1,7 @@
-# lspvue
+# callscape
 
-A Go module's call graph, dumped by `lspvue-dump` and flown through in a three.js page.
-Personal project, MIT licensed, `dpritchett/lspvue` on GitHub.
+A Go module's call graph, dumped by `callscape-dump` and flown through in a three.js page.
+Personal project, MIT licensed, `dpritchett/callscape` on GitHub.
 
 ## Required reading
 
@@ -64,4 +64,4 @@ around.
 
 - No automated browser has ever loaded the page. Rendering, controls and the reload loop
   are verified by a human looking at them. Do not claim otherwise.
-- `lspvue-dump` runs the Go toolchain against whatever module you point it at.
+- `callscape-dump` runs the Go toolchain against whatever module you point it at.

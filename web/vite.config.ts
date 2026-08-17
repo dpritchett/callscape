@@ -25,7 +25,7 @@ function remoteShutter(): Plugin {
   let latest = ''
 
   return {
-    name: 'lspvue-remote-shutter',
+    name: 'callscape-remote-shutter',
     configureServer(server) {
       server.middlewares.use('/__shot', (req, res) => {
         const url = req.url ?? '/'
@@ -80,7 +80,7 @@ function remoteShutter(): Plugin {
  */
 function devLogSink(): Plugin {
   return {
-    name: 'lspvue-dev-log',
+    name: 'callscape-dev-log',
     configureServer(server) {
       server.middlewares.use('/__log', (req, res) => {
         if (req.method !== 'POST') {
@@ -111,17 +111,17 @@ function devLogSink(): Plugin {
  * Token spans for one file, from the Go scanner that compiles it.
  *
  * A highlighter written in the browser guesses at a grammar this project
- * already has a lexer for — `lspvue-dump --lex` is one file and no package
+ * already has a lexer for — `callscape-dump --lex` is one file and no package
  * loading, so it answers fast enough to ask per panel. The built binary if
  * `make build` has been run, otherwise the toolchain; neither is required, and
  * a failure here costs colour rather than the source.
  */
 async function lex(file: string): Promise<Span[] | null> {
   const root = resolve('..') // vite runs in web/; the Go module is the repo
-  const binary = join(root, 'lspvue-dump')
+  const binary = join(root, 'callscape-dump')
   const [cmd, args] = existsSync(binary)
     ? [binary, ['--lex', file]]
-    : ['go', ['run', './cmd/lspvue-dump', '--lex', file]]
+    : ['go', ['run', './cmd/callscape-dump', '--lex', file]]
   try {
     const { stdout } = await execFileAsync(cmd, args, {
       cwd: root,
@@ -142,7 +142,7 @@ async function lex(file: string): Promise<Span[] | null> {
  */
 function sourceReader(): Plugin {
   return {
-    name: 'lspvue-source',
+    name: 'callscape-source',
     configureServer(server) {
       server.middlewares.use('/__src', (req, res) => {
         const url = new URL(req.url ?? '/', 'http://localhost')
@@ -205,7 +205,7 @@ function remoteCue(): Plugin {
   let cue: Cue = { seq: 0 }
 
   return {
-    name: 'lspvue-remote-cue',
+    name: 'callscape-remote-cue',
     configureServer(server) {
       server.middlewares.use('/__cue', (req, res) => {
         if (req.method === 'GET') {

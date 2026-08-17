@@ -8,7 +8,7 @@
  * where anything was.
  */
 
-/** `[byte offset, byte length, class]`, as emitted by `lspvue-dump --lex`. */
+/** `[byte offset, byte length, class]`, as emitted by `callscape-dump --lex`. */
 export type Span = [number, number, number]
 
 /** A stretch of text that is all one colour. Class 0 is uncoloured. */

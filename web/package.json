@@ -1,5 +1,5 @@
 {
-  "name": "lspvue-web",
+  "name": "callscape-web",
   "version": "0.1.0",
   "main": "index.js",
   "scripts": {
@@ -11,7 +11,7 @@
   "keywords": [],
   "author": "",
   "license": "MIT",
-  "description": "three.js viewer for a Go call graph dumped by lspvue-dump",
+  "description": "three.js viewer for a Go call graph dumped by callscape-dump",
   "dependencies": {
     "three": "^0.185.1"
   },

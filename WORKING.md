@@ -1,4 +1,4 @@
-# Working on lspvue
+# Working on callscape
 
 How to pick this up cold. `HANDOFF.md` is the original v0 brief and still describes the
 shape of the thing; `ARCHITECTURE.md` has the ground rules; `DECISIONS.md` logs the
@@ -133,7 +133,7 @@ unchanged recipe rebakes to an empty diff. Never hand-edit a WAV. Wording, level
 grit are all recipe changes — ask beepboop in plain language. `view.json` carries
 `sound.enabled` and `sound.volume`.
 
-**Go**: `cmd/lspvue-dump` — loads a module with `go/packages`, emits nodes and statically
+**Go**: `cmd/callscape-dump` — loads a module with `go/packages`, emits nodes and statically
 resolved call edges. `--lex <file.go>` is a second mode: token spans for one file from
 `go/scanner`, no package loading, fast enough for the dev server to call per source
 panel. Run `make build` and the plugin uses the binary; otherwise it falls back to

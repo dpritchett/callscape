@@ -1,4 +1,4 @@
-# lspvue v0 — agent handoff
+# callscape v0 — agent handoff
 
 ## What you're building
 
@@ -6,7 +6,7 @@ Two programs. A Go command that turns a Go module into a graph file, and a brows
 that flies through it.
 
 ```
-lspvue-dump ~/P/gitlab-kiosk > web/public/graph.json
+callscape-dump ~/P/gitlab-kiosk > web/public/graph.json
 cd web && npm run dev
 # open localhost, fly around glk
 ```
@@ -26,9 +26,9 @@ If a decision would take more than ten minutes, pick the boring option and note 
 
 ---
 
-## Part 1: `cmd/lspvue-dump`
+## Part 1: `cmd/callscape-dump`
 
-Go, module `lspvue`. Loads a Go module and writes a graph to stdout.
+Go, module `callscape`. Loads a Go module and writes a graph to stdout.
 
 Use `golang.org/x/tools/go/packages` with `NeedName | NeedFiles | NeedSyntax | NeedTypes
 | NeedTypesInfo | NeedDeps`, pattern `./...`, `Dir` set to the target.
@@ -145,7 +145,7 @@ Run the dump against glk, start the dev server, and:
 2. You can fly between them and read symbol names up close.
 3. Editing `occupants.packages` in `view.json` changes what's on screen within a second,
    without touching the browser.
-4. `lspvue-dump --stats` prints a top-20 list.
+4. `callscape-dump --stats` prints a top-20 list.
 5. `README.md` says how to run both halves in five lines or fewer.
 6. `DECISIONS.md` lists every ten-minute-rule call you made.
 

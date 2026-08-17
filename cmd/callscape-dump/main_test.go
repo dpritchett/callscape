@@ -6,10 +6,10 @@ import (
 	"testing"
 )
 
-// Smoke test against gitlab-kiosk, the repo v0 is aimed at. Set LSPVUE_TARGET
+// Smoke test against gitlab-kiosk, the repo v0 is aimed at. Set CALLSCAPE_TARGET
 // to point it somewhere else; skipped when the target is not on this machine.
 func TestDumpGitlabKiosk(t *testing.T) {
-	target := os.Getenv("LSPVUE_TARGET")
+	target := os.Getenv("CALLSCAPE_TARGET")
 	if target == "" {
 		home, err := os.UserHomeDir()
 		if err != nil {

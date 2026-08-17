@@ -8,10 +8,10 @@ NPM := npm --prefix web
 check: vet test lint web-check web-test
 
 build:
-	go build -o lspvue-dump ./cmd/lspvue-dump
+	go build -o callscape-dump ./cmd/callscape-dump
 
 install:
-	go install ./cmd/lspvue-dump
+	go install ./cmd/callscape-dump
 
 test:
 	go test ./...
@@ -47,7 +47,7 @@ logs:
 # make dump TARGET=/path/to/a/go/module
 dump:
 	@test -n "$(TARGET)" || { echo "usage: make dump TARGET=/path/to/a/go/module"; exit 1; }
-	go run ./cmd/lspvue-dump $(TARGET) > web/public/graph.json
+	go run ./cmd/callscape-dump $(TARGET) > web/public/graph.json
 
 # The navigator's voice. The WAVs are committed, so a clone runs with sound and
 # without beepboop; this is how to rebake them after a wording or level change.
@@ -76,7 +76,7 @@ hooks:
 	lefthook install
 
 clean:
-	rm -f lspvue-dump
+	rm -f callscape-dump
 
 # Ask the open page to screenshot itself. Writes web/shots/latest.png.
 shot:
