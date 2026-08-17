@@ -9,9 +9,14 @@
     "check": "tsc --noEmit"
   },
   "keywords": [],
-  "author": "",
+  "author": "Daniel James Pritchett <dpritchett@gmail.com>",
   "license": "MIT",
   "description": "three.js viewer for a Go call graph dumped by callscape-dump",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dpritchett/callscape.git",
+    "directory": "web"
+  },
   "dependencies": {
     "three": "^0.185.1"
   },
