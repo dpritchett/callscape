@@ -445,6 +445,15 @@ timer to get their own page back. Rejected: a longer automatic hold, which turns
 stray cue into a five-second lockout you cannot shorten; and leaving it declared-only,
 which was the status quo and did not survive one working session.
 
+**The history is not being rewritten before the repo goes public.** A scan over all 75
+commits found no credentials of any kind. What survives is `/home/dpritchett/Projects/coder`
+and `/mnt/wsl/projects/cli` inside old `graph.json` blobs — a username already published as
+the GitHub handle it belongs to, plus two directory names. `.git` packs to 7.6MB, so size
+is not an argument either. Rewriting was cheap up to the moment of publishing and
+impossible afterwards, so it was decided deliberately rather than by default. Rejected:
+a filter-branch to scrub two paths, which trades every existing commit hash for tidiness
+nobody was going to notice.
+
 **`.claude/settings.json` stays tracked.** It is a Bash allowlist with no secrets in it,
 and it is the same kind of artefact as `lefthook.yml` — a description of how this repo is
 worked on, which is part of what the repo has to say. Rejected: untracking it as a
