@@ -434,6 +434,17 @@ so it lives in a local untracked file that `make dump` writes, and with no pin t
 is this repo, which is right for the sample. Rejected: leaving the field and stripping it
 before commit, which is a rule someone has to remember.
 
+**A cue takes the wheel without being asked to.** Holding the controls used to be a thing
+the remote had to declare, which meant it got forgotten exactly when it mattered — halfway
+through lining a shot up, with two people steering and the camera going somewhere neither
+of them asked for. Wanting the view somewhere *is* wanting the controls, so any cue that
+changes anything locks them for five seconds and the next cue extends that. `hold: true`
+survives as the long lease for going away to think, and `hold: false` hands it back
+instantly, which matters more than the automatic part: nobody should have to wait out a
+timer to get their own page back. Rejected: a longer automatic hold, which turns every
+stray cue into a five-second lockout you cannot shorten; and leaving it declared-only,
+which was the status quo and did not survive one working session.
+
 **`.claude/settings.json` stays tracked.** It is a Bash allowlist with no secrets in it,
 and it is the same kind of artefact as `lefthook.yml` — a description of how this repo is
 worked on, which is part of what the repo has to say. Rejected: untracking it as a

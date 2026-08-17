@@ -22,12 +22,19 @@ export interface Cue {
    */
   clear?: boolean
   /**
-   * Take the wheel, or give it back. While it is held, every local input is
-   * ignored and the page says so across the top — a page that quietly stops
-   * answering the keyboard is indistinguishable from a broken one.
+   * Take the wheel for a long lease, or give it back this instant.
    *
-   * It expires on its own, and Escape always takes it back, so an agent that
-   * dies mid-experiment cannot leave the controls locked.
+   * Mostly you do not need it: a cue that changes anything takes the wheel by
+   * itself, for a few seconds, extended by the next one — see `movesTheView`.
+   * `true` is for holding it across a longer stretch of thinking; `false` hands
+   * it straight back rather than making anyone wait out the timer, and is worth
+   * sending the moment you are done.
+   *
+   * While it is held, every local input is ignored and the page says so across
+   * the top — a page that quietly stops answering the keyboard is
+   * indistinguishable from a broken one. It expires on its own, and Escape
+   * always takes it back, so an agent that dies mid-experiment cannot leave the
+   * controls locked.
    */
   hold?: boolean
   /** Look the other way. Arrives at once, since a cue may be driving a tab
@@ -48,6 +55,24 @@ export interface Cue {
    * readable from a terminal rather than only from the panel.
    */
   search?: string
+}
+
+/**
+ * Does this cue change what is on screen or where the camera is?
+ *
+ * Anything that does should take the wheel on its own. Two people steering is
+ * the failure mode the hold exists to prevent, and asking whoever is driving
+ * remotely to remember to declare it first means it gets forgotten exactly when
+ * it matters — mid-sequence, halfway through lining something up.
+ *
+ * `seq` is bookkeeping and `hold` is the thing itself, so a cue carrying only
+ * those is not a change. That leaves the rule as "any field with something in
+ * it", which is one line and stays right when a field is added.
+ */
+export function movesTheView(cue: Cue): boolean {
+  return Object.entries(cue).some(
+    ([key, value]) => key !== 'seq' && key !== 'hold' && value !== undefined,
+  )
 }
 
 /**

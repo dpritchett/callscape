@@ -7,7 +7,7 @@ import { neighborhood, toggle, type Neighborhood } from './selection'
 import { rank, SEARCH_LIMIT } from './search'
 import { devlog, installDevLog } from './devlog'
 import { Shutter } from './shutter'
-import { watchCues } from './cue'
+import { movesTheView, watchCues } from './cue'
 import { makeStarfield } from './sky'
 import { MFD, MODES } from './mfd'
 import { Voice } from './sound'
@@ -320,7 +320,18 @@ function toggleReveal() {
  * dies mid-experiment must not leave the page locked; and Escape takes it back
  * immediately, because the person sitting in front of it outranks the remote.
  */
+/**
+ * A declared hold is a long lease: somebody said they were driving, and they
+ * get to go and think for a while without the page taking itself back.
+ */
 const HOLD_SECONDS = 120
+/**
+ * A hold taken by a cue simply having done something is a short one, refreshed
+ * by the next cue. Long enough that a sequence of them reads as one stretch of
+ * somebody else driving, short enough that the wheel comes back on its own
+ * about as fast as you would reach for it.
+ */
+const AUTO_HOLD_SECONDS = 5
 const holdBar = document.getElementById('hold')!
 let held = false
 let holdTimer: ReturnType<typeof setTimeout> | null = null
@@ -335,16 +346,16 @@ function renderHold() {
   holdBar.textContent = held ? 'REMOTE HAS THE WHEEL · esc to take it back' : 'YOU HAVE CONTROL'
 }
 
-function takeWheel() {
+function takeWheel(seconds = HOLD_SECONDS) {
   if (holdTimer) clearTimeout(holdTimer)
-  holdTimer = setTimeout(() => giveWheel('expired'), HOLD_SECONDS * 1000)
+  holdTimer = setTimeout(() => giveWheel('expired'), seconds * 1000)
   if (held) return // a later cue only refreshes the deadman
   held = true
   controls.setLocked(true)
   closeSearch()
   document.exitPointerLock()
   renderHold()
-  devlog('hold', { on: true, seconds: HOLD_SECONDS })
+  devlog('hold', { on: true, seconds })
   voice.play('remote-on')
   flying()
 }
@@ -727,8 +738,12 @@ shutter.start()
 /** Put the page into a requested state, so a specific view can be evaluated. */
 watchCues((cue) => {
   devlog('cue', cue)
-  if (cue.hold === true) takeWheel()
+  // Wanting the view somewhere is the same thing as wanting the controls, so
+  // no cue has to ask. An explicit hold is the long lease; an explicit release
+  // hands it back now rather than making anyone sit out the timer.
   if (cue.hold === false) giveWheel('remote')
+  else if (cue.hold === true) takeWheel()
+  else if (movesTheView(cue)) takeWheel(AUTO_HOLD_SECONDS)
   if (cue.select) {
     selected = new Set(cue.select.filter((id) => world.nodeById(id)))
   }

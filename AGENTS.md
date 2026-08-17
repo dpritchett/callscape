@@ -37,6 +37,11 @@ see the scene change within a second without a reload and without the camera mov
 the point of the project. Anything that breaks it is a regression regardless of what else
 it improves.
 
+You can see the page without a browser: `make cue` puts it where you want it and
+`make shot` photographs it. A cue locks the local controls for a few seconds on its own,
+so you are never steering against whoever is flying — **send `"hold": false` when you are
+done** to hand the wheel straight back. `WORKING.md` has the rest of the instruments.
+
 ## Where to put code
 
 The interesting logic goes in `web/src/placement.ts` and its neighbours: pure functions

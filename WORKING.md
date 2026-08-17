@@ -53,6 +53,20 @@ line never varies. Edit that file to change what you are looking at. It is untra
 scratch — where you happened to be pointing — and `make cue` writes a starting one if
 there is none.
 
+**A cue takes the wheel by itself.** Anything that changes the view locks the local
+controls for 5 seconds, and the next cue extends it, so a sequence of them reads as one
+stretch of somebody else driving. You do not have to declare anything, and two people are
+never steering at once. The banner across the top says who has it.
+
+Two overrides. `"hold": true` is a long lease — 120 seconds, for going away to think —
+and **`"hold": false` hands it back this instant**, which is worth sending the moment you
+are done rather than leaving someone to wait out a timer. Escape always takes it back too:
+the person in front of the screen outranks the remote.
+
+The rest of the cue: `focus` a symbol id, `distance`, `yaw`, `pitch`, `select` a list of
+ids, `reveal`, `clear`, `pick` the reticle, `flip` to look behind, `panel` and `labels` to
+set those modes, `search` to open the query box (empty string closes it).
+
 `"search": "Client.Get"` opens the symbol search on that query and logs what it ranked;
 `"search": ""` closes it. Note that the panel is DOM and the shutter photographs the
 canvas, so no screenshot has ever contained the HUD or the panel — the log and
