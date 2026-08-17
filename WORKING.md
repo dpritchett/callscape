@@ -13,8 +13,12 @@ symbols cluster by the file they live in; each file is a parcel, each symbol a b
 straddling the ground. Select a symbol and its callers and callees light up; Tab swaps
 the panel between counts and the function's actual source.
 
-Currently loaded: **coder** (18,522 symbols, 355 packages, 10MB graph), viewed with
-generated code excluded — 7,941 symbols across 321 districts.
+Currently loaded: **cli/cli** (3,501 symbols, 307 packages, 2.4MB graph), viewed with
+generated code excluded — 2,448 symbols across 294 districts. Cloned to `../cli`.
+
+The measurements throughout these notes were taken on **coder** (18,522 symbols, 355
+packages, 10MB), which is four times the size and still the one to reach for when the
+question is whether something scales.
 
 ## The loop
 
@@ -112,11 +116,16 @@ against each other rather than one being stopped and the other started. Both run
 life of the page. `remote-on` and `remote-off` are wired but not yet in the recipe, so
 they are silent.
 
-Two eight-second music loops sit under all of it, one minute each in turn, forever. They
-only play while somebody has the controls — pointer captured, or a remote holding the
-wheel — because a page sitting idle with the cursor free does not want a soundtrack. They
-come from a different recipe, `music-lab.json`, which bakes four candidates; `make sounds`
-copies out the two this uses.
+One written track sits under all of it, `apollo-v1.flac`, looping. It only plays while
+somebody has the controls — pointer captured, or a remote holding the wheel — because a
+page sitting idle with the cursor free does not want a soundtrack. It comes from
+[beatshop](../beatshop), not from a recipe: `make music` copies it out of that project's
+`out/archive`, and `make sounds` deliberately no longer touches it. FLAC rather than the
+WAV beside it, at a fifth the size and sample-exact, so the loop has no seam.
+
+It replaced two eight-second loops that took a minute each in turn. That handover existed
+to make eight seconds of material last; 111 seconds of written music does not need it, so
+the second gain and the minute timer went with them.
 They are baked by [beepboop](../beepboop) from `recipes/navigator.json` over there and
 committed here, so a clone runs with sound and without that toolchain. `make sounds`
 rebakes; the recipe is the source of truth and the output is deterministic, so an

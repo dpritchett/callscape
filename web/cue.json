@@ -1,5 +1,5 @@
 {
-  "focus": "github.com/coder/coder/v2/coderd/httpapi.Write",
+  "focus": "github.com/cli/cli/v2/api.NewClientFromHTTP",
   "select": [],
   "distance": 110,
   "yaw": 40,

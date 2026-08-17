@@ -23,7 +23,7 @@
     "mode": "all"
   },
   "camera": {
-    "focus": "github.com/coder/coder/v2/coderd/database/dbtime.Now",
+    "focus": "github.com/cli/cli/v2/api.NewClientFromHTTP",
     "distance": 120
   },
   "select": []
