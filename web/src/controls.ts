@@ -452,6 +452,11 @@ export class FlyController implements Controller {
     if (!this.locked) {
       this.keys.clear()
       this.buttons.clear()
+      // Letting the pointer go is somebody saying they are done, and it should
+      // not then take fifteen seconds of pad timeout for the sim to agree. An
+      // explicit release beats implicit presence; the next touch of the stick
+      // picks the controls straight back up on the following frame.
+      this.dropPad()
     }
   }
 
