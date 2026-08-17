@@ -24,10 +24,14 @@ if curl -sS -o /dev/null --max-time 2 "http://127.0.0.1:$PORT/" 2>/dev/null; the
   exit 0
 fi
 
+# setup put a graph here at create time. If it is missing, setup failed and the
+# build log says why — so say that here rather than quietly starting a second
+# dump in the background, which is what the first version of this did. It hid
+# both the work and its failure, and left a visitor looking at an empty sky with
+# no way to tell waiting from broken.
 if [ ! -f web/public/graph.json ]; then
-  echo "no graph yet — cloning and dumping cli/cli in the background"
-  # Its output would otherwise interleave with Vite's in the same terminal.
-  make sample > .devcontainer/sample.log 2>&1 &
+  echo "no graph on disk — setup did not finish. Run 'make sample' here and the"
+  echo "page will pick it up within a second, without a reload."
 fi
 
 exec make dev

@@ -9,10 +9,6 @@
 # one takes seconds.
 /web/public/graph.json
 
-# the Codespace's background clone-and-dump, kept out of the terminal Vite is
-# writing to. Whether the graph arrived is a question for the page, not a log.
-/.devcontainer/sample.log
-
 # where you were looking last: scratch, rewritten a dozen times a session.
 # `make cue` writes a starting one when it is missing.
 /web/cue.json

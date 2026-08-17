@@ -48,7 +48,8 @@
   },
 
   // onCreate rather than postCreate: this is the half that depends only on the
-  // repo, so a prebuild can bake it if this ever gets one.
+  // repo, so a prebuild can bake it if this ever gets one — including the
+  // graph, which is the slowest part and the one most worth baking.
   "onCreateCommand": ".devcontainer/setup",
 
   // Every attach, including a reconnect — it is written to notice a server it

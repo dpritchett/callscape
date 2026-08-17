@@ -27,11 +27,10 @@ Or fly it without installing anything:
 
 [![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/dpritchett/callscape)
 
-That builds a container, opens the page, and clones and dumps cli/cli behind it — the
-sky is empty for the first few seconds and then a city arrives in it, without a reload,
-which is the same thing `make sample` does in a second window. Pointer lock wants a real
-browser tab rather than the editor's preview pane. The remote endpoints stay off in
-there; `.devcontainer/devcontainer.json` says why at some length.
+That builds a container, dumps cli/cli into it while it builds, and opens the page on a
+city already there. Pointer lock wants a real browser tab rather than the editor's
+preview pane. The remote endpoints stay off in there;
+`.devcontainer/devcontainer.json` says why at some length.
 
 Or install the dumper on its own:
 

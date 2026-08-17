@@ -3,11 +3,14 @@
 # Everything that depends on the repo and not on the session. Runs once, at
 # create time, where a prebuild would cache it.
 #
-# Deliberately not here: the graph. `make sample` clones cli/cli and dumps it,
-# which is the slow step and the one thing the page can wait for live — so it
-# runs in `fly`, alongside the server, rather than holding the Codespace shut
-# until it finishes. The page says it is waiting and picks the graph up without
-# a reload, which is the first-run experience this project already has.
+# That includes the graph, after a first run said otherwise. Starting the dump
+# next to the server and letting the page pick it up live is a nice trick and it
+# is the wrong default here: a visitor who clicked a badge gets an empty sky and
+# no way to tell waiting from broken. Create time already has a progress bar they
+# are watching, and a failure here lands in the build log instead of a file
+# nobody opens. The live pickup is still real — `make sample` in a second
+# terminal against a running server still works, and that is where it belongs,
+# as a thing you do on purpose rather than the first thing you are shown.
 set -euo pipefail
 
 cd "$(dirname "$0")/.."
@@ -26,4 +29,17 @@ npm --prefix web ci
 go mod download
 go build -o callscape-dump ./cmd/callscape-dump
 
-echo "setup done — the server and the sample graph start on attach"
+# The graph, in the foreground, where its output is the build log. About half a
+# minute on the two cores this runs on: a shallow clone of cli/cli and a dump of
+# it, 3,501 symbols across 307 packages.
+#
+# Not fatal if it fails. This clones from the network and the rest of the
+# container is fine without it — the page has a real "no graph yet" state that
+# names the command to fix it, so a bad minute on the network should cost a
+# visitor one command, not the whole Codespace.
+if make sample; then
+  echo "setup done — a graph is on disk; the server starts on attach"
+else
+  echo "WARNING: make sample failed — the container is fine, but the page will"
+  echo "open with no graph. Run 'make sample' in the terminal to retry it."
+fi
