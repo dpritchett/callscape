@@ -112,6 +112,85 @@ export function setLabelHeight(sprite: THREE.Sprite, height: number) {
   sprite.scale.set(height * perLine * aspect, height * perLine, 1)
 }
 
+/**
+ * The repo's name under its mark, in neon.
+ *
+ * A flat panel rather than a sprite, because it hangs on the sky next to the
+ * badge and has to be stuck to that sphere the same way — a sprite would turn
+ * to face you and slide off the thing it belongs to.
+ *
+ * The look is chromatic split: the same text laid down three times, cyan
+ * nudged one way, magenta the other, the readable copy on top in a pink-to-cyan
+ * gradient with a pink glow behind it. That is where the fringing on old video
+ * came from, and it costs two extra fillText calls on a canvas drawn once.
+ * Letter-spaced, because tracking is most of the aesthetic.
+ *
+ * `height` is the height of the text itself in world units, not of the padded
+ * canvas — the padding here is generous enough to hold the glow, and sizing the
+ * quad instead is the mistake `setLabelHeight` exists to avoid.
+ */
+export function makeNeonPanel(text: string, height: number): THREE.Mesh {
+  const px = 96
+  const font = `700 ${px}px ui-monospace, Menlo, monospace`
+  const track = px * 0.18 // extra space per character
+  const pad = px * 0.9 // room for the glow and the split, both of which spill
+
+  const measure = document.createElement('canvas').getContext('2d')!
+  measure.font = font
+  const textWidth = measure.measureText(text).width + track * (text.length - 1)
+
+  const canvas = document.createElement('canvas')
+  canvas.width = Math.ceil(textWidth + pad * 2)
+  canvas.height = Math.ceil(px + pad * 2)
+  const ctx = canvas.getContext('2d')!
+  ctx.font = font
+  ctx.textBaseline = 'middle'
+  ctx.textAlign = 'left'
+
+  // One pass per colour, each character placed by hand because canvas has no
+  // letter-spacing that every browser here agrees on.
+  const draw = (dx: number, dy: number, style: string | CanvasGradient) => {
+    ctx.fillStyle = style
+    let x = pad
+    for (const ch of text) {
+      ctx.fillText(ch, x + dx, canvas.height / 2 + dy)
+      x += ctx.measureText(ch).width + track
+    }
+  }
+
+  const split = px * 0.055
+  draw(-split, 0, '#01cdfe') // cyan, lagging
+  draw(split, 0, '#ff2fd0') // magenta, leading
+
+  const gradient = ctx.createLinearGradient(0, pad, 0, canvas.height - pad)
+  gradient.addColorStop(0, '#fff6fb')
+  gradient.addColorStop(0.45, '#ff71ce')
+  gradient.addColorStop(1, '#01cdfe')
+  ctx.shadowColor = '#ff71ce'
+  ctx.shadowBlur = px * 0.5
+  draw(0, 0, gradient)
+  ctx.shadowBlur = 0
+
+  const tex = new THREE.CanvasTexture(canvas)
+  tex.colorSpace = THREE.SRGBColorSpace
+  tex.minFilter = THREE.LinearFilter
+  tex.generateMipmaps = false
+
+  // The quad is the whole canvas; `height` is the text inside it, so the
+  // padding scales with the type rather than squashing it.
+  const worldHeight = height * (canvas.height / px)
+  return new THREE.Mesh(
+    new THREE.PlaneGeometry(worldHeight * (canvas.width / canvas.height), worldHeight),
+    new THREE.MeshBasicMaterial({
+      map: tex,
+      transparent: true,
+      depthWrite: false,
+      fog: false,
+      side: THREE.DoubleSide,
+    }),
+  )
+}
+
 /** Text sprite drawn on a canvas texture. Cheap enough for a few hundred. */
 export function makeLabel(
   text: string,

@@ -9,6 +9,7 @@ import {
   labelRank,
   labelWorldHeight,
   makeLabel,
+  makeNeonPanel,
   setLabelHeight,
 } from './labels'
 import { aimedOnly, namesDistricts, namesSymbols, type LabelMode } from './labelmode'
@@ -25,6 +26,10 @@ import type { ResolvedEdgeShow } from './types'
 // happened one altitude higher: the district under the reticle was too far to
 // have any names while the one under the nose had all of them.
 const LABEL_RANGE = 900
+// The repo's name under its mark: how tall the type is, and how far below the
+// mark it sits, both as fractions of the mark itself.
+const NAME_HEIGHT = 0.12
+const NAME_GAP = 0.12
 const DISTRICT_PX = 26 // on-screen label heights
 const SYMBOL_PX = 17
 // How many names compete for the screen. These are the *candidates*, not the
@@ -235,7 +240,7 @@ export class World {
    */
   private buildBadge(p: Placement) {
     if (!p.badge) return
-    const { path, at, size } = p.badge
+    const { path, label, at, size } = p.badge
 
     // Flat panels rather than sprites, because a sprite always faces you and
     // would follow you round the sky like a decal on the inside of a helmet.
@@ -267,6 +272,14 @@ export class World {
       // anything missing under public/, and an <img> fed HTML errors out.
       panel.visible = false
       this.group.add(panel)
+
+      // The name rides as a child, so it inherits the panel's facing rather
+      // than working out the same orientation a second time. Local -Y is down
+      // the sphere from the mark.
+      const name = makeNeonPanel(label, size * NAME_HEIGHT)
+      name.position.set(0, -size * (0.5 + NAME_GAP), 0)
+      panel.add(name)
+
       return panel
     })
 
@@ -284,7 +297,17 @@ export class World {
     )
 
     this.disposables.push(() => {
-      for (const p of panels) this.group.remove(p)
+      for (const p of panels) {
+        // Each name is its own canvas texture, so unlike the marks these do
+        // not share anything and each one has to go.
+        for (const child of p.children as THREE.Mesh[]) {
+          child.geometry.dispose()
+          const m = child.material as THREE.MeshBasicMaterial
+          m.map?.dispose()
+          m.dispose()
+        }
+        this.group.remove(p)
+      }
       geometry.dispose()
       material.map?.dispose()
       material.dispose()

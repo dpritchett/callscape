@@ -41,10 +41,23 @@ export function badgePath(module: string): string | null {
 /** A badge, placed. The renderer asks for `path` and draws nothing if it misses. */
 export interface PlacedBadge {
   path: string
-  /** Every copy of the mark. One texture, one sprite per point. */
+  /** What to write under the mark: the repo, as you would type it. */
+  label: string
+  /** Every copy of the mark. One texture, one panel per point. */
   at: Vec3[]
   /** World height, which for a square mark is also its width. */
   size: number
+}
+
+/**
+ * The module path as the repo you would go and clone.
+ *
+ * Go's major-version suffix is a detail of the import path rather than part of
+ * the name of anything: `github.com/cli/cli/v2` is `github.com/cli/cli`, and
+ * typing the first into a browser gets you a 404.
+ */
+export function repoLabel(module: string): string {
+  return module.replace(/\/v[1-9][0-9]*$/, '')
 }
 
 /**
@@ -97,6 +110,7 @@ export function placeBadge(module: string, radius: number): PlacedBadge | null {
   const reach = Math.max(1, radius)
   return {
     path,
+    label: repoLabel(module),
     at: CARDINALS.map((d) => ({ x: d.x * reach, y: d.y * reach, z: d.z * reach })),
     size: reach * SIZE,
   }

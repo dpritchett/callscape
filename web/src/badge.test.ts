@@ -1,5 +1,19 @@
 import { describe, expect, test } from 'vitest'
-import { badgePath, placeBadge } from './badge'
+import { badgePath, placeBadge, repoLabel } from './badge'
+
+describe('repoLabel', () => {
+  test('drops the Go major-version suffix, which is not part of the repo', () => {
+    expect(repoLabel('github.com/cli/cli/v2')).toBe('github.com/cli/cli')
+    expect(repoLabel('example.com/a/b/v12')).toBe('example.com/a/b')
+  })
+
+  test('leaves alone anything that only looks like one', () => {
+    expect(repoLabel('github.com/dpritchett/callscape')).toBe('github.com/dpritchett/callscape')
+    expect(repoLabel('github.com/some/v')).toBe('github.com/some/v')
+    expect(repoLabel('github.com/some/version')).toBe('github.com/some/version')
+    expect(repoLabel('github.com/some/v0')).toBe('github.com/some/v0')
+  })
+})
 
 describe('badgePath', () => {
   test('names a file from the host and owner', () => {
@@ -27,6 +41,7 @@ describe('placeBadge', () => {
   test('one mark at each cardinal point, all on the sphere it was given', () => {
     const b = placeBadge('github.com/cli/cli/v2', 3200)!
     expect(b.path).toBe('badges/github.com/cli.png')
+    expect(b.label).toBe('github.com/cli/cli')
     expect(b.at).toHaveLength(6)
     // On the sky, not somewhere in the middle distance: every one of them is
     // exactly the radius out.
