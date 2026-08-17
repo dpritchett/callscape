@@ -140,7 +140,17 @@ export class Voice {
         }
       }),
     )
-    devlog('voice.ready', { loaded: this.buffers.size, of: wanted.length })
+    // The context's state and the master gain go in the log because every
+    // silent-page question so far has been one of: nothing decoded, nothing
+    // asked to play, or a graph that is running perfectly into a tab the
+    // browser has muted. The first two were already visible; this is the third.
+    devlog('voice.ready', {
+      loaded: this.buffers.size,
+      of: wanted.length,
+      state: this.ctx.state,
+      master: this.master.gain.value,
+      rate: this.ctx.sampleRate,
+    })
     // Whatever was asked for while this was still loading, do it now.
     this.applyMusic()
   }
@@ -200,7 +210,7 @@ export class Voice {
     // The loop itself never stops once started; only whether you can hear it
     // changes. Leaving takes under a second, arriving takes three.
     this.rampTo(this.music!.gain, want ? 1 : 0, want ? TRACK_FADE : TRACK_STOP)
-    devlog('music', { playing: want, track: TRACK })
+    devlog('music', { playing: want, track: TRACK, state: this.ctx.state, master: this.master.gain.value })
   }
 
   /** Starts the loop at zero, once. */
