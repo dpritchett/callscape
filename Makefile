@@ -103,7 +103,15 @@ shot:
 # distance, yaw, pitch. Edit the file, then run this; the command line never
 # changes, which keeps it out of the permission prompts an inline JSON argument
 # would generate every time it differed.
-cue:
+#
+# The file is scratch — where you happened to be looking, rewritten a dozen
+# times a session — so it is not tracked, and a clone that has never cued has
+# to be given one rather than being met with a curl error about a missing path.
+web/cue.json:
+	@printf '{\n  "select": [],\n  "distance": 110,\n  "yaw": 40,\n  "pitch": 35\n}\n' > $@
+	@echo "wrote a starting $@"
+
+cue: web/cue.json
 	@curl -sS -X POST -H 'content-type: application/json' --data-binary @web/cue.json \
 		http://localhost:5178/__cue > /dev/null
 	@echo "cued $$(tr -d '\n ' < web/cue.json)"

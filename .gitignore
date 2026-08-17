@@ -8,4 +8,8 @@
 # The tracked sample next to it is graph.default.json, from `make sample`.
 /web/public/graph.json
 
+# where you were looking last: scratch, rewritten a dozen times a session.
+# `make cue` writes a starting one when it is missing.
+/web/cue.json
+
 .claude/settings.local.json

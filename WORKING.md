@@ -49,7 +49,9 @@ make look    # cue then shot
 ```
 
 `make cue` reads `web/cue.json` rather than taking an inline argument, so the command
-line never varies. Edit that file to change what you are looking at.
+line never varies. Edit that file to change what you are looking at. It is untracked
+scratch — where you happened to be pointing — and `make cue` writes a starting one if
+there is none.
 
 `"search": "Client.Get"` opens the symbol search on that query and logs what it ranked;
 `"search": ""` closes it. Note that the panel is DOM and the shutter photographs the
