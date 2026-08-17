@@ -370,7 +370,15 @@ export default defineConfig({
     // Note for anything behind a port forward — a Codespace, an SSH tunnel —
     // where loopback is reachable from elsewhere and this default protects
     // less than it looks like it does. See issue #16.
-    host: REMOTE_ENABLED,
+    // `127.0.0.1` rather than `false`. They mean the same thing to Vite —
+    // "loopback" — but `false` defers to `localhost`, and what that resolves to
+    // depends on the host: IPv4 first on this laptop, `::1` first inside the
+    // devcontainer image. A server on `[::1]:5178` only is invisible to
+    // `scripts/page`, which addresses 127.0.0.1 and is the documented way to
+    // ask this server anything, so the instruments quietly stopped working in a
+    // Codespace while the page itself was fine. Naming the address makes the
+    // binding the same everywhere.
+    host: REMOTE_ENABLED ? true : '127.0.0.1',
     // Pinned, and pinned loudly. `make shot` and `make cue` post to 5178, and
     // Vite's default is to take the next free port when 5173 is busy — so this
     // server was on 5178 by coincidence, and the instruments would have been
