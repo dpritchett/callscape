@@ -11,6 +11,7 @@ import {
   makeLabel,
   setLabelHeight,
 } from './labels'
+import { aimedOnly, namesDistricts, namesSymbols, type LabelMode } from './labelmode'
 import { edgeKey, type Neighborhood } from './selection'
 import { arcPoints } from './wires'
 import { devlog } from './devlog'
@@ -202,6 +203,9 @@ export class World {
    */
   private labelled: { s: Symbol3D; rank: number }[] = []
   private districtChosen: { label: THREE.Sprite; rank: number }[] = []
+  private labelMode: LabelMode = 'all'
+  /** The district the reticle is on, while `aim` is what the ribbon says. */
+  private aimedPkg: string | null = null
   private labelsDirty = true
   private lastEye = new THREE.Vector3(Infinity, 0, 0)
   private lastDir = new THREE.Vector3(0, 0, 0)
@@ -515,6 +519,17 @@ export class World {
   }
 
   /**
+   * How much of the scene is named. Cheap to change — the labels are rechosen
+   * on the next frame and everything fades across rather than switching, so
+   * spinning the ribbon looks like the map dressing and undressing itself.
+   */
+  setLabelMode(mode: LabelMode) {
+    if (mode === this.labelMode) return
+    this.labelMode = mode
+    this.labelsDirty = true
+  }
+
+  /**
    * Applies a neighbourhood: the selection burns bright, its callers and
    * callees stay lit, everything else drops back so the shape of the
    * neighbourhood is the only thing you can see.
@@ -791,6 +806,11 @@ export class World {
       this.projScreen.multiplyMatrices(camera.projectionMatrix, camera.matrixWorldInverse),
     )
 
+    // Which district the reticle is on, answered once a frame: the anchor loop
+    // below wants it, and so does the choosing.
+    this.aimedPkg =
+      aimedOnly(this.labelMode) && !this.selecting ? this.districtAtReticle(camera) : null
+
     // Float each name on whichever side of its district the camera is on. Park
     // it at a fixed offset and the district's own cap occludes it from one side
     // — which is what happens to a label sitting inside the shell when you are
@@ -798,6 +818,20 @@ export class World {
     const toCamera = this.scratchA
     const anchor = this.scratchB
     for (const part of this.districtParts) {
+      // The one district `aim` is about goes to the reticle rather than waiting
+      // to be found off the edge of the frame. The widest district on coder is
+      // 180 units across and you are usually inside it when you point at it, so
+      // its centre is nowhere near the middle of the screen — walking the name
+      // only as far as the usual margin left it off screen entirely, which is
+      // the one outcome this mode cannot have.
+      if (part.pkg === this.aimedPkg) {
+        axisAnchor(part.centre, eye, dir, part.radius, anchor)
+        toCamera.copy(eye).sub(anchor)
+        part.label.position
+          .copy(anchor)
+          .addScaledVector(toCamera, (MAX_LIFT + 6) / (toCamera.length() || 1))
+        continue
+      }
       anchor.copy(part.centre)
       for (let pass = 0; pass < 2; pass++) {
         toCamera.copy(eye).sub(anchor)
@@ -950,8 +984,22 @@ export class World {
     const best: { s: Symbol3D; rank: number }[] = []
     let worst = Infinity
     const range = LABEL_RANGE * LABEL_RANGE
+    // In `aim` the reticle picks one district and everything else goes quiet.
+    // A selection turns it off: you already said what you were interested in,
+    // and it is usually not what the nose happens to be pointing at afterwards.
+    const aiming = aimedOnly(this.labelMode) && !this.selecting
+    const aimed = this.aimedPkg
+    // Pointing at empty sky names nothing rather than everything, which is the
+    // reading that makes it a sight rather than a filter that fails open.
+    // A selection keeps its neighbourhood named in any mode but `off`, because
+    // that is a direct answer to a direct action.
+    const wantsSymbols =
+      this.labelMode !== 'off' &&
+      (namesSymbols(this.labelMode) || this.selecting) &&
+      !(aiming && aimed === null)
 
-    for (const s of this.symbols) {
+    if (wantsSymbols) for (const s of this.symbols) {
+      if (aiming && s.node.pkg !== aimed) continue
       // With a selection up, only the neighbourhood is labelled — at any
       // distance and in any direction, since you selected it to read it and it
       // is usually behind you by the time you stop moving. Without one, a name
@@ -1001,7 +1049,11 @@ export class World {
     // actually read never get one. From outside it never showed, because out
     // there the nearest districts are the ones you are looking at.
     const districts = this.districtParts
-      .filter((part) => this.frustum.containsPoint(part.label.position))
+      .filter((part) => namesDistricts(this.labelMode) && (!aiming || part.pkg === aimed))
+      // The aimed district skips the on-screen test: it is on screen by
+      // definition — that is what the reticle being on it means — even when the
+      // point its name hangs from is not.
+      .filter((part) => part.pkg === aimed || this.frustum.containsPoint(part.label.position))
       .map((part) => {
         const len = part.label.position.distanceTo(eye)
         toLabel.copy(part.label.position).sub(eye)

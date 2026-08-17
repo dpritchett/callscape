@@ -52,6 +52,24 @@
       }
       #hold.mine { color: #566072; background: #10141c; }
       #hold.remote { color: #0b0e14; background: #ffc978; }
+      /* The label ribbon: which names are on, always on screen, and the only
+         piece of HUD you can click. Bottom right, clear of the hint block. */
+      #ribbon {
+        position: fixed; bottom: 10px; right: 12px;
+        display: flex; gap: 4px;
+        font: 600 13px/1 ui-monospace, SFMono-Regular, Menlo, monospace;
+      }
+      #ribbon button {
+        width: 26px; height: 26px; padding: 0;
+        font: inherit; cursor: pointer;
+        color: #5b6474; background: rgba(10,13,20,0.86);
+        border: 1px solid #2b3348; border-radius: 5px;
+        transition: color 140ms, border-color 140ms, background-color 140ms;
+      }
+      #ribbon button:hover { color: #8b95a7; border-color: #3b4560; }
+      #ribbon button.on {
+        color: #0b0e14; background: #dbe4f3; border-color: #dbe4f3;
+      }
       #reticle {
         position: fixed; left: 50%; top: 50%; width: 5px; height: 5px;
         margin: -3px 0 0 -3px; border-radius: 50%;
@@ -68,8 +86,9 @@
     <div id="hold"></div>
     <div id="sel"></div>
     <div id="reticle"></div>
-    <div id="hint">click to capture &middot; hold LMB/RMB to fly forward/back &middot; wheel to dolly &middot; WASD + mouse look &middot; QE up/down &middot; shift burns (drops back when you stop) &middot; F focus &middot; middle-click or space to select &middot; X clears &middot; R reveals hidden neighbours &middot; C looks behind you &middot; / search &middot; esc release
-      <br />gamepad: left stick flies &middot; right stick is a control column &mdash; pull back to climb, push to dive, left/right to roll &middot; triggers are the rudder &middot; F levels the wings &middot; bumpers burn &middot; click either stick to look behind you &middot; A focus &middot; X select &middot; B clear &middot; Y reveal</div>
+    <div id="ribbon"></div>
+    <div id="hint">click to capture &middot; hold LMB/RMB to fly forward/back &middot; wheel to dolly &middot; WASD + mouse look &middot; QE up/down &middot; shift burns (drops back when you stop) &middot; F focus &middot; middle-click or space to select &middot; X clears &middot; R reveals hidden neighbours &middot; C looks behind you &middot; / search &middot; L labels &middot; esc release
+      <br />gamepad: left stick flies &middot; right stick is a control column &mdash; pull back to climb, push to dive, left/right to roll &middot; triggers are the rudder &middot; F levels the wings &middot; bumpers burn &middot; click either stick to look behind you &middot; A focus &middot; X select &middot; B clear &middot; Y reveal &middot; d-pad left/right steps the label ribbon</div>
     <div id="err"></div>
     <script type="module" src="/src/main.ts"></script>
   </body>

@@ -77,6 +77,8 @@ export class FlyController implements Controller {
   onClearSelection: (() => void) | null = null
   /** Pull the selection's hidden neighbours into the scene, and back out. */
   onToggleReveal: (() => void) | null = null
+  /** Step the label ribbon, -1 or 1. */
+  onCycleLabels: ((step: number) => void) | null = null
   private padLook = 2.6 // radians/sec at full stick deflection
   /** Roll is faster than pitch, since a turn starts by banking. */
   private padRoll = 3.2
@@ -86,6 +88,7 @@ export class FlyController implements Controller {
   private padPickHeld = false
   private padClearHeld = false
   private padRevealHeld = false
+  private padRibbonHeld = 0
   private padBoostHeld = false
   private padFlipHeld = false
   /** Shift or a bumper lights the burn; standing still puts it out. */
@@ -301,6 +304,15 @@ export class FlyController implements Controller {
     if (reveal && !this.padRevealHeld) this.onToggleReveal?.()
     this.padRevealHeld = reveal
 
+    // The d-pad steps the label ribbon. It is the only cluster the flight model
+    // never wanted: everything else on the pad is an axis or already spoken for,
+    // and stepping a ribbon is exactly what a four-way rocker is for. Edge
+    // triggered per direction, so holding it does not spin the ring.
+    const ribbon =
+      (pad.buttons[15]?.pressed ?? false) ? 1 : (pad.buttons[14]?.pressed ?? false) ? -1 : 0
+    if (ribbon !== 0 && ribbon !== this.padRibbonHeld) this.onCycleLabels?.(ribbon)
+    this.padRibbonHeld = ribbon
+
     // Either stick, pressed in: standard mapping puts L3 and R3 at 10 and 11.
     const stick = (pad.buttons[10]?.pressed ?? false) || (pad.buttons[11]?.pressed ?? false)
     if (stick && !this.padFlipHeld) this.flip()
@@ -485,6 +497,11 @@ export class FlyController implements Controller {
     if (e.code === 'KeyC') this.flip()
     if (e.code === 'KeyX') this.onClearSelection?.()
     if (e.code === 'KeyR') this.onToggleReveal?.()
+    // Same ribbon from the keyboard, since the pad is not always plugged in.
+    // Forwards only: shift already toggles the burn on its own keydown, so
+    // shift-L would light the engines every time you stepped back, and a ring
+    // of five reaches everything going one way.
+    if (e.code === 'KeyL') this.onCycleLabels?.(1)
   }
 
   private onKeyUp = (e: KeyboardEvent) => {

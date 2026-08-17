@@ -36,6 +36,13 @@ export interface Cue {
   /** Put the panel in a mode, since Tab is a key and a cue has no fingers. */
   panel?: string
   /**
+   * Set the label ribbon. Same reason as `panel`: the ribbon is a d-pad, a key
+   * and a click, and a cue has none of those. It is also the only way to see
+   * what a mode does from a terminal, since the ribbon itself is DOM and no
+   * screenshot has ever contained it.
+   */
+  labels?: string
+  /**
    * Open the symbol search on this query; the empty string closes it. The hits
    * land in the log, so what ranking actually returns on a real graph is
    * readable from a terminal rather than only from the panel.

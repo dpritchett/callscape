@@ -1,3 +1,7 @@
+import type { LabelMode } from './labelmode'
+
+export type { LabelMode }
+
 export interface GraphNode {
   id: string
   name: string
@@ -81,6 +85,14 @@ export interface ViewSpec {
   sound: {
     enabled: boolean
     volume: number
+  }
+  /**
+   * How much of the scene is named. This one is a starting position rather than
+   * a setting: the ribbon on the glass moves it from a d-pad or a click, and
+   * only an actual edit to this value takes it back off you.
+   */
+  labels: {
+    mode: LabelMode
   }
   /**
    * Symbol ids to light up on load. Empty means "leave whatever is selected in

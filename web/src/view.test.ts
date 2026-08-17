@@ -15,7 +15,14 @@ test('accepts the documented shape, filling in the optional blocks', () => {
     select: [],
     edges: { show: 'auto', opacity: 0.7 },
     sound: { enabled: true, volume: 0.8 },
+    labels: { mode: 'all' },
   })
+})
+
+test('labels block is optional and validated', () => {
+  expect(parseView({ ...OK, labels: { mode: 'aim' } }).labels.mode).toBe('aim')
+  expect(() => parseView({ ...OK, labels: { mode: 'some' } })).toThrow(/labels.mode/)
+  expect(() => parseView({ ...OK, labels: { size: 3 } })).toThrow(/unknown field/)
 })
 
 test('sound block is optional and validated', () => {

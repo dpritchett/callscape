@@ -11,7 +11,8 @@ import { watchCues } from './cue'
 import { makeStarfield } from './sky'
 import { MFD, MODES } from './mfd'
 import { Voice } from './sound'
-import type { Graph, ViewSpec } from './types'
+import { cycleMode, LABEL_MODES, ribbon } from './labelmode'
+import type { Graph, LabelMode, ViewSpec } from './types'
 
 installDevLog()
 
@@ -19,6 +20,7 @@ const POLL_MS = 400
 
 const hud = document.getElementById('hud')!
 const errBox = document.getElementById('err')!
+const ribbonEl = document.getElementById('ribbon')!
 
 const renderer = new THREE.WebGLRenderer({ antialias: true })
 renderer.setPixelRatio(Math.min(devicePixelRatio, 2))
@@ -462,6 +464,7 @@ function paint() {
 flyControls.onPick = pickAtReticle
 flyControls.onClearSelection = clearSelection
 flyControls.onToggleReveal = toggleReveal
+flyControls.onCycleLabels = (step) => setLabelMode(cycleMode(labelMode, step))
 
 /**
  * Fly to whatever the panel is showing. The selection is the thing you are
@@ -510,9 +513,47 @@ function lastSelected(): string | undefined {
   return last
 }
 
+/**
+ * The ribbon's position, and the last one the file asked for.
+ *
+ * Seeded from `view.json` and then owned by whoever is flying: the ribbon is a
+ * control rather than a setting, and having a file poll every 400ms put the
+ * labels back would make it useless. An actual edit to `labels.mode` still wins,
+ * which is what the second variable is for — it is the difference between "the
+ * file says all" and "the file has just changed its mind to all".
+ */
+let labelMode: LabelMode = 'all'
+let specMode: LabelMode | null = null
+
+function setLabelMode(mode: LabelMode) {
+  labelMode = mode
+  world.setLabelMode(mode)
+  drawRibbon()
+  devlog('labels', { mode })
+}
+
+function drawRibbon() {
+  ribbonEl.replaceChildren(
+    ...ribbon(labelMode).map((r, i) => {
+      const b = document.createElement('button')
+      b.textContent = r.glyph
+      b.title = r.title
+      b.className = r.active ? 'on' : ''
+      // Clickable only with the pointer free, which is the honest state for a
+      // button: captured, the mouse is a flight control and this is a d-pad.
+      b.onclick = () => setLabelMode(LABEL_MODES[i])
+      return b
+    }),
+  )
+}
+
 function rebuild() {
   if (!graph || !view) return
   voice.set(view.sound.enabled, view.sound.volume)
+  if (view.labels.mode !== specMode) {
+    specMode = view.labels.mode
+    setLabelMode(specMode)
+  }
   const p = place(graph, view, revealing ? selected : [])
   placement = p
   world.build(p, view.edges.opacity)
@@ -684,6 +725,14 @@ watchCues((cue) => {
     // mode change and the callout still happens.
     for (let i = 0; i < MODES.length && mfd.mode !== cue.panel; i++) mfd.cycle()
     paint()
+  }
+  if (cue.labels) {
+    // Cycle to it rather than setting it, for the same reason as the panel:
+    // one route through the change, and an unknown name leaves the ribbon
+    // where it was instead of putting it somewhere invalid.
+    for (let i = 0; i < LABEL_MODES.length && labelMode !== cue.labels; i++) {
+      setLabelMode(cycleMode(labelMode, 1))
+    }
   }
   if (typeof cue.search === 'string') {
     // An empty query closes it. A cue that could only open the search would

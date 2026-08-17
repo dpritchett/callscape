@@ -369,3 +369,30 @@ the realm of the possible for anything but the smallest districts. The other hal
 objection stands unchanged: ground text foreshortens to a line when the cap is edge-on,
 and it cannot hold a pixel height. Worth another look, from the new numbers, before
 anyone re-derives the old ones.
+
+**How much is named is a control, not a rule.** No single answer is right at every
+distance: crossing the shell wants package names and nothing else, standing in a district
+wants the functions, and lining something up wants the one thing under the reticle. The
+ribbon is five modes — `all`, `pkg`, `fn`, `aim`, `off` — stepped by the d-pad, `L`, a
+click, or a cue. Rejected: choosing the mode from altitude, which is a rule that would be
+wrong at somebody's favourite distance and cannot be argued with when it is.
+
+**The ribbon is seeded by the view spec and then owned by whoever is flying.** `view.json`
+is the control surface, but it is also polled every 400ms, and a file that puts the labels
+back four hundred milliseconds after you changed them is not a control. The spec's value
+applies when it *changes*, which is the difference between the file saying `all` and the
+file having just changed its mind to `all`. Rejected: browser-only state with no spec key,
+which would make the starting position unsettable and the mode unreachable from a cue.
+
+**The d-pad steps the ribbon.** It is the only cluster on the pad the flight model never
+wanted — everything else is an axis or already spoken for — and stepping a ring is what a
+four-way rocker is for. On the keyboard it is `L`, forwards only: shift already toggles the
+burn on its own keydown, so shift-L would light the engines every time you stepped back,
+and a ring of five reaches everything going one way.
+
+**`aim` walks the name to the reticle rather than waiting to find it.** The district you
+are pointing at is usually the one you are inside, and the widest on coder is 180 units
+across, so its centre is nowhere near the middle of the screen — the usual eight-tenths
+margin left the name off screen entirely, which is the one outcome this mode cannot have.
+It also skips the on-screen test the other names take: the reticle being on it is what
+"on screen" means.

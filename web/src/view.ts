@@ -1,4 +1,5 @@
-import type { EdgeShow, GeneratedFilter, NodeField, ScaleKind, ViewSpec } from './types'
+import { LABEL_MODES } from './labelmode'
+import type { EdgeShow, GeneratedFilter, LabelMode, NodeField, ScaleKind, ViewSpec } from './types'
 
 const EDGE_SHOWS: EdgeShow[] = ['auto', 'all', 'cross', 'selected', 'none']
 const SCALES: ScaleKind[] = ['linear', 'sqrt', 'log']
@@ -22,6 +23,7 @@ export function parseView(raw: unknown): ViewSpec {
     'select',
     'edges',
     'sound',
+    'labels',
   ])
 
   const occ = obj(root.occupants, 'occupants', errs, [
@@ -34,6 +36,7 @@ export function parseView(raw: unknown): ViewSpec {
   const cam = obj(root.camera, 'camera', errs, ['focus', 'distance'])
   const edg = obj(root.edges ?? {}, 'edges', errs, ['show', 'opacity'])
   const snd = obj(root.sound ?? {}, 'sound', errs, ['enabled', 'volume'])
+  const lbl = obj(root.labels ?? {}, 'labels', errs, ['mode'])
 
   const view: ViewSpec = {
     occupants: {
@@ -59,6 +62,9 @@ export function parseView(raw: unknown): ViewSpec {
     sound: {
       enabled: bool(snd.enabled, 'sound.enabled', errs, true),
       volume: num(snd.volume, 'sound.volume', errs, 0.8),
+    },
+    labels: {
+      mode: oneOf<LabelMode>(lbl.mode, 'labels.mode', errs, [...LABEL_MODES], 'all'),
     },
     select: strArray(root.select, 'select', errs, []),
   }

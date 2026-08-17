@@ -48,6 +48,14 @@ line never varies. Edit that file to change what you are looking at.
 canvas, so no screenshot has ever contained the HUD or the panel — the log and
 `search.test.ts` are the only readers of that text.
 
+`"labels": "aim"` sets the label ribbon — `all`, `pkg`, `fn`, `aim`, `off`. The ribbon
+itself is a d-pad, a key and a click, none of which a cue has, and it is DOM so it is in
+no screenshot either. What each mode does is legible from the terminal all the same: the
+`renderMs` line carries `districtsVisible` and `symbolsVisible`, which on one parked
+camera went 21/37 for `all`, 38/0 for `pkg`, 0/43 for `fn`, 1/2 for `aim` and 0/0 for
+`off`. Note the cue polls every 400ms, so a `make shot` issued in the same breath
+photographs the mode you were in before.
+
 `"hold": true` takes the wheel: local input is ignored so an experiment is not fighting
 whoever is holding the mouse, and a banner says so across the top. `"hold": false` gives
 it back, Escape at the keyboard always takes it back, and it expires by itself after two
@@ -186,11 +194,12 @@ Every one of these cost real time. They are not hypothetical.
   in 0.8–1.7ms at 78 draw calls, against 9.1–10.6ms at 1,129 before. What is left in a
   frame is the districts: 355 caps and 355 rims, each its own object.
 - **Labels can be occluded by geometry.** Decluttering only checks label against label.
-- **District names are boxes floating over the map, and it is awkward.** They hold a fixed
-  pixel height so they read from anywhere, which is why they win, but a screenful of them
-  sits on top of the thing it is describing. Painting the name onto the district's own
-  ground is the obvious alternative and does not survive the arithmetic — `DECISIONS.md`
-  has the working. Still open, and not for want of an idea.
+- **District names are boxes floating over the map.** They hold a fixed pixel height so
+  they read from anywhere, which is why they win, but a screenful of them sits on top of
+  the thing it is describing. Painting the name onto the district's own ground is the
+  obvious alternative and does not survive the arithmetic — `DECISIONS.md` has the
+  working. What exists instead is the ribbon: five modes on the d-pad, `L`, a click or a
+  cue, so how much is named is a control rather than a compromise.
 - **Panels.** Agreed shape is MFDs — two or three small displays that swap modes — rather
   than a dashboard. `info`, `source` and `district` exist, and `/` opens a symbol search
   that takes the keyboard until Escape. Still missing: clickable callers/callees for

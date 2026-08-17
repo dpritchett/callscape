@@ -19,6 +19,9 @@
     "enabled": true,
     "volume": 0.8
   },
+  "labels": {
+    "mode": "all"
+  },
   "camera": {
     "focus": "github.com/coder/coder/v2/coderd/database/dbtime.Now",
     "distance": 120
