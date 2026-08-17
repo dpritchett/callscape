@@ -136,27 +136,35 @@ export class Voice {
     void this.preload()
   }
 
+  private async fetchInto(cue: Cue | Bed | Track) {
+    try {
+      const res = await fetch(`/sounds/${fileOf(cue)}`)
+      if (!res.ok) throw new Error(`${res.status} ${res.statusText}`)
+      this.buffers.set(cue, await this.ctx.decodeAudioData(await res.arrayBuffer()))
+    } catch (err) {
+      // A slug the recipe has not baked yet is silence, not a broken page.
+      devlog('voice.missing', { cue, err: String(err) })
+    }
+  }
+
   /**
-   * Decode everything at startup. Decoding on first use would put the work in
-   * the main thread at exactly the moment something is happening, which is the
-   * problem this class exists to avoid.
+   * The spoken cues and the flight beds, decoded at startup. Decoding those on
+   * first use would put the work in the main thread at exactly the moment
+   * something is happening, which is the problem this class exists to avoid.
+   *
+   * The music is deliberately not in that set. It is 6.6MB against 0.85MB for
+   * everything else here, it cannot be heard until somebody captures the
+   * pointer, and fetching it alongside the graph put twenty-seven requests
+   * through a six-connection pool on a dev server that speaks HTTP/1.1 — which
+   * is how a 0KB view.json came to arrive 325ms *after* a 2.4MB graph.json, and
+   * the scene sat waiting on it. It loads once the voice is in, off the path
+   * that decides when the page can draw.
    */
   private async preload() {
     // Annotated: a bare element in an array literal widens to `string`, which
     // the spreads alone did not.
-    const wanted: (Cue | Bed | Track)[] = [...CUES, ...BEDS, TRACK]
-    await Promise.all(
-      wanted.map(async (cue) => {
-        try {
-          const res = await fetch(`/sounds/${fileOf(cue)}`)
-          if (!res.ok) throw new Error(`${res.status} ${res.statusText}`)
-          this.buffers.set(cue, await this.ctx.decodeAudioData(await res.arrayBuffer()))
-        } catch (err) {
-          // A slug the recipe has not baked yet is silence, not a broken page.
-          devlog('voice.missing', { cue, err: String(err) })
-        }
-      }),
-    )
+    const wanted: (Cue | Bed)[] = [...CUES, ...BEDS]
+    await Promise.all(wanted.map((cue) => this.fetchInto(cue)))
     // The context's state and the master gain go in the log because every
     // silent-page question so far has been one of: nothing decoded, nothing
     // asked to play, or a graph that is running perfectly into a tab the
@@ -169,6 +177,21 @@ export class Voice {
       rate: this.ctx.sampleRate,
     })
     // Whatever was asked for while this was still loading, do it now.
+    this.applyMusic()
+    void this.loadTrack()
+  }
+
+  /**
+   * The music, after everything that has to be instant already is.
+   *
+   * Not awaited by anything: `startMusic` returns false while the buffer is
+   * missing and `applyMusic` is idempotent, so capturing the pointer before
+   * this lands sets the intent and this call honours it on arrival — the same
+   * handshake the cue preload already used.
+   */
+  private async loadTrack() {
+    await this.fetchInto(TRACK)
+    devlog('music.ready', { track: TRACK, decoded: this.buffers.has(TRACK) })
     this.applyMusic()
   }
 
