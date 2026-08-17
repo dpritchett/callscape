@@ -238,6 +238,17 @@ function remoteCue(): Plugin {
 export default defineConfig({
   plugins: [devLogSink(), remoteShutter(), remoteCue(), sourceReader()],
   server: {
+    // Listen on the LAN as well as on loopback, so the page can be flown from a
+    // phone. This is a dev server and it means it: `/__src` reads files out of
+    // whatever module was dumped, and `/__cue` lets anything on the network take
+    // the wheel. Fine on a home network, not something to run on a shared one.
+    host: true,
+    // Pinned, and pinned loudly. `make shot` and `make cue` post to 5178, and
+    // Vite's default is to take the next free port when 5173 is busy — so this
+    // server was on 5178 by coincidence, and the instruments would have been
+    // talking to whatever else happened to answer there.
+    port: 5178,
+    strictPort: true,
     // graph.json and view.json live in public/ and are polled by the client.
     // Without this, Vite full-reloads the page whenever they change, which
     // resets the camera — the one thing the edit loop must not do.
