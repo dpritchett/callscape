@@ -223,6 +223,54 @@ export class World {
     this.buildDistricts(p)
     this.buildSymbols(p)
     this.buildEdges(p)
+    this.buildBadge(p)
+  }
+
+  /**
+   * The module's mark, if somebody has vendored one under `public/badges`.
+   *
+   * Asked for rather than configured, so a module with no badge on disk costs
+   * one 404 and a log line. It loads after the scene is already up — the image
+   * is not worth blocking a rebuild on, and it appears when it appears.
+   */
+  private buildBadge(p: Placement) {
+    if (!p.badge) return
+    const { path, at, size } = p.badge
+
+    const material = new THREE.SpriteMaterial({
+      transparent: true,
+      // A landmark you take bearings from is no use dissolved into the fog, and
+      // it hangs outside the crust where the fog is thickest.
+      fog: false,
+      depthWrite: false,
+    })
+    const sprite = new THREE.Sprite(material)
+    sprite.position.set(at.x, at.y, at.z)
+    sprite.scale.set(size, size, 1)
+    // Nothing is drawn until the texture lands, so a miss leaves an empty
+    // sprite rather than a white square hanging over the world. The miss is a
+    // decode failure rather than a 404: Vite answers 200 with index.html for
+    // anything missing under public/, and an <img> fed HTML errors out.
+    sprite.visible = false
+
+    new THREE.TextureLoader().load(
+      `/${path}`,
+      (tex) => {
+        tex.colorSpace = THREE.SRGBColorSpace
+        material.map = tex
+        material.needsUpdate = true
+        sprite.visible = true
+        devlog('badge', { path, size: +size.toFixed(1) })
+      },
+      undefined,
+      () => devlog('badge.missing', { path }),
+    )
+
+    this.group.add(sprite)
+    this.disposables.push(() => {
+      this.group.remove(sprite)
+      disposeSprite(sprite)
+    })
   }
 
   /**

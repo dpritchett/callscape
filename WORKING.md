@@ -198,6 +198,11 @@ Every one of these cost real time. They are not hypothetical.
   something looks wrong, which of its rules were written about a different version.
 - **Poll with HEAD and an ETag.** Re-fetching a 10MB graph every 400ms to discover it is
   unchanged is 25MB/s of nothing.
+- **A missing file under `public/` is a 200, not a 404.** Vite's SPA fallback hands back
+  `index.html` for anything it cannot find, so a status check is not an existence check.
+  The badge loader gets away with it because an `<img>` fed HTML fails to decode and its
+  error handler fires anyway — but anything that trusts the status code will believe a
+  file is there and then parse a web page.
 
 ## Known limits and open threads
 

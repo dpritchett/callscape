@@ -54,6 +54,14 @@ Tab swaps the panel between what the graph knows about the selection, the functi
 source (coloured by `go/scanner`, not a guess), and a list of whatever district you are
 pointing at.
 
+## The mark in the sky
+
+A module hosted somewhere with an owner avatar can wear it. Drop a PNG at
+`web/public/badges/<host>/<owner>.png` — `github.com/cli/cli/v2` looks for
+`badges/github.com/cli.png` — and it hangs outside the crust as a landmark, in a direction
+fixed by the module path so it is always in the same place. Nothing is fetched: if the file
+is not there, there is no mark and the dev log says which one it looked for.
+
 ## What it does
 
 `cmd/callscape-dump` loads a module with `go/packages` and emits one node per top-level func

@@ -8,6 +8,7 @@ import type {
   ViewSpec,
 } from './types'
 import { layout, type District, type Vec3 } from './layout'
+import { placeBadge, type PlacedBadge } from './badge'
 import { selectOccupants } from './select'
 
 /** A symbol, placed and encoded. Everything the renderer needs, no three.js in it. */
@@ -63,6 +64,9 @@ export interface Placement {
   revealed: number
   /** `auto` resolved against how many edges actually came out. */
   edgeShow: ResolvedEdgeShow
+  /** Where the module's mark hangs, if its path can name one. May not exist on
+   * disk — that is the renderer's problem, and a miss is a log line. */
+  badge: PlacedBadge | null
 }
 
 /** Past this many drawn edges, showing them all is a hairball, not a picture. */
@@ -162,6 +166,7 @@ export function place(graph: Graph, view: ViewSpec, reveal: Iterable<string> = [
     total: graph.nodes.length,
     revealed: extra.length,
     edgeShow: resolveEdgeShow(view.edges.show, edges.length),
+    badge: placeBadge(graph.module, lay.extent),
   }
 }
 
