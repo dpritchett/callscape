@@ -15,6 +15,13 @@ set -euo pipefail
 
 readonly ORIGIN="http://127.0.0.1:5178"
 
+# Every request gets a deadline. The server this talks to is either running or
+# it is not, and there is no useful third answer to wait for — but "not running"
+# does not always come back as a refused connection, so without this a poke at a
+# dead port hangs until something else gives up. Fail in seconds and say the
+# obvious thing instead.
+readonly TIMEOUT=5
+
 usage() {
   cat >&2 <<'EOF'
 usage: scripts/page <verb> <path> [body-file]
@@ -67,20 +74,30 @@ case "$path" in
   //*) echo "page: '//' would name another host" >&2; exit 2 ;;
 esac
 
+# Exit 28 is curl's timeout. Say what it means here rather than leaving a bare
+# code to be looked up: on this origin it means nothing is serving the page.
+ran() {
+  "$@" && return 0
+  code=$?
+  [ "$code" = 28 ] && echo "page: nothing answered on :5178 within ${TIMEOUT}s — is a dev server running?" >&2
+  exit "$code"
+}
+
 case "$verb" in
   get)
-    exec curl -sS "$ORIGIN$path"
+    ran curl -sS --max-time "$TIMEOUT" "$ORIGIN$path"
     ;;
   head)
-    exec curl -sS -I "$ORIGIN$path"
+    ran curl -sS --max-time "$TIMEOUT" -I "$ORIGIN$path"
     ;;
   post)
     if [ -n "$body" ]; then
       [ -f "$body" ] || { echo "page: no such body file: $body" >&2; exit 2; }
-      exec curl -sS -X POST -H 'content-type: application/json' \
+      ran curl -sS --max-time "$TIMEOUT" -X POST -H 'content-type: application/json' \
         --data-binary "@$body" "$ORIGIN$path"
+    else
+      ran curl -sS --max-time "$TIMEOUT" -X POST "$ORIGIN$path"
     fi
-    exec curl -sS -X POST "$ORIGIN$path"
     ;;
   *)
     echo "page: unknown verb '$verb'" >&2
