@@ -264,7 +264,19 @@ Every one of these cost real time. They are not hypothetical.
   `index.html` for anything it cannot find, so a status check is not an existence check.
   The badge loader gets away with it because an `<img>` fed HTML fails to decode and its
   error handler fires anyway — but anything that trusts the status code will believe a
-  file is there and then parse a web page.
+  file is there and then parse a web page. Check the content type.
+- **A backgrounded tab has no animation loop, so nothing tweens.** A camera move that
+  glides is stepped by `requestAnimationFrame`, which a hidden tab does not run — so the
+  move never finishes and the camera sits wherever it started. Cues and the opening shot
+  both arrive instantly for this reason. If something looks like it ignored you, check
+  whether it was waiting for frames that were never going to come.
+- **Take the wheel before you verify anything.** Two of the screenshots that went into
+  diagnosing a "bug" this week were of somebody else flying: the page was photographed
+  mid-session and the camera was theirs, not the one the code had just set. `"hold": true`,
+  shoot, `"hold": false`. It is quicker than being wrong twice.
+- **`pkill -f <pattern>` matches the shell running it.** The pattern appears in the
+  wrapper's own command line, so it kills its own process and the command dies before it
+  does anything useful. `pgrep -f`, read the PIDs, then `kill` them.
 
 ## Known limits and open threads
 

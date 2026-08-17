@@ -62,6 +62,12 @@ seam where it can be tested.
 Determinism is a hard requirement. The same graph and view must place byte-identically in
 any input order — there is a test for it.
 
+**Before you gate, rename or delete something, find its callers.** One `grep` for the name
+you are about to make conditional. Gating `/__src` alongside the remote-control endpoints
+looked obviously right and turned the source panel into a parse error for every default
+clone, because the Tab panel is what calls it — and nothing failed loudly, since a missing
+route under `public/` answers 200 with `index.html`.
+
 ## Commits
 
 - No `Co-Authored-By` trailers, and no generated-with footers. Subject and body only.
@@ -71,6 +77,9 @@ any input order — there is a test for it.
   else is working in this tree with an editor open, and a blanket add has swept an
   in-progress file and a vim swapfile into the index at least once. Read
   `git status --short`, stage what you actually edited, and leave anything else alone.
+- **Ideas go in GitHub issues, not a file.** There is no `FEATURE-IDEAS.md`; there was, and
+  its contents became issues #16 and #19 to #21. A checklist in the repo is a second
+  tracker that nobody closes.
 
 ## Not in scope
 

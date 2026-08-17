@@ -1,3 +1,0 @@
-- [ ] screaming "VIEWERROR, HOLDING LAST SCENE" is a lame way to let the end user know the server went away. let's say something more thematic and chill, like "connection lost".
-- [ ] the tab bar of selectable view modalities at the bottom right would be a lot cooler if it used thematic icons that hinted at the purpose of each view, rather than just letters and +/-
-- [ ] 
