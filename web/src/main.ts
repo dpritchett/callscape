@@ -91,6 +91,15 @@ scene.fog = fog
 const stars = makeStarfield(STAR_RADIUS)
 scene.add(stars)
 
+// Something to look at while the graph is on its way. The stars come up in the
+// first frame and the scene about a second later — measured at roughly 300ms of
+// place() and build() plus the fetch of a module-sized file — and that second
+// was a blank sky with help text, which reads as broken rather than as loading.
+//
+// Sized off the camera rather than in world units, because the scale of the
+// scene is not known until the thing we are waiting for arrives.
+world.showGhost(camera)
+
 // Swap this line for an OrbitController if flying turns out to feel bad.
 const flyControls = new FlyController(camera, renderer.domElement)
 const controls: Controller = flyControls
@@ -308,7 +317,7 @@ function pickAtReticle() {
   selected = toggle(selected, hit.id)
   // While revealing, the selection decides which nodes exist, so it has to go
   // all the way back through place().
-  if (revealing) rebuild()
+  if (revealing) rebuild('pick')
   else applySelection()
 }
 
@@ -316,7 +325,7 @@ function toggleReveal() {
   revealing = !revealing
   devlog('reveal', { on: revealing, selected: selected.size })
   voice.play(revealing ? 'reveal-on' : 'reveal-off')
-  rebuild()
+  rebuild('reveal')
 }
 
 /**
@@ -416,7 +425,7 @@ function clearSelection() {
   }
   // Reveal decides which nodes exist from the selection, so changing it there
   // has to go back through place() — the same rule the pick path follows.
-  if (revealing) rebuild()
+  if (revealing) rebuild('select')
   else applySelection()
 }
 
@@ -633,16 +642,58 @@ function drawRibbon() {
   )
 }
 
-function rebuild() {
+/**
+ * How long the loading sphere is guaranteed to be on screen, and the one place
+ * this project deliberately makes itself slower.
+ *
+ * The scene takes about 300ms to place and build, which is long enough to be a
+ * blank sky and far too short to be a loading screen — the sphere would appear
+ * and vanish before it had finished saying anything, which is worse than either
+ * extreme. Held for a beat and turning once, it is a title card. The cost is
+ * paid once per page load and never again: this gate opens after the first
+ * build and stays open, so editing view.json still applies within a second,
+ * which is the loop the whole project is built around.
+ */
+const GHOST_HOLD_MS = 2800
+const ghostShownAt = performance.now()
+let firstBuildDone = false
+// Not `holdTimer` — that one is the wheel lease, and clearing it here would
+// hand the controls back out from under whoever is driving.
+let ghostHoldTimer: ReturnType<typeof setTimeout> | null = null
+
+function rebuild(why: string) {
   if (!graph || !view) return
+
+  if (!firstBuildDone) {
+    const waited = performance.now() - ghostShownAt
+    if (waited < GHOST_HOLD_MS) {
+      // Whichever file landed last wins the retry; stacking a timer per caller
+      // would build several times in a row the moment the hold expired.
+      if (ghostHoldTimer) clearTimeout(ghostHoldTimer)
+      ghostHoldTimer = setTimeout(() => {
+        ghostHoldTimer = null
+        rebuild(why)
+      }, GHOST_HOLD_MS - waited)
+      return
+    }
+    firstBuildDone = true
+  }
+
   voice.set(view.sound.enabled, view.sound.volume)
   if (view.labels.mode !== specMode) {
     specMode = view.labels.mode
     setLabelMode(specMode)
   }
+  // Timed in two halves because they fail differently: place() is arithmetic
+  // over plain data and scales with the graph, world.build() is three.js object
+  // construction and scales with how much of it survived the filter. Knowing
+  // which half a slow rebuild is in has been guesswork until now.
+  const t0 = performance.now()
   const p = place(graph, view, revealing ? selected : [])
+  const t1 = performance.now()
   placement = p
   world.build(p, view.edges.opacity)
+  const t2 = performance.now()
   // Depth cue scaled to the world we actually built, so the far side of the
   // shell reads as far away rather than as missing.
   fog.near = p.extent * 0.8
@@ -654,7 +705,14 @@ function rebuild() {
   camera.far = Math.max(4000, p.extent * 6)
   camera.updateProjectionMatrix()
   stars.scale.setScalar(skyRadius(p.extent) / STAR_RADIUS)
-  devlog('rebuild', { nodes: p.nodes.length, edges: p.edges.length, districts: p.districts.length })
+  devlog('rebuild', {
+    why,
+    nodes: p.nodes.length,
+    edges: p.edges.length,
+    districts: p.districts.length,
+    placeMs: Math.round(t1 - t0),
+    buildMs: Math.round(t2 - t1),
+  })
 
   // A view change can filter out something that was selected; keep only what
   // is still on screen rather than holding a reference to a ghost.
@@ -733,7 +791,14 @@ function watch(url: string, onChange: (raw: unknown) => void, onAbsent?: () => v
       }
       const text = await res.text()
       if (text !== last) {
-        onChange(JSON.parse(text))
+        // Parsing is separated from applying because they are different costs
+        // with different fixes: a slow parse is the file being large, a slow
+        // apply is the scene being complicated.
+        const t0 = performance.now()
+        const raw = JSON.parse(text)
+        const t1 = performance.now()
+        onChange(raw)
+        devlog('loaded', { url, kb: Math.round(text.length / 1024), parseMs: Math.round(t1 - t0) })
         last = text
       }
       // Only after a successful apply, so a broken file keeps being retried.
@@ -764,7 +829,7 @@ watch(
     graph = raw as Graph
     sources.clear()
     for (const n of graph.nodes) sources.set(n.id, { file: n.file, line: n.line, lines: n.lines })
-    rebuild()
+    rebuild('graph')
   },
   () => {
     if (graph) return // it was there and went away mid-session; keep flying it
@@ -792,7 +857,7 @@ watch(
 
 watch('/view.json', (raw) => {
   view = parseView(raw)
-  rebuild()
+  rebuild('view')
 })
 
 // Frame timing goes to the log, so "is it slow" is answerable from a terminal
@@ -807,6 +872,7 @@ const shutter = new Shutter(renderer.domElement, () => {
   const t0 = performance.now()
   world.updateLabels(camera, renderer.domElement.clientHeight, 1)
   updateBeacon(beat())
+  world.pulseGhost(beat())
   watchAim() // a cue can move the camera where no animation loop is running
   const t1 = performance.now()
   renderer.render(scene, camera)
@@ -836,9 +902,9 @@ watchCues((cue) => {
   const wantsReveal = typeof cue.reveal === 'boolean' ? cue.reveal : revealing
   if (wantsReveal !== revealing) {
     revealing = wantsReveal
-    rebuild() // reveal changes which nodes exist, so positions move
+    rebuild('cue.reveal') // reveal changes which nodes exist, so positions move
   } else if (cue.select) {
-    if (revealing) rebuild()
+    if (revealing) rebuild('cue.select')
     else applySelection()
   }
   if (cue.focus) {
@@ -892,6 +958,7 @@ renderer.setAnimationLoop(() => {
   controls.update(dt)
   world.updateLabels(camera, renderer.domElement.clientHeight, dt)
   updateBeacon(beat())
+  world.pulseGhost(beat())
   watchAim()
   renderer.render(scene, camera)
 

@@ -168,6 +168,38 @@ function buildingMaterial(): THREE.MeshLambertMaterial {
  * in placement.ts; this file only draws. Rebuilt wholesale when either JSON
  * file changes — the camera lives outside it and is never touched.
  */
+/**
+ * What the loading sphere says as it turns.
+ *
+ * A rotating globe with words banded round it is the blimp from Scarface, and
+ * what it says is SimCity's, which is the better joke: this actually is a city
+ * builder, and the thing it is doing while you read it is laying out districts.
+ *
+ * Uppercase against the rest of the interface, which is lowercase throughout —
+ * it is a sign on an object in the world rather than a label the page is
+ * printing at you.
+ *
+ * Twenty characters is the budget. Past that it wraps far enough round the
+ * sphere that the tail goes behind the horizon; this one is exactly at it.
+ */
+const GHOST_LEGEND = 'RETICULATING SPLINES'
+
+/**
+ * How the legend sits and moves. Gathered here because this is feel rather than
+ * arithmetic, and feel gets tuned by looking — which means one place to edit and
+ * one reload, not five.
+ */
+const GHOST_BAND = {
+  /** Degrees the pole leans right, which is the only thing setting the angle
+   *  the words travel at. The band itself is flat on the equator. */
+  axialTilt: 24,
+  /** Radians per second about that leaned axis. At 2.0 a full revolution takes
+   *  about 3.1s, so the 2.8s the globe is held covers very nearly all of it and
+   *  the legend comes round once, whole. Tuned by looking: 0.55 and 0.83 both
+   *  read as half a sentence, and 4.2 — where this started — was a blur. */
+  spin: 2.0,
+} as const
+
 export class World {
   readonly group = new THREE.Group()
 
@@ -233,6 +265,8 @@ export class World {
   private projScreen = new THREE.Matrix4()
 
   build(p: Placement, opacity = 0.7) {
+    // The real thing is about to exist, so the promise is redundant.
+    this.hideGhost()
     this.clear()
     this.shell = p.shell || 1
     this.edgeShow = p.edgeShow
@@ -1214,6 +1248,154 @@ export class World {
 
   positionOf(id: string): THREE.Vector3 | undefined {
     return this.positions.get(id)
+  }
+
+  /**
+   * A stand-in shell for the second before a graph exists.
+   *
+   * Not a spinner. It is the sphere every district is a patch of, so the scene
+   * arriving reads as this object gaining detail rather than one thing being
+   * swapped for another — which is the whole difference between a load that
+   * feels progressive and one that pops. Wireframe and dim on purpose: it is a
+   * promise about the scene, and it should not be mistaken for part of it.
+   *
+   * The radius cannot be the real one — that comes out of `place()`, which is
+   * the thing being waited for — so it is derived from the camera instead: big
+   * enough on screen to be the same object the graph turns into, whatever the
+   * scale of the graph turns out to be. Sizing it in world units is what the
+   * first attempt got wrong; a 300-unit sphere put the camera inside itself and
+   * drew faint triangles across the whole sky.
+   */
+  /**
+   * Two nested groups, because a planet is two rotations and not one.
+   *
+   * `ghostTilt` leans the axis over and never moves again; `ghostSpin` turns
+   * inside it, about that leaned axis. The band sits flat on the equator with
+   * no rotation of its own, so the only thing carrying the words is the globe
+   * turning — which is what makes them climb from lower-left to upper-right
+   * instead of sliding along a ring somebody tilted by hand. Tilting the band
+   * and spinning it separately, which is what this did first, gives two
+   * unrelated motions and reads as a mistake.
+   */
+  private ghostTilt: THREE.Group | null = null
+  private ghostSpin: THREE.Group | null = null
+  private ghostBandMat: THREE.MeshBasicMaterial | null = null
+
+  showGhost(camera: THREE.PerspectiveCamera, fill = 0.45) {
+    if (this.ghostTilt) return
+    // A sphere of radius r seen from distance d has angular radius asin(r/d).
+    // Solve it backwards for the fraction of the vertical view we want it to
+    // cover, so this lands in the right place from wherever the camera starts.
+    const halfFov = ((camera.fov / 2) * Math.PI) / 180
+    const distance = camera.position.length()
+    const radius = distance * Math.sin(halfFov * fill)
+
+    this.ghostTilt = new THREE.Group()
+    this.ghostSpin = new THREE.Group()
+    // Leaning the pole to the right drops the equator's left end and lifts its
+    // right, so the line the words travel runs uphill across the view.
+    this.ghostTilt.rotation.z = THREE.MathUtils.degToRad(GHOST_BAND.axialTilt)
+    this.ghostTilt.add(this.ghostSpin)
+    this.group.add(this.ghostTilt)
+
+    const geom = new THREE.SphereGeometry(radius, 48, 32)
+    const mat = new THREE.MeshLambertMaterial({
+      color: 0x2a1250,
+      // Carrying most of the look, because the key light is aimed at a scene
+      // that does not exist yet — an unlit purple ball in deep space is a hole,
+      // the same problem the sky badges have.
+      emissive: 0x4a1d7a,
+      fog: false,
+    })
+    this.ghostSpin.add(new THREE.Mesh(geom, mat))
+    this.addGhostBand(radius)
+  }
+
+  /**
+   * The legend, printed around the equator.
+   *
+   * A ring rather than a sprite: a sprite always faces you, which would say
+   * "dialog box" where this wants to say "object in space with writing on it".
+   */
+  private addGhostBand(radius: number) {
+    if (!this.ghostSpin) return
+    const W = 2048
+    const H = 256
+    const canvas = document.createElement('canvas')
+    canvas.width = W
+    canvas.height = H
+    const ctx = canvas.getContext('2d')
+    if (!ctx) return
+
+    ctx.font = `700 120px ui-monospace, SFMono-Regular, Menlo, monospace`
+    ctx.textBaseline = 'middle'
+    ctx.textAlign = 'center'
+
+    // Magenta into cyan across the word, which is the whole vaporwave palette
+    // in two stops.
+    const grad = ctx.createLinearGradient(W * 0.18, 0, W * 0.82, 0)
+    grad.addColorStop(0, '#ff71ce')
+    grad.addColorStop(0.5, '#f5f0ff')
+    grad.addColorStop(1, '#01cdfe')
+
+    // Neon is a bright core inside a wide bloom of its own colour, so it gets
+    // drawn three times: twice for the halo, once sharp on top. A single pass
+    // with a shadow is a smudge, not a tube of gas.
+    ctx.shadowColor = '#ff2fd0'
+    ctx.shadowBlur = 44
+    ctx.fillStyle = '#ff71ce'
+    ctx.fillText(GHOST_LEGEND, W / 2, H / 2)
+    ctx.shadowColor = '#01cdfe'
+    ctx.shadowBlur = 26
+    ctx.fillText(GHOST_LEGEND, W / 2, H / 2)
+    ctx.shadowBlur = 0
+    ctx.fillStyle = grad
+    ctx.fillText(GHOST_LEGEND, W / 2, H / 2)
+
+    const tex = new THREE.CanvasTexture(canvas)
+    tex.anisotropy = 4
+
+    // Just clear of the sphere, or the two surfaces fight over the same depth.
+    const band = new THREE.CylinderGeometry(radius * 1.02, radius * 1.02, radius * 0.42, 96, 1, true)
+    this.ghostBandMat = new THREE.MeshBasicMaterial({
+      map: tex,
+      transparent: true,
+      // Additive, so the glow lands on the globe as light rather than as a
+      // sticker of a glow.
+      blending: THREE.AdditiveBlending,
+      fog: false,
+      // The far half is behind an opaque sphere, so only the near half is ever
+      // seen and it should not be double-drawn.
+      side: THREE.FrontSide,
+      depthWrite: false,
+    })
+    this.ghostSpin.add(new THREE.Mesh(band, this.ghostBandMat))
+  }
+
+  /**
+   * Wall time in, so a backgrounded tab that comes back is not frozen
+   * mid-breath — the same reason the beacon reads the clock it does.
+   */
+  pulseGhost(t: number) {
+    if (!this.ghostSpin || !this.ghostBandMat) return
+    // Shallow: neon that goes dark is a fault light. This only breathes.
+    this.ghostBandMat.opacity = 0.78 + 0.22 * (0.5 + 0.5 * Math.sin(t * 2.0))
+    this.ghostSpin.rotation.y = t * GHOST_BAND.spin
+  }
+
+  hideGhost() {
+    if (!this.ghostTilt) return
+    this.ghostTilt.traverse((o) => {
+      if (!(o instanceof THREE.Mesh)) return
+      o.geometry.dispose()
+      const m = o.material as THREE.MeshBasicMaterial
+      m.map?.dispose()
+      m.dispose()
+    })
+    this.group.remove(this.ghostTilt)
+    this.ghostTilt = null
+    this.ghostSpin = null
+    this.ghostBandMat = null
   }
 
   clear() {
