@@ -73,8 +73,9 @@ about three.js. Anything interesting enough to get wrong belongs on the pure sid
 - **`callscape-dump` runs the Go toolchain against its target.** `go/packages` shells out to
   `go list`, which can fetch dependencies, honour a `toolchain` directive and preprocess
   cgo. Point it only at code you would already run a build on.
-- **The dev server is a dev server.** It binds localhost. Don't put it on a shared
-  network.
+- **The dev server is a dev server, and it binds the LAN** so the page can be flown from a
+  phone. `/__cue` gives anything on the network the wheel and `/__src` reads Go files out
+  of the dumped module. Don't put it on a shared network.
 
 ## Scope
 

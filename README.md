@@ -125,8 +125,10 @@ dumping a module runs `go list` against it — which can fetch dependencies, hon
 build on that code, and the same reason not to do it to a repo you just cloned from a
 stranger.
 
-**The dev server is a dev server.** It binds localhost. Don't `--host` it onto a network
-you share.
+**The dev server is a dev server, and it binds the LAN.** That is deliberate — the page is
+worth flying from a phone — but it means anything on the network can drive the camera
+through `/__cue` and read Go files out of the dumped module through `/__src`. Fine on a
+home network, not something to run on a shared one.
 
 ## Checks
 
