@@ -82,19 +82,18 @@ function fileOf(name: Cue | Bed | Track): string {
 }
 
 /**
- * Playback trim, per cue, against the level the recipe baked.
+ * How loud a spoken line is, against the level the recipe baked.
  *
- * The recipe normalises every line to one peak, which is right for a set of
- * callouts that all matter equally — and these two do not. `capture` and
- * `release` fire on every click and every escape, dozens of times a session,
- * and the banner across the top already says who has the wheel continuously,
- * which is more than a line said once. This is a mix decision about how often
- * something happens, so it lives at the call rather than in the recording.
+ * One number for all of them rather than a trim per cue. The recipe normalises
+ * every line to the same peak and that is the right call there — but the whole
+ * voice sits too far forward against the beds and the music, and "view error,
+ * holding last scene" arriving at full level is a shout for something the error
+ * bar is already saying quietly at the bottom of the screen.
+ *
+ * The value is the one `capture` and `release` were trimmed to, which is the
+ * level that stopped being annoying, applied to the lot.
  */
-const TRIM: Partial<Record<Cue, number>> = {
-  capture: 0.45,
-  release: 0.45,
-}
+const VOICE_LEVEL = 0.45
 
 /** Long enough not to click, short enough not to be a crossfade. */
 const CUT_SECONDS = 0.015
@@ -302,14 +301,14 @@ export class Voice {
     const src = this.ctx.createBufferSource()
     const gain = this.ctx.createGain()
     src.buffer = buffer
-    gain.gain.value = TRIM[cue] ?? 1
+    gain.gain.value = VOICE_LEVEL
     src.connect(gain).connect(this.master)
     src.onended = () => {
       if (this.now?.src === src) this.now = null
     }
     src.start()
     this.now = { src, gain }
-    devlog('voice', { cue, gain: gain.gain.value })
+    devlog('voice', { cue, gain: VOICE_LEVEL })
   }
 
   /** End whatever is talking, without the click of stopping it dead. */
