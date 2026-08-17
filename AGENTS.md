@@ -66,6 +66,10 @@ any input order — there is a test for it.
 - No `Co-Authored-By` trailers, and no generated-with footers. Subject and body only.
 - Small changes, committed and pushed promptly.
 - If a change touches both halves, say what it does to the seam between them.
+- **Stage the paths you changed. Never `git add -A`, `git add .`, or `commit -a`.** Someone
+  else is working in this tree with an editor open, and a blanket add has swept an
+  in-progress file and a vim swapfile into the index at least once. Read
+  `git status --short`, stage what you actually edited, and leave anything else alone.
 
 ## Not in scope
 
