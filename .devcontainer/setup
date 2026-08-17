@@ -12,9 +12,12 @@ set -euo pipefail
 
 cd "$(dirname "$0")/.."
 
-# `make logs` pipes through jq, and make itself is not in every base image.
+# jq, for `make logs`. That is the whole gap: the base image already carries
+# curl, git, make and sudo, so this list was measured down to one package rather
+# than guessed upward. Keep it that way — an apt line on the create path is the
+# slowest and flakiest thing here.
 sudo apt-get update -qq
-sudo apt-get install -y -qq --no-install-recommends make jq
+sudo apt-get install -y -qq --no-install-recommends jq
 
 npm --prefix web ci
 
