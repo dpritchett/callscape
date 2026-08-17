@@ -416,6 +416,19 @@ was changed while nobody had typed it: module path, command, env var, plugin nam
 package, page title, and every mention in the prose. Rejected: keeping it and explaining
 the name in the README, which is a paragraph of apology on the front page forever.
 
+**Nothing is committed to fly; `make sample` fetches one.** *(Supersedes the entry below,
+which shipped a tracked fixture.)* Committing this repo dumped by itself bought
+clone-and-run for 9.5KB, and what it bought was a bad advertisement: callscape is one Go
+package, so the sample laid out flat with seventeen buildings on it, next to a README
+showing a sphere with 294 districts. `make sample` shallow-clones cli/cli into
+`~/.cache/callscape` and dumps it — ten seconds from nothing, for 3,501 symbols across 307
+packages — and the page waits live rather than erroring, so a dump landing in another
+window appears without a reload. The clone lives outside the repo because a git repo
+inside the working tree is one `git add` from an accidental submodule, and that is a
+worse failure than a missing file. Rejected: committing a dump of a *real* module, which
+is the module-sized blob this whole line of work removed; and keeping the self-dump with a
+louder README, which is documentation compensating for a first run nobody would like.
+
 **`graph.json` is untracked; `graph.default.json` is the tracked sample.** Tracking the
 dump is what made `make dev` work on clone, and also what would have committed a
 module-sized blob every time the dump target changed — and `.gitignore` cannot stop that

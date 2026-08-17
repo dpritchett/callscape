@@ -35,9 +35,14 @@ else; the endpoints the instruments talk to are not registered without
 on a server that binds the LAN, and a fresh clone should not be offering those to its
 network on somebody's behalf. It prints a warning line when they are on.
 
-With no `make dump` behind you the page flies `graph.default.json` instead: this repo,
-dumped by itself, tracked so a clone has something to fly. `make sample` rebakes it and
-should be run whenever the dumper's output changes shape.
+Nothing is committed to fly. `make sample` shallow-clones cli/cli into
+`~/.cache/callscape` and dumps it — about ten seconds from nothing, 3,501 symbols across
+307 packages. Outside the repo on purpose: a git repo inside this working tree is one
+`git add` away from an accidental submodule, and being somewhere git will never look is a
+stronger promise than a `.gitignore` line.
+
+With no graph on disk the page says so and keeps watching, so `make dev` in one window and
+`make sample` in another is a working first run — the scene arrives without a reload.
 
 Then edit `web/public/view.json` while the page is open. It applies within a second,
 without a reload and without moving the camera. That loop is the point of the project;

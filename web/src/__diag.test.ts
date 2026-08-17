@@ -3,13 +3,13 @@ import { existsSync, readFileSync } from 'node:fs'
 import { place } from './placement'
 import { parseView } from './view'
 
-// Whatever is loaded: the local dump when there is one, and otherwise the
-// sample a clone ships with. This is a diagnostic rather than an assertion
-// about a particular graph, and it must not be the one check that fails for
-// someone who has not dumped anything yet.
-const GRAPH = existsSync('public/graph.json') ? 'public/graph.json' : 'public/graph.default.json'
+// A diagnostic on whatever is loaded, not an assertion about a particular
+// graph — and nothing is committed to load, so on a checkout that has not
+// dumped anything this has nothing to measure and says so. It must not be the
+// one check that fails for somebody who just cloned.
+const GRAPH = 'public/graph.json'
 
-test('shell fill', () => {
+test.skipIf(!existsSync(GRAPH))('shell fill', () => {
   const G = JSON.parse(readFileSync(GRAPH, 'utf8'))
   const v = parseView(JSON.parse(readFileSync('public/view.json', 'utf8')))
   const t0 = performance.now()

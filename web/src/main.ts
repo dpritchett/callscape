@@ -111,6 +111,8 @@ let graph: Graph | null = null
 let view: ViewSpec | null = null
 let placement: Placement | null = null
 let framed = false
+/** Announced that there is nothing to fly, so it is not announced every poll. */
+let waiting = false
 let status = ''
 let selected = new Set<string>()
 let revealing = false
@@ -689,7 +691,7 @@ function renderErrors() {
  * `last` advances only after a successful apply, so a broken file keeps its
  * error on screen until it is fixed.
  */
-function watch(url: string, onChange: (raw: unknown) => void) {
+function watch(url: string, onChange: (raw: unknown) => void, onAbsent?: () => void) {
   let last: string | null = null
   let stamp: string | null = null
 
@@ -707,6 +709,15 @@ function watch(url: string, onChange: (raw: unknown) => void) {
 
       const res = await fetch(`${url}?t=${Date.now()}`, { cache: 'no-store' })
       if (!res.ok) throw new Error(`${res.status} ${res.statusText}`)
+      // A missing file under public/ comes back as index.html with a 200, so
+      // the status is not an existence check and the content type is. Absent is
+      // not an error: the poller is still running, and whatever writes the file
+      // will be noticed within 400ms of doing so.
+      if (!(res.headers.get('content-type') ?? '').includes('json')) {
+        onAbsent?.()
+        clearError(url)
+        return
+      }
       const text = await res.text()
       if (text !== last) {
         onChange(JSON.parse(text))
@@ -725,33 +736,46 @@ function watch(url: string, onChange: (raw: unknown) => void) {
 }
 
 /**
- * Whatever `make dump` last wrote, and otherwise the sample this repo ships.
- * graph.json is untracked, so a fresh clone has only graph.default.json — and
- * flying that one is a better first run than an error banner telling you to
- * dump something before the page will do anything at all.
+ * Nothing is committed to fly. A dump is a derived file the size of the module
+ * it came from, and making one takes about as long as reading this comment, so
+ * the repo ships none and the page waits for one instead.
  *
- * Chosen once, at startup: a dump landing later is a page reload away, and the
- * poller must not be checking two URLs forever.
+ * Waiting rather than erroring, and waiting *live*: the poller is already
+ * asking every 400ms, so a dump that lands while this is on screen replaces it
+ * without a reload. Run `make sample` in another window and watch it arrive.
  */
-async function graphUrl(): Promise<string> {
-  try {
-    const res = await fetch('/graph.json', { method: 'HEAD', cache: 'no-store' })
-    if (res.ok) return '/graph.json'
-  } catch {
-    /* no dev server, or no such file: the sample it is */
-  }
-  return '/graph.default.json'
-}
-
-void graphUrl().then((url) => {
-  devlog('graph', { url })
-  watch(url, (raw) => {
+watch(
+  '/graph.json',
+  (raw) => {
+    waiting = false
     graph = raw as Graph
     sources.clear()
     for (const n of graph.nodes) sources.set(n.id, { file: n.file, line: n.line, lines: n.lines })
     rebuild()
-  })
-})
+  },
+  () => {
+    if (graph) return // it was there and went away mid-session; keep flying it
+    // Once, not twice a second. The poller is going to keep finding it missing
+    // until somebody dumps something, and a log line per poll would bury the
+    // one thing it is trying to say. Same reason the error bar only announces
+    // a fault when it is new.
+    if (!waiting) {
+      waiting = true
+      // The message itself is DOM, and no screenshot this project can take has
+      // ever contained the HUD — so without this line, "why is the page blank"
+      // is unanswerable from a terminal, which is exactly when it gets asked.
+      devlog('graph.absent', { waiting: '/graph.json' })
+    }
+    hud.textContent = [
+      'no graph yet',
+      '',
+      '  make sample                             fly github.com/cli/cli',
+      '  make dump TARGET=/path/to/a/go/module   fly something else',
+      '',
+      'this page is watching for one; it will load the moment it lands',
+    ].join('\n')
+  },
+)
 
 watch('/view.json', (raw) => {
   view = parseView(raw)

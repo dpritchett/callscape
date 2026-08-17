@@ -63,14 +63,24 @@ dump:
 	go run ./cmd/callscape-dump $(TARGET) > web/public/graph.json
 	@echo "$(abspath $(TARGET))" > web/.source-root
 
-# The graph a fresh clone flies before it has dumped anything: this repo,
-# dumped by itself. graph.json is untracked — it is a module-sized blob and
-# every re-dump would otherwise commit another one — so something has to be
-# there on clone. Generated rather than hand-kept, so it cannot drift from what
-# the dumper emits, and deterministic, so an unchanged dumper rebakes to an
-# empty diff.
+# A real graph to fly, fetched on demand. About eight seconds from nothing.
+#
+# Nothing is committed: a dump is a derived file the size of the module it came
+# from, and this repo dumped by itself — the obvious thing to commit — is one
+# package, which the layout lays out flat. A poor advertisement for a thing that
+# draws cities.
+#
+# The clone lives outside the repo on purpose. A git repo inside this working
+# tree is one `git add` away from becoming an accidental submodule, and a
+# .gitignore line is a weaker promise than being somewhere git will never look.
+# It also survives re-cloning callscape, and a second checkout shares it.
+SAMPLE_REPO ?= https://github.com/cli/cli.git
+SAMPLE_DIR ?= $(or $(XDG_CACHE_HOME),$(HOME)/.cache)/callscape/cli
 sample:
-	go run ./cmd/callscape-dump . > web/public/graph.default.json
+	@test -d "$(SAMPLE_DIR)/.git" || git clone --depth 1 $(SAMPLE_REPO) "$(SAMPLE_DIR)"
+	go run ./cmd/callscape-dump "$(SAMPLE_DIR)" > web/public/graph.json
+	@echo "$(SAMPLE_DIR)" > web/.source-root
+	@echo "flying $(SAMPLE_REPO) — delete $(SAMPLE_DIR) to refetch it"
 
 # The navigator's voice. The WAVs are committed, so a clone runs with sound and
 # without beepboop; this is how to rebake them after a wording or level change.

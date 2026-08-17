@@ -4,8 +4,9 @@
 # where `make dump` found the module it dumped: a path on this machine only
 /web/.source-root
 
-# whatever `make dump` last wrote, module-sized and different every time.
-# The tracked sample next to it is graph.default.json, from `make sample`.
+# whatever `make dump` or `make sample` last wrote, module-sized and different
+# every time. Nothing is committed in its place: a graph is derived, and making
+# one takes seconds.
 /web/public/graph.json
 
 # where you were looking last: scratch, rewritten a dozen times a session.
