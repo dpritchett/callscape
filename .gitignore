@@ -14,3 +14,9 @@
 /web/cue.json
 
 .claude/settings.local.json
+
+# Editor scratch. Belongs in a global ignore, and is here as well because this
+# repo has already committed a vim swapfile once.
+[._]*.sw[a-p]
+[._]*.un~
+*~
