@@ -27,6 +27,9 @@ export const CUES = [
   // strictly more than a callout said once. The recipe can drop those two.
   'capture',
   'release',
+  // Looking behind you. Wants a whoosh rather than a word: it is a movement,
+  // and the thing it should sound like is the thrusters that turned you round.
+  'flip',
   'view-error',
   // Not in the recipe yet: silent until beepboop bakes them, which is what the
   // banner across the top is for in the meantime.

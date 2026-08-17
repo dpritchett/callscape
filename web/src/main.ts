@@ -488,6 +488,10 @@ flyControls.onCycleLabels = (step) => setLabelMode(cycleMode(labelMode, step))
 // A pointer announces capture and release with an event; a pad is polled, so
 // picking it up has to say so or nothing re-decides who is flying.
 flyControls.onPadPresence = () => flying()
+// Every way of looking behind you — the stick press, C, and a cue — goes
+// through the controller's own flip, so hanging the sound there covers all
+// three without any of them knowing about it.
+flyControls.onFlip = () => voice.play('flip')
 
 /**
  * Fly to whatever the panel is showing. The selection is the thing you are

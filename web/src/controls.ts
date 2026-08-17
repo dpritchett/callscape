@@ -110,6 +110,13 @@ export class FlyController implements Controller {
    * announces it and this has to.
    */
   onPadPresence: ((live: boolean) => void) | null = null
+  /**
+   * Somebody looked behind them. A hook rather than a call into the sound
+   * module, for the same reason as `onPadPresence`: the controller decides what
+   * the inputs mean and nothing else, and it has never needed to know that the
+   * page makes noise.
+   */
+  onFlip: (() => void) | null = null
   private padLook = 2.6 // radians/sec at full stick deflection
   /** Roll is faster than pitch, since a turn starts by banking. */
   private padRoll = 3.2
@@ -179,6 +186,9 @@ export class FlyController implements Controller {
     }
     this.tween = null // a focus flight and a look behind you disagree
     devlog('flip', { instant })
+    // Only once the spin is really starting — the guard above means a second
+    // press mid-turn is not another flip, and should not sound like one.
+    this.onFlip?.()
     // Nothing advances a spin in a backgrounded tab, where there is no
     // animation loop — the same reason `frame` can arrive instantly.
     if (instant) this.stepSpin(SPIN_SECONDS)
