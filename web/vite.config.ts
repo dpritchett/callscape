@@ -281,6 +281,54 @@ function remoteCue(): Plugin {
 const REMOTE_ENABLED = process.env.UNSAFE_ENABLE_REMOTE_CONTROL === 'true'
 
 /**
+ * The domain a Codespace forwards this port through, or null when we are not in
+ * one.
+ *
+ * Three things need it and none of them can be guessed at build time. The
+ * forward terminates HTTPS on 443 and proxies to 5178 here, so the client has
+ * to be told which port to open its socket on; Vite refuses a Host header it
+ * does not recognise, and the forward sends its own; and the loopback default
+ * stops meaning what it means on a laptop, which is worth saying out loud.
+ *
+ * The domain is read rather than hardcoded because it is not always
+ * `app.github.dev` — an enterprise or a proxy sets a different one, and this is
+ * the variable that carries it.
+ */
+const FORWARDING_DOMAIN =
+  process.env.CODESPACES === 'true'
+    ? (process.env.GITHUB_CODESPACES_PORT_FORWARDING_DOMAIN ?? 'app.github.dev')
+    : null
+
+/**
+ * Says what the loopback binding is and is not worth, when it is worth less.
+ *
+ * `host: false` is a real boundary on a laptop. It is not one here: the
+ * forwarding agent runs inside this container and reaches 127.0.0.1 the same
+ * way the browser on your desk would, so the page is on the internet behind an
+ * authenticating proxy rather than off it. The forward's visibility is the
+ * actual boundary, and it is set outside this repo — so the only useful thing
+ * the server can do is name it.
+ */
+function forwardWarning(): Plugin {
+  return {
+    name: 'callscape-forward-warning',
+    configureServer(server) {
+      server.httpServer?.once('listening', () => {
+        server.config.logger.warn(
+          `  ⚠  forwarded through ${FORWARDING_DOMAIN}: loopback is not a boundary here. ` +
+            'The port forward reaches this server, and who reaches the forward is its ' +
+            'visibility setting — private, unless somebody changed it.' +
+            (REMOTE_ENABLED
+              ? ' Remote control is ON behind that, so /__cue and /__shot are reachable ' +
+                'by anyone the forward lets through. Make it public and that is everyone.'
+              : ''),
+        )
+      })
+    },
+  }
+}
+
+/**
  * Says so at startup, once.
  *
  * A capability that is on and silent is one nobody remembers is on. This is the
@@ -311,6 +359,7 @@ export default defineConfig({
     devLogSink(), // local file, no reach — unconditional
     sourceReader(), // the Tab panel's own endpoint; contained by resolveWithinRoot
     ...(REMOTE_ENABLED ? [remoteWarning(), remoteShutter(), remoteCue()] : []),
+    ...(FORWARDING_DOMAIN ? [forwardWarning()] : []),
   ],
   server: {
     // Loopback unless asked otherwise. With the flag, this listens on every
@@ -328,6 +377,21 @@ export default defineConfig({
     // talking to whatever else happened to answer there.
     port: 5178,
     strictPort: true,
+    // Vite refuses a request whose Host header it does not recognise, and
+    // allows only localhost and bare IPs by default — so a Codespace's
+    // forwarded hostname is met with "Blocked request", which looks like the
+    // devcontainer is broken rather than like a setting. The leading dot makes
+    // it a suffix match over the one domain this port is forwarded through.
+    allowedHosts: FORWARDING_DOMAIN ? [`.${FORWARDING_DOMAIN}`] : [],
+    // The forward terminates HTTPS on 443 and proxies to 5178 in here, so a
+    // client told to open its socket on 5178 opens it against a port that is
+    // not published and HMR dies silently — the page loads, and only edits stop
+    // arriving, which is the worst way for this to break. The protocol needs no
+    // setting: the client reads `wss` off the page's own URL.
+    //
+    // `server.ws`, not `server.hmr` — Vite 8 moved these and still answers to
+    // the old spelling, with a deprecation warning.
+    ...(FORWARDING_DOMAIN ? { ws: { clientPort: 443 } } : {}),
     // graph.json and view.json live in public/ and are polled by the client.
     // Without this, Vite full-reloads the page whenever they change, which
     // resets the camera — the one thing the edit loop must not do.

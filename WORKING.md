@@ -38,6 +38,14 @@ is running.
 The source panel's `/__src` is not part of that and never turns off — it is the Tab panel's
 own endpoint, and gating it once broke the source view for every default clone.
 
+**In a Codespace that trade is a different one.** The port-forwarding agent runs inside the
+container, so it reaches 127.0.0.1 whatever `host` is set to, and the loopback default
+keeps nobody out — the forward's visibility does, and it is private unless somebody
+changed it. `.devcontainer/` therefore runs plain `make dev`, and the server prints a
+second warning naming the forward. Running `make dev-remote` in there is a real choice
+rather than a formality: it puts `/__cue` and `/__shot` behind a URL that is one toggle
+away from being public.
+
 Nothing is committed to fly. `make sample` shallow-clones cli/cli into
 `~/.cache/callscape` and dumps it — about ten seconds from nothing, 3,501 symbols across
 307 packages. Outside the repo on purpose: a git repo inside this working tree is one
@@ -276,7 +284,15 @@ Every one of these cost real time. They are not hypothetical.
   shoot, `"hold": false`. It is quicker than being wrong twice.
 - **`pkill -f <pattern>` matches the shell running it.** The pattern appears in the
   wrapper's own command line, so it kills its own process and the command dies before it
-  does anything useful. `pgrep -f`, read the PIDs, then `kill` them.
+  does anything useful. `pgrep -f`, read the PIDs, then `kill` them. `pgrep -af vite` has
+  the same problem in reverse: it matches its own shell and reports a dev server that is
+  not running, which is a convincing way to spend two minutes poking a dead port. `ss -ltn
+  | grep 5178` asks the question that was actually meant.
+- **Vite only answers to a Host header it recognises.** `server.allowedHosts` defaults to
+  localhost and bare IPs, so any hostname that is not one — a Codespace's forwarded
+  domain, a tunnel, a name in `/etc/hosts` — gets `Blocked request` instead of the page.
+  It reads as a broken setup rather than as a setting, which is why the Codespace branch
+  in `vite.config.ts` sets it explicitly.
 
 ## Known limits and open threads
 

@@ -84,6 +84,12 @@ about three.js. Anything interesting enough to get wrong belongs on the pure sid
   is what the Tab panel calls, and gating it turned a headline feature into a parse error
   for everybody who cloned the repo. The containment in `srcpath.ts` applies regardless:
   the flag decides who can reach the server, those functions decide what a request can do.
+- **A port forward moves that boundary.** In a Codespace or over a tunnel the forwarder is
+  inside the container with the server, so binding loopback excludes nobody and the
+  forward's visibility is the whole boundary. `vite.config.ts` detects the case and says
+  so at startup; `.devcontainer/` leaves the remote control off because a private forward
+  is one setting away from a public one, and `/__cue` and `/__shot` should not be what is
+  behind it when somebody flips that.
 
 ## Scope
 

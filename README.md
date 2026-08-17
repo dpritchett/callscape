@@ -23,6 +23,16 @@ graph is committed — one is a derived file the size of the module it came from
 page watches for it, so you can leave `make dev` running and fly the graph the moment it
 lands.
 
+Or fly it without installing anything:
+
+[![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/dpritchett/callscape)
+
+That builds a container, opens the page, and clones and dumps cli/cli behind it — the
+sky is empty for the first few seconds and then a city arrives in it, without a reload,
+which is the same thing `make sample` does in a second window. Pointer lock wants a real
+browser tab rather than the editor's preview pane. The remote endpoints stay off in
+there; `.devcontainer/devcontainer.json` says why at some length.
+
 Or install the dumper on its own:
 
 ```sh
@@ -190,6 +200,13 @@ terminal. That combination is a camera anything on your network can take, and a 
 writer. Fine on a home network, not something to run on a shared one, and not a decision a
 fresh clone should make on your behalf. `scripts/page lan` answers which one you are
 running.
+
+**Behind a port forward, loopback is not a boundary.** In a Codespace — or over an SSH
+tunnel — the thing doing the forwarding sits on the same side of loopback as the server,
+so `make dev` binding 127.0.0.1 does not keep anyone out; what keeps them out is the
+forward's own visibility, which GitHub defaults to private. The devcontainer therefore
+leaves the remote control off, and the server says so at startup rather than letting the
+loopback default look like protection it is not providing.
 
 ## Checks
 

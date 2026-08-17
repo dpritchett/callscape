@@ -1,0 +1,63 @@
+// A Codespace that flies cli/cli, so the README badge lands somebody in the
+// cockpit rather than in a checkout.
+//
+// The security decision this file makes, and why it is here rather than
+// inherited: UNSAFE_ENABLE_REMOTE_CONTROL is *not* set. On a laptop the default
+// binds loopback, and loopback is a real boundary. In a Codespace it is not —
+// the port-forwarding agent runs inside this container, so it reaches 127.0.0.1
+// exactly as `make dev` binds it, and the forwarded HTTPS URL is the front door
+// regardless. What keeps that door shut is the forward's own visibility, which
+// GitHub defaults to private: only the person who created this Codespace is
+// authenticated through it. That is the right default for a badge, because the
+// badge makes each visitor their own Codespace rather than sharing one.
+//
+// So the endpoints stay off. `/__cue` hands the wheel to anything that asks and
+// `/__shot` writes files, and neither should be one visibility toggle away from
+// the open internet. Run `make dev-remote` in the terminal if you want them —
+// it is a sentence you type, and the server says what it turned on.
+{
+  "name": "callscape",
+  "image": "mcr.microsoft.com/devcontainers/base:ubuntu-24.04",
+
+  // go.mod requires 1.26; .mise.toml pins node 23.11.1. mise itself is not
+  // installed here — the feature is the pin inside the container, and there is
+  // exactly one runtime in a Codespace to disagree with it.
+  "features": {
+    "ghcr.io/devcontainers/features/go:1": { "version": "1.26" },
+    "ghcr.io/devcontainers/features/node:1": { "version": "23.11.1" }
+  },
+
+  // No hostRequirements: the default 2-core machine was measured, not assumed.
+  // Dumping cli/cli — `go/packages` type-checking 307 packages, the one slow
+  // step between clicking the badge and flying — takes 16s on two cores with a
+  // cold build cache, 5s warm, and peaks at 1.4GB against the 8GB that comes
+  // with them. Bumping the machine would double what a visitor spends out of
+  // their free core-hours to save ten seconds they do not spend waiting anyway,
+  // because the page comes up first and the graph lands in it live.
+
+  "forwardPorts": [5178],
+  "portsAttributes": {
+    "5178": {
+      "label": "callscape",
+      // The page is the deliverable, so open it. `openPreview` uses the
+      // in-editor browser; pointer lock and WebGL want a real browser tab, and
+      // the preview pane offers "open in browser" for that.
+      "onAutoForward": "openPreview"
+      // No "visibility": "public" here, deliberately. See the note at the top.
+    }
+  },
+
+  // onCreate rather than postCreate: this is the half that depends only on the
+  // repo, so a prebuild can bake it if this ever gets one.
+  "onCreateCommand": ".devcontainer/setup",
+
+  // Every attach, including a reconnect — it is written to notice a server it
+  // already started.
+  "postAttachCommand": ".devcontainer/fly",
+
+  "customizations": {
+    "vscode": {
+      "extensions": ["golang.go"]
+    }
+  }
+}

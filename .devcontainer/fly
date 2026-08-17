@@ -1,0 +1,33 @@
+#!/usr/bin/env bash
+#
+# Start the page, and get a real graph into it.
+#
+# The two run at once on purpose. With no graph on disk the page says so and
+# keeps watching, so the server can come up immediately — port forwarded, tab
+# opened — while cli/cli is still being cloned and dumped behind it. The scene
+# arrives without a reload. That is the project's own first-run behaviour, and
+# showing it is better than hiding it behind a progress bar.
+#
+# `make dev`, not `make dev-remote`: see the note at the top of devcontainer.json
+# for why a forwarded port makes that a real choice rather than a formality.
+set -euo pipefail
+
+cd "$(dirname "$0")/.."
+
+readonly PORT=5178
+
+# postAttachCommand runs on every attach, including a reconnect to a Codespace
+# that is still running. The port is pinned and strict, so a second server would
+# not politely pick another one — it would exit and take the tab with it.
+if curl -sS -o /dev/null --max-time 2 "http://127.0.0.1:$PORT/" 2>/dev/null; then
+  echo "callscape is already up on :$PORT — leaving it alone"
+  exit 0
+fi
+
+if [ ! -f web/public/graph.json ]; then
+  echo "no graph yet — cloning and dumping cli/cli in the background"
+  # Its output would otherwise interleave with Vite's in the same terminal.
+  make sample > .devcontainer/sample.log 2>&1 &
+fi
+
+exec make dev
