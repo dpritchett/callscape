@@ -7,11 +7,15 @@
     <style>
       html, body { margin: 0; height: 100%; background: #0b0e14; overflow: hidden; }
       canvas { display: block; }
+      /* Every overlay sits on its own plate. A text shadow is enough against
+         the sky and nothing like enough against the pale top face of a
+         building, which is most of what is on screen inside a district. */
       #hud {
         /* clear of the control banner, which is always at the very top */
         position: fixed; top: 40px; left: 12px;
-        font: 12px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace;
-        color: #8b95a7; pointer-events: none; white-space: pre; text-shadow: 0 1px 2px #000;
+        font: 13px/1.55 ui-monospace, SFMono-Regular, Menlo, monospace;
+        color: #b9c2d0; pointer-events: none; white-space: pre;
+        background: rgba(10,13,20,0.72); border-radius: 6px; padding: 7px 10px;
       }
       #err {
         position: fixed; bottom: 0; left: 0; right: 0;
@@ -19,15 +23,21 @@
         color: #ffb4a2; background: #2a1114; border-top: 1px solid #6b2732;
         padding: 8px 12px; white-space: pre-wrap; display: none;
       }
+      /* The worst offender before it had a plate: four lines of dim grey lying
+         directly across the crust, and the one thing a newcomer needs to read. */
       #hint {
-        position: fixed; bottom: 10px; left: 12px;
-        font: 12px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace;
-        color: #5b6474; pointer-events: none;
+        /* Stops short of the ribbon, which owns the bottom-right corner and
+           would otherwise be tinted by this plate — the hint is painted after
+           it, so it wins on overlap. */
+        position: fixed; bottom: 10px; left: 12px; right: 176px;
+        font: 13px/1.6 ui-monospace, SFMono-Regular, Menlo, monospace;
+        color: #97a1b2; pointer-events: none;
+        background: rgba(10,13,20,0.72); border-radius: 6px; padding: 7px 10px;
       }
       #sel {
         position: fixed; top: 40px; right: 12px; max-width: 46vw; max-height: 78vh;
-        font: 12px/1.45 ui-monospace, SFMono-Regular, Menlo, monospace;
-        color: #dbe4f3; background: rgba(10,13,20,0.86);
+        font: 13px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace;
+        color: #dbe4f3; background: rgba(10,13,20,0.88);
         border: 1px solid #2b3348; border-radius: 6px; padding: 8px 10px;
         white-space: pre; pointer-events: none; display: none;
         overflow: hidden;

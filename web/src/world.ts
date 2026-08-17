@@ -35,8 +35,8 @@ const ICON_FRACTION = 0.62
 const NAME_HEIGHT = 0.12
 const NAME_DROP = 0.72
 const NAME_FLOAT = 0.55
-const DISTRICT_PX = 26 // on-screen label heights
-const SYMBOL_PX = 17
+const DISTRICT_PX = 28 // on-screen label heights
+const SYMBOL_PX = 20
 // How many names compete for the screen. These are the *candidates*, not the
 // count you see: declutter drops whatever collides, so on a crowded view the
 // limit is the screen itself. That is the point of sizing them this high — a
@@ -1134,7 +1134,15 @@ export class World {
     const shown = new Set(best.map((b) => b.s.node.id))
     for (const { s } of best) {
       if (this.symbolLabels.has(s.node.id)) continue
-      const label = makeLabel(s.node.name, { size: 1, color: '#dbe4f3', onTop: this.selecting })
+      // A plate, like the district names have. White on a dark sky reads fine;
+      // white on the pale top face of a building is white on white, and a
+      // district full of them was the reason this was unreadable.
+      const label = makeLabel(s.node.name, {
+        size: 1,
+        color: '#dbe4f3',
+        bg: 'rgba(10,13,20,0.72)',
+        onTop: this.selecting,
+      })
       // Arrives from nothing rather than at full strength, like every other
       // label; declutter has not had its say about this one yet.
       label.visible = false
