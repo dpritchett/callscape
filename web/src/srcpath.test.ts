@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { lineWindow, normalise, resolveWithinRoot } from './srcpath'
+import { lineWindow, normalise, resolveWithinRoot, shotFileName } from './srcpath'
 
 const ROOT = '/home/me/Projects/coder'
 
@@ -43,6 +43,28 @@ test('normalise collapses . and .. and separators', () => {
   expect(normalise('a//b/./c')).toBe('a/b/c')
   expect(normalise('a/b/../c')).toBe('a/c')
   expect(normalise('a\\b')).toBe('a/b')
+})
+
+describe('shotFileName', () => {
+  test('passes the name the shutter actually sends', () => {
+    expect(shotFileName('latest.png')).toBe('latest.png')
+    expect(shotFileName('district-2.png')).toBe('district-2.png')
+  })
+
+  test('strips any directory it is given', () => {
+    expect(shotFileName('../../x.png')).toBe('x.png')
+    expect(shotFileName('/etc/cron.d/x.png')).toBe('x.png')
+    expect(shotFileName('a/b/c.png')).toBe('c.png')
+  })
+
+  test('refuses anything that is not a plain PNG name', () => {
+    expect(shotFileName('latest.png.sh')).toBeNull()
+    expect(shotFileName('..')).toBeNull()
+    expect(shotFileName('.png')).toBeNull()
+    expect(shotFileName('shot;rm -rf ~.png')).toBeNull()
+    expect(shotFileName('sh\0ot.png')).toBeNull()
+    expect(shotFileName('')).toBeNull()
+  })
 })
 
 describe('lineWindow', () => {

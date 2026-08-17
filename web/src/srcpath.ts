@@ -1,10 +1,11 @@
 /**
- * Path containment for the source reader.
+ * Path containment for the dev server, on both the read and the write path.
  *
- * The dev server hands out files from a directory the graph names, which means
- * the request decides which file. That is a directory traversal waiting to
- * happen, so the check lives here as a pure function with tests rather than
- * inline in a request handler where nobody reads it.
+ * The server hands out files from a directory the graph names and writes
+ * screenshots under a name the page picks, which means the request decides
+ * which file in both directions. That is a directory traversal waiting to
+ * happen, so the checks live here as pure functions with tests rather than
+ * inline in a request handler where nobody reads them.
  */
 
 /** Normalises a path to forward slashes with `.` and `..` resolved. */
@@ -43,6 +44,24 @@ export function resolveWithinRoot(root: string, requested: string): string | nul
   // and would otherwise land outside.
   if (full !== normalise(full) || !full.startsWith(`${base}/`)) return null
   return (root.startsWith('/') ? '/' : '') + full
+}
+
+/**
+ * The file name to write a posted screenshot under, or null to refuse it.
+ *
+ * The page names its own capture and the dev server listens on the LAN, so the
+ * name is input like any other: `../../../.ssh/authorized_keys.png` would land
+ * outside `shots/` if it were joined on as given. Reduce it to a bare name and
+ * insist on a PNG — the only thing the shutter ever sends is `latest.png`.
+ */
+export function shotFileName(name: string): string | null {
+  if (!name || name.includes('\0')) return null
+  const base = normalise(name).split('/').pop() ?? ''
+  // A leading dot would let a capture land on a dotfile in shots/, and the
+  // charset leaves nothing for a shell or a path to interpret later.
+  if (base.startsWith('.') || !base.endsWith('.png')) return null
+  if (!/^[A-Za-z0-9._-]+$/.test(base)) return null
+  return base
 }
 
 /** The window of lines to show around a symbol. */

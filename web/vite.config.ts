@@ -4,7 +4,7 @@ import { appendFile, mkdir, readFile, writeFile } from 'node:fs/promises'
 import { join, resolve } from 'node:path'
 import { promisify } from 'node:util'
 import { defineConfig, type Plugin } from 'vite'
-import { resolveWithinRoot } from './src/srcpath'
+import { resolveWithinRoot, shotFileName } from './src/srcpath'
 import { runsForLines, type Span } from './src/spans'
 
 const execFileAsync = promisify(execFile)
@@ -50,9 +50,16 @@ function remoteShutter(): Plugin {
             void (async () => {
               try {
                 const { name, dataUrl } = JSON.parse(body) as { name: string; dataUrl: string }
+                const safe = shotFileName(name)
+                if (!safe) {
+                  server.config.logger.warn(`shot refused: ${name}`)
+                  res.statusCode = 400
+                  res.end()
+                  return
+                }
                 const png = Buffer.from(dataUrl.split(',')[1] ?? '', 'base64')
                 await mkdir(SHOT_DIR, { recursive: true })
-                const file = `${SHOT_DIR}/${name}`
+                const file = `${SHOT_DIR}/${safe}`
                 await writeFile(file, png)
                 latest = file
                 server.config.logger.info(`shot: ${file} (${Math.round(png.length / 1024)}kb)`)
